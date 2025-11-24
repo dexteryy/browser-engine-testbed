@@ -105,10 +105,15 @@
       .top-bar {
         width: 100%;
         background: linear-gradient(
-          135deg,
-          rgba(255, 255, 255, 0.08),
-          rgba(255, 255, 255, 0.03)
-        );
+            135deg,
+            rgba(15, 23, 42, 0.32),
+            rgba(15, 23, 42, 0.12)
+          ),
+          linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.08),
+            rgba(255, 255, 255, 0.03)
+          );
         border-bottom: 1px solid var(--border);
         box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
         padding: 30px 0 32px;
@@ -202,15 +207,40 @@
         padding: 18px;
         border-radius: 14px;
         border: 1px solid var(--border);
-        background: transparent;
+        background: rgba(15, 23, 42, 0.16);
         box-shadow: none;
-        transition: border-color 0.2s ease, background 0.2s ease;
+        transition: border-color 0.2s ease, background 0.2s ease,
+          transform 0.2s ease;
         cursor: pointer;
       }
 
       .suite-card:hover {
         border-color: rgba(255, 255, 255, 0.2);
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(15, 23, 42, 0.22);
+      }
+
+      .suite-card.active {
+        background: linear-gradient(
+          150deg,
+          rgba(15, 23, 42, 0.32),
+          rgba(15, 23, 42, 0.2)
+        );
+        border-color: rgba(255, 255, 255, 0.16);
+        box-shadow: 0 12px 42px rgba(0, 0, 0, 0.42),
+          0 0 0 1px var(--suite-accent, rgba(255, 255, 255, 0.08));
+        transform: translateY(-2px);
+      }
+
+      .suite-card.active .active-indicator {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: var(--suite-accent, #22d3ee);
+      }
+
+      .suite-card.active .btn {
+        background: var(--suite-accent, #22d3ee);
+        border-color: var(--suite-accent, #22d3ee);
+        color: #0b1224;
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.3);
       }
 
       .suite-meta {
@@ -1177,7 +1207,7 @@
             suite => `
               <div class="suite-card" data-suite="${
                 suite.id
-              }" style="border-left: 3px solid ${suite.accent}">
+              }" style="--suite-accent: ${suite.accent}; border-left: 3px solid ${suite.accent}">
                 <div class="active-indicator" style="background: ${
                   suite.accent
                 }1a; color: ${suite.accent}; border: 1px solid ${
@@ -1312,6 +1342,14 @@
         const url = new URL(window.location.href);
         url.searchParams.set("suite", id);
         history.replaceState({}, "", url);
+        suiteCards.querySelectorAll(".suite-card").forEach(card => {
+          const isActive = card.dataset.suite === id;
+          card.classList.toggle("active", isActive);
+          const actionBtn = card.querySelector(".btn");
+          if (actionBtn) {
+            actionBtn.textContent = isActive ? "已选择" : "选择此套件";
+          }
+        });
         renderCategories();
       }
 
