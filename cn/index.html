@@ -6,26 +6,53 @@
     <meta
       name="description"
       content="浏览器引擎测试用例集合：涵盖现代 CSS 布局、渲染、跨引擎兼容性与媒体等场景的完整测试导航。" />
-    <meta name="keywords" content="浏览器测试, CSS 渲染, WebGL, 兼容性, 性能测试, Web Demo" />
+    <meta
+      name="keywords"
+      content="浏览器测试, CSS 渲染, WebGL, 兼容性, 性能测试, Web Demo" />
     <meta name="author" content="Browser Engine Testbed" />
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-V0EPJ979LW"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-V0EPJ979LW");
+    </script>
     <meta property="og:title" content="浏览器引擎测试用例集合 · 导航入口" />
     <meta
       property="og:description"
       content="浏览器引擎测试用例集合：涵盖现代 CSS 布局、渲染、跨引擎兼容性与媒体等场景的完整测试导航。" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://example.com/cn/index.html" />
-    <meta property="og:image" content="https://example.com/icons/be-testbed-512.svg" />
+    <meta
+      property="og:image"
+      content="https://example.com/icons/be-testbed-512.svg" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="浏览器引擎测试用例集合 · 导航入口" />
     <meta
       name="twitter:description"
       content="浏览器引擎测试用例集合：涵盖现代 CSS 布局、渲染、跨引擎兼容性与媒体等场景的完整测试导航。" />
-    <meta name="twitter:image" content="https://example.com/icons/be-testbed-512.svg" />
+    <meta
+      name="twitter:image"
+      content="https://example.com/icons/be-testbed-512.svg" />
     <title>浏览器引擎测试用例集合 · 导航入口</title>
     <meta name="theme-color" id="themeColor" content="#0f172a" />
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" type="image/svg+xml" sizes="192x192" href="../icons/be-testbed-192.svg" />
-    <link rel="icon" type="image/svg+xml" sizes="512x512" href="../icons/be-testbed-512.svg" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      sizes="192x192"
+      href="../icons/be-testbed-192.svg" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      sizes="512x512"
+      href="../icons/be-testbed-512.svg" />
     <link rel="apple-touch-icon" href="../icons/be-testbed-192.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -436,7 +463,7 @@
                 fill-rule="evenodd"
                 clip-rule="evenodd"
                 d="M12 2C6.477 2 2 6.552 2 12.092c0 4.461 2.865 8.236 6.839 9.573.5.096.683-.22.683-.49 0-.242-.009-.883-.014-1.733-2.781.611-3.368-1.362-3.368-1.362-.455-1.164-1.11-1.474-1.11-1.474-.907-.625.069-.612.069-.612 1.003.071 1.53 1.04 1.53 1.04.892 1.545 2.341 1.099 2.91.84.091-.654.35-1.099.636-1.353-2.22-.257-4.555-1.123-4.555-4.998 0-1.104.39-2.006 1.03-2.715-.104-.258-.447-1.296.098-2.704 0 0 .842-.27 2.758 1.036A9.536 9.536 0 0 1 12 6.844c.853.004 1.712.116 2.514.341 1.914-1.307 2.755-1.036 2.755-1.036.546 1.408.203 2.446.1 2.704.64.709 1.028 1.611 1.028 2.715 0 3.884-2.339 4.737-4.566 4.988.359.314.679.93.679 1.874 0 1.353-.012 2.445-.012 2.777 0 .272.18.59.688.49 3.97-1.34 6.833-5.113 6.833-9.572C22 6.552 17.523 2 12 2Z"
-                fill="currentColor"/>
+                fill="currentColor" />
             </svg>
             GitHub
           </a>
@@ -1215,7 +1242,9 @@
                   ${cat.tests
                     .map(
                       test => `
-                        <a class="test" target="_blank" rel="noopener noreferrer" href="${test.path}" data-search="${[
+                        <a class="test" target="_blank" rel="noopener noreferrer" href="${
+                          test.path
+                        }" data-search="${[
                         test.title,
                         test.desc,
                         cat.title,
