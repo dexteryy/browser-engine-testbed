@@ -25,6 +25,17 @@ p{ line-height:1.7; }
 }
 .topbar .wrap{ padding: 16px 0; }
 .topbar h1{ margin: 0 0 6px 0; font-size: 22px; }
+.top-links{ display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; }
+.top-links a{
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: var(--border);
+  text-decoration: none;
+  color:#0f172a;
+  font-size:13px;
+  background:#f8fafc;
+}
+.top-links a[aria-current="page"]{ background:#2563eb; color:#fff; border-color:#1d4ed8; }
 .subtitle{ margin: 0; color: var(--muted); }
 
 .toolbar{ border-bottom: var(--border); background:#fff; }
@@ -70,6 +81,8 @@ p{ line-height:1.7; }
   opacity: .9;
   pointer-events: none;
 }
+
+.hide-badge .size-badge{ display:none !important; }
 
 /* Explanation section */
 .explain{ border-top: var(--border); padding: 14px 0 40px; }

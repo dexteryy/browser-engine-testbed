@@ -118,8 +118,9 @@
     </div>
   </div>
 
-  <script type="module">
-    import {qs, byId, on, copy, cssSupports, extractMaskCSS} from './assets/common.js';
+  <script src="./assets/common.js"></script>
+  <script>
+    const {byId, on, copy, cssSupports, extractMaskCSS} = window.MaskUtils;
 
     const masked = byId('maskedBox');
     const ref = byId('refBox');
@@ -135,7 +136,7 @@
     const copyCss = byId('copyCss');
 
     const mswv = byId('mswv'); const mshv = byId('mshv');
-    const mpxv = byId('mpxv'); const mpfv = byId('mpyv');
+    const mpxv = byId('mpxv');
 
     function updateBoxBG(){
       masked.classList.remove('bg-choice-pure','bg-choice-gradient');
@@ -147,12 +148,14 @@
       } // checker is default (via .checker)
     }
 
+    const {maskSources} = window.MaskUtils;
+
     function maskImageValue(){
       switch(maskSrc.value){
-        case 'svg-circle': return "url('./assets/circle.svg')";
-        case 'svg-star': return "url('./assets/star.svg')";
-        case 'svg-ring': return "url('./assets/ring.svg')";
-        case 'svg-soft': return "url('./assets/soft-circle.svg')";
+        case 'svg-circle': return `url('${maskSources.circle}')`;
+        case 'svg-star': return `url('${maskSources.star}')`;
+        case 'svg-ring': return `url('${maskSources.ring}')`;
+        case 'svg-soft': return `url('${maskSources.soft}')`;
         case 'css-radial': {
           // Smooth alpha fade using alpha channel (for alpha mode)
           const center = `${mpx.value}% ${mpy.value}%`;
@@ -174,6 +177,11 @@
 
       if (img === 'none'){
         masked.style.mask = 'none';
+        masked.style.maskImage = 'none';
+        masked.style.maskSize = '';
+        masked.style.maskPosition = '';
+        masked.style.maskRepeat = '';
+        masked.style.maskMode = '';
       } else {
         masked.style.maskImage = img;
         masked.style.maskMode = mode;
@@ -190,17 +198,22 @@
       byId('mpyv').textContent = mpy.value + '%';
     }
 
+    function syncCustomSizeEnabled(){
+      const custom = maskSize.value === 'custom';
+      msw.disabled = msh.disabled = !custom;
+    }
+
     on(maskSrc, 'change', applyMask);
     on(maskMode, 'change', applyMask);
     on(maskSize, 'change', ()=>{ 
-      const custom = maskSize.value === 'custom';
-      msw.disabled = msh.disabled = !custom;
+      syncCustomSizeEnabled();
       applyMask(); 
     });
     [msw,msh,mpx,mpy,maskRepeat,bgChoice].forEach(el=>on(el,'input',()=>{updateLabels(); applyMask(); if (el===bgChoice) updateBoxBG();}));
     on(copyCss,'click', ()=> copy(extractMaskCSS(masked)) );
 
     // init
+    syncCustomSizeEnabled();
     updateLabels(); applyMask(); updateBoxBG();
 
     // feature detection for mask-composite (informational)

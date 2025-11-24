@@ -10,6 +10,7 @@
     /* Page-only helper styles (comments in English) */
     #grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:8px; margin-top:12px; }
     perf-element{ display:block; }
+    body.probe perf-element{ box-shadow:0 0 0 2px rgba(139,92,246,0.35); background:#f9f5ff; }
   </style>
   <script>
   // Define <perf-element> (comments in English)
@@ -54,11 +55,12 @@
   }
 
   async function triggerStyleRecalc(){
-    // Very rough probe: toggle a class on body and measure 2 rAFs
+    // Probe: add a class that affects hosts, allow two rAFs, then remove it
     const t0 = performance.now();
-    document.body.classList.toggle('probe');
+    document.body.classList.add('probe');
     await new Promise(requestAnimationFrame);
     await new Promise(requestAnimationFrame);
+    document.body.classList.remove('probe');
     const t1 = performance.now();
     document.getElementById('statRecalc').textContent = (t1 - t0).toFixed(2) + ' ms';
   }
@@ -101,6 +103,13 @@
     <div class="container">
       <h1 class="title">测试用例7：Shadow DOM 样式封装隔离 — 多实例与样式隔离</h1>
       <p class="subtitle">创建大量组件实例，观察样式计算与渲染是否互不干扰（仅做粗略观测）。</p>
+      <div class="top-links">
+        <a href="index.html">目录</a>
+        <a href="01-basic.html">01 基础隔离</a>
+        <a href="02-slotted.html">02 slot 分发</a>
+        <a href="03-host.html">03 :host</a>
+        <a aria-current="page" href="04-performance.html">04 多实例</a>
+      </div>
     </div>
   </div>
 
@@ -118,6 +127,7 @@
     <div class="test-area">
       <h2>测试区域</h2>
       <div class="note">提示：该页面的时间统计仅用于相对对比与观察，不代表绝对性能指标。</div>
+      <p class="inside helper">外部对照文本（受全局样式影响，验证全局样式依旧作用于 Light DOM）。</p>
       <div id="grid"></div>
       <hr>
       <div class="grid">

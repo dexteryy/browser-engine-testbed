@@ -33,16 +33,16 @@
       <div class="control">
         <label>形状 A（居中）</label>
         <select id="shapeA">
-          <option value="url('./assets/circle.svg')">圆形</option>
-          <option value="url('./assets/star.svg')">星形</option>
+          <option value="circle">圆形</option>
+          <option value="star">星形</option>
           <option value="radial">径向渐变</option>
         </select>
       </div>
       <div class="control">
         <label>形状 B（可偏移）</label>
         <select id="shapeB">
-          <option value="url('./assets/ring.svg')">圆环</option>
-          <option value="url('./assets/star.svg')">星形</option>
+          <option value="ring">圆环</option>
+          <option value="star">星形</option>
           <option value="linear">线性渐变</option>
         </select>
       </div>
@@ -87,8 +87,9 @@
     </div>
   </div>
 
-  <script type="module">
-    import {byId, on, cssSupports} from './assets/common.js';
+  <script src="./assets/common.js"></script>
+  <script>
+    const {byId, on, cssSupports, maskSources} = window.MaskUtils;
     const t = byId('target'); const cssOut = byId('cssOut');
     const preset = byId('preset'), shapeA = byId('shapeA'), shapeB = byId('shapeB');
     const bx = byId('bx'), by = byId('by'), bs = byId('bs');
@@ -103,7 +104,10 @@
       if (value === 'linear'){
         return `linear-gradient(135deg, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 70%)`;
       }
-      return value; // url(...)
+      if (value === 'circle') return `url('${maskSources.circle}')`;
+      if (value === 'star') return `url('${maskSources.star}')`;
+      if (value === 'ring') return `url('${maskSources.ring}')`;
+      return value;
     }
 
     function apply(){

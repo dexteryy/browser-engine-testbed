@@ -49,6 +49,13 @@
         <label>列分隔线颜色</label>
         <input id="ruleColor" type="color" value="#dddddd" />
       </div>
+      <div class="control" style="grid-column: span 3;">
+        <label>column-fill</label>
+        <select id="fill">
+          <option value="balance" selected>balance（默认）</option>
+          <option value="auto">auto</option>
+        </select>
+      </div>
       <div class="control" style="grid-column: span 12;">
         <div id="metrics" class="meta"></div>
       </div>
@@ -82,6 +89,7 @@
       const ruleW = $("#ruleW"); const ruleWOut = $("#ruleWOut");
       const ruleStyle = $("#ruleStyle");
       const ruleColor = $("#ruleColor");
+      const fill = $("#fill");
       const metrics = $("#metrics");
 
       bindRangeOutput(cw, cwOut, v => v + " px");
@@ -97,6 +105,7 @@
         mc.style.columnWidth = colw.value + "px";
         mc.style.columnGap = gap.value + "px";
         mc.style.columnRule = `${ruleW.value}px ${ruleStyle.value} ${ruleColor.value}`;
+        mc.style.columnFill = fill.value;
         // Optional count cap
         const cap = parseInt(maxCount.value || "0", 10);
         if (cap > 0) mc.style.columnCount = cap;
@@ -118,7 +127,7 @@
       };
 
       apply();
-      [cw, colw, gap, ruleW, ruleStyle, ruleColor, maxCount].forEach(i => i.addEventListener("input", apply));
+      [cw, colw, gap, ruleW, ruleStyle, ruleColor, maxCount, fill].forEach(i => i.addEventListener("input", apply));
       window.addEventListener("resize", apply);
     });
   </script>

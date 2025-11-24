@@ -12,6 +12,11 @@
     <div class="container headline">
       <h1>测试用例8：复杂选择器与交互状态布局</h1>
       <p>子场景：大量元素 + 交互引发的选择器匹配压力，观察 Recalculate Style 的耗时。</p>
+      <div class="top-links">
+        <a href="index.html">主场景</a>
+        <a href="nested-forms.html">嵌套表单</a>
+        <a aria-current="page" href="performance-load.html">性能压力</a>
+      </div>
     </div>
   </header>
 
@@ -23,7 +28,7 @@
         <label for="perf-shadow">卡片强阴影</label>
       </div>
       <div class="control">
-        <input id="perf-cols-3" name="perf-cols" type="radio">
+        <input id="perf-cols-3" name="perf-cols" type="radio" checked>
         <label for="perf-cols-3">三列</label>
       </div>
       <div class="control">

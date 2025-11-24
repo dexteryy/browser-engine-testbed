@@ -11,9 +11,17 @@
       <div class="row"><span>Jank(>16.7ms)</span> <span id="jank" class="muted">0</span></div>\
       <div class="row"><span>LongTasks</span> <span id="lt" class="muted">0</span></div>\
       <div class="row"><span>Scroll/s</span> <span id="scrolls" class="muted">0</span></div>';
-    document.addEventListener('DOMContentLoaded', ()=>{
-      document.body.appendChild(this.root);
-    });
+    // Mount immediately if DOM is ready; otherwise defer to DOMContentLoaded
+    this._mount = ()=>{
+      if (!document.body.contains(this.root)) {
+        document.body.appendChild(this.root);
+      }
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', this._mount, { once:true });
+    } else {
+      this._mount();
+    }
 
     this.running = false;
     this.frames = [];

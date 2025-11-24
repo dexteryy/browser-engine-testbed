@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>研发侧用例 07｜WebGL 视频纹理渲染（采样与尺寸）</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="inner">
+      <h1>研发侧用例 07｜WebGL 视频纹理渲染（采样与尺寸）</h1>
+      <p class="subtitle">全屏四边形贴视频纹理，快速切换最近邻/线性采样与 1:1、下采样、上采样，观察采样质量与纹理更新稳定性。</p>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar-section">
+    <div class="inner">
+      <div class="toolbar">
+        <fieldset>
+          <legend>视频源</legend>
+          <label>
+            预设
+            <select id="sourceSelect">
+              <option value="bunny720">Big Buck Bunny 720p (mp4)</option>
+              <option value="tos1080">Tears of Steel 1080p (mp4)</option>
+              <option value="sintel4k">Sintel 720p（上采样测试）</option>
+            </select>
+          </label>
+          <label>本地文件 <input id="fileInput" type="file" accept="video/*" /></label>
+          <button id="loadBtn" class="primary">加载/切换</button>
+          <button id="playToggle">播放/暂停</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>采样模式</legend>
+          <label><input type="radio" name="leftFilter" value="linear" checked /> 左：线性</label>
+          <label><input type="radio" name="leftFilter" value="nearest" /> 左：最近邻</label>
+          <label><input type="radio" name="rightFilter" value="nearest" checked /> 右：最近邻</label>
+          <label><input type="radio" name="rightFilter" value="linear" /> 右：线性</label>
+          <label><input id="flipY" type="checkbox" checked /> UNPACK_FLIP_Y_WEBGL</label>
+          <label><input id="useSRGB" type="checkbox" /> sRGB 目标（若可用）</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>尺寸与输出</legend>
+          <label><input type="radio" name="scale" value="1" checked /> 1:1</label>
+          <label><input type="radio" name="scale" value="0.5" /> 下采样 0.5×</label>
+          <label><input type="radio" name="scale" value="2" /> 上采样 2×</label>
+          <label>
+            帧同步
+            <select id="frameDriver">
+              <option value="rvfc">requestVideoFrameCallback</option>
+              <option value="raf">requestAnimationFrame</option>
+            </select>
+          </label>
+          <label>
+            DPR 缩放
+            <select id="dprMode">
+              <option value="1" selected>忽略（原始像素）</option>
+              <option value="device">跟随设备像素比</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>状态</legend>
+          <div class="status-row">
+            <span class="badge" id="videoInfo">视频：-- × -- ｜ --fps</span>
+            <span class="badge" id="canvasInfo">画布：-- × --</span>
+            <span class="badge" id="fpsBadge">FPS：--</span>
+            <span class="badge" id="srgbInfo">sRGB：检测中</span>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </section>
+
+  <!-- Test area -->
+  <main class="test-area">
+    <div class="inner">
+      <div class="panes">
+        <section class="pane" id="leftPane">
+          <header class="pane-head">
+            <h2>左侧画布</h2>
+            <span class="hint">线性/最近邻可切换，观察平滑与锯齿</span>
+          </header>
+          <div class="canvas-wrap">
+            <canvas id="canvasLeft"></canvas>
+            <div class="overlay" id="overlayLeft"><strong id="leftLabel">LINEAR</strong><span class="muted-text">采样</span></div>
+            <div class="fps" id="fpsLeft">-- fps</div>
+          </div>
+        </section>
+
+        <section class="pane" id="rightPane">
+          <header class="pane-head">
+            <h2>右侧画布</h2>
+            <span class="hint">可设为对照组（另一种采样）</span>
+          </header>
+          <div class="canvas-wrap">
+            <canvas id="canvasRight"></canvas>
+            <div class="overlay" id="overlayRight"><strong id="rightLabel">NEAREST</strong><span class="muted-text">采样</span></div>
+            <div class="fps" id="fpsRight">-- fps</div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Explanation -->
+  <section class="explain">
+    <div class="inner">
+      <h3>解释说明</h3>
+      <h4>测试目标</h4>
+      <p>验证浏览器在 WebGL 中以 &lt;video&gt; 为 TEXTURE_2D 时的稳定性，覆盖 UNPACK_FLIP_Y_WEBGL、线性/最近邻采样以及 1:1、下采样、上采样场景，观察纹理更新是否跟随帧率、采样质量是否符合预期。</p>
+
+      <h4>测试方案</h4>
+      <ul>
+        <li>左右各一张 WebGL 画布，均用全屏四边形贴视频纹理，可分别选择 LINEAR 与 NEAREST 作为 MIN/MAG 过滤。</li>
+        <li>提供 1:1、0.5×、2× 三档输出尺寸，直接影响 framebuffer 分辨率，无 CSS 额外缩放，便于观察采样差异。</li>
+        <li>可切换 UNPACK_FLIP_Y_WEBGL；若浏览器支持 EXT_sRGB，则可勾选 sRGB Framebuffer，对比色彩差异。</li>
+        <li>帧驱动可切换 requestVideoFrameCallback 与 requestAnimationFrame，以检查纹理更新稳定性与合成节奏。</li>
+      </ul>
+
+      <h4>使用方法</h4>
+      <ol>
+        <li>在工具栏选择预设视频或加载本地文件，点击“加载/切换”，默认自动播放循环。</li>
+        <li>左右分别选择 LINEAR/NEAREST，切换尺寸档位，肉眼观察缩放时的锯齿或模糊，特别是高分辨率上采样。</li>
+        <li>在 DevTools → Rendering 勾选“Paint flashing”，确认画布是否保持独立合成层；Performance 录制 10s，查看纹理更新频率与掉帧。</li>
+        <li>按键：空格播放/暂停，N 切换左画布采样，M 切换右画布采样，F 切换 UNPACK_FLIP_Y_WEBGL。</li>
+      </ol>
+
+      <h4>查看/检验/评估结果的方法</h4>
+      <ul>
+        <li>视觉上无撕裂、无闪屏，采样切换应瞬时生效；LINEAR 应平滑、NEAREST 应明显颗粒且保持阶梯边缘。</li>
+        <li>在高分辨率（如 4K 源 + 2× 输出）仍能保持稳定帧率，FPS 徽章与 Performance 面板应无异常掉帧。</li>
+        <li>在 Layers 面板中，两个 canvas 应各自持有合成层，切换采样或尺寸不应触发多余重建。</li>
+      </ul>
+    </div>
+  </section>
+
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -107,7 +107,9 @@
     window.addEventListener('DOMContentLoaded', function(){
       Test04.wireCommonControls({
         target: document.getElementById('vb'),
-        meters: document.getElementById('meters')
+        meters: document.getElementById('meters'),
+        // Apply number combine toggles to both columns (半角/全角对照)
+        tcuNodes: Array.from(document.querySelectorAll('.vertical-box'))
       });
     });
   </script>

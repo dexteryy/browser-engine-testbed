@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas/WebGL 缓冲配置 2×2 对比</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .config-line { font-size: 12px; color: #cbd5e1; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #312e81;
+      border: 1px solid #cbd5e1;
+      font-size: 13px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Canvas/WebGL 缓冲配置 2×2 对比</h1>
+    <p>同场景多缓冲配置并排展示，观察合成层、预乘、抗锯齿与 preserveDrawingBuffer 的差异。</p>
+  </header>
+  <main class="page">
+    <section class="toolbar">
+      <div class="group">
+        <span class="chip">DPR: <span id="dpr"></span></span>
+        <span class="chip">时间轴：<span id="time-label">0ms</span></span>
+      </div>
+      <div class="group">
+        <label>画布尺寸(px)</label>
+        <input type="number" id="size-input" value="320" min="160" max="640" step="20">
+      </div>
+      <div class="group">
+        <label>自动动画</label>
+        <input type="checkbox" id="animate-toggle" checked>
+      </div>
+      <div class="group">
+        <label>Canvas 2D willReadFrequently</label>
+        <input type="checkbox" id="wrf-toggle">
+      </div>
+      <div class="group">
+        <label>WebGL 抗锯齿</label>
+        <input type="checkbox" id="aa-toggle" checked>
+      </div>
+      <button class="btn" id="redraw">重绘全部</button>
+    </section>
+
+    <section class="panel">
+      <h2 class="section-title">Canvas 2D 4 组合（alpha × willReadFrequently）</h2>
+      <p class="note">同一绘制内容：渐变底+半透明圆+细线+文本。切换 willReadFrequently 观察缓冲保留与读取成本。</p>
+      <div class="grid-2x2" id="canvas-grid"></div>
+    </section>
+
+    <section class="panel" style="margin-top:16px;">
+      <h2 class="section-title">WebGL1 4 组合（preserveDrawingBuffer × premultipliedAlpha）</h2>
+      <p class="note">统一绘制彩色四边形 + 旋转线条。关闭抗锯齿可观察边缘锯齿；切换 preserve 评估合成与拷贝开销。</p>
+      <div class="grid-2x2" id="webgl-grid"></div>
+    </section>
+
+    <section class="panel explain">
+      <h3 class="section-title">使用说明</h3>
+      <div>1）打开 DevTools → Layers，检查 2D 与 WebGL 画布在不同配置下的合成层与尺寸。</div>
+      <div>2）Performance 录制重绘/动画过程，对比 Raster、Composite，重点关注 preserveDrawingBuffer 对合成拷贝的影响。</div>
+      <div>3）启用 Paint flashing，拖动动画，观察 Canvas 2D 的重绘范围；关闭 WebGL 抗锯齿查看线条锯齿是否符合预期。</div>
+    </section>
+  </main>
+
+  <script>
+    const dpr = window.devicePixelRatio || 1;
+    const state = {
+      size: 320,
+      animate: true,
+      wrf: false,
+      aa: true
+    };
+    const canvasConfigs = [
+      { alpha: true, wrf: false, label: "alpha: true / willRead: false" },
+      { alpha: false, wrf: false, label: "alpha: false / willRead: false" },
+      { alpha: true, wrf: true, label: "alpha: true / willRead: true" },
+      { alpha: false, wrf: true, label: "alpha: false / willRead: true" }
+    ];
+    const webglConfigs = [
+      { preserve: true, premultiply: true, label: "preserve: true / premul: true" },
+      { preserve: false, premultiply: true, label: "preserve: false / premul: true" },
+      { preserve: true, premultiply: false, label: "preserve: true / premul: false" },
+      { preserve: false, premultiply: false, label: "preserve: false / premul: false" }
+    ];
+
+    const canvasGrid = document.getElementById("canvas-grid");
+    const webglGrid = document.getElementById("webgl-grid");
+    const timeLabel = document.getElementById("time-label");
+
+    const canvasCards = [];
+    const webglCards = [];
+    let rafId = null;
+
+    document.getElementById("dpr").textContent = dpr.toFixed(2);
+    document.getElementById("size-input").addEventListener("change", e => {
+      const v = Math.max(160, Math.min(640, Number(e.target.value) || 320));
+      state.size = v;
+      e.target.value = v;
+      rebuildAll();
+    });
+    document.getElementById("animate-toggle").addEventListener("change", e => {
+      state.animate = e.target.checked;
+      if (state.animate) startLoop(); else stopLoop();
+    });
+    document.getElementById("wrf-toggle").addEventListener("change", e => {
+      state.wrf = e.target.checked;
+      rebuildCanvas2d();
+    });
+    document.getElementById("aa-toggle").addEventListener("change", e => {
+      state.aa = e.target.checked;
+      rebuildWebgl();
+    });
+    document.getElementById("redraw").addEventListener("click", () => {
+      drawAll(performance.now());
+    });
+
+    function buildCanvasCard(cfg) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "canvas-card";
+      const label = document.createElement("div");
+      label.className = "card-label";
+      label.innerHTML = `<div>${cfg.label}</div><div class="config-line">2D context</div>`;
+      const canvas = document.createElement("canvas");
+      const meta = document.createElement("div");
+      meta.className = "meta-row";
+      meta.textContent = "尺寸: -";
+      wrapper.appendChild(label);
+      wrapper.appendChild(canvas);
+      wrapper.appendChild(meta);
+      canvasGrid.appendChild(wrapper);
+      const ctx = canvas.getContext("2d", { alpha: cfg.alpha, willReadFrequently: cfg.wrf });
+      return { cfg, canvas, ctx, label, meta };
+    }
+
+    function draw2d(card, t) {
+      const { canvas, ctx, cfg } = card;
+      if (!ctx) return;
+      const logical = state.size;
+      const w = logical * dpr;
+      const h = logical * dpr;
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+        canvas.style.width = `${logical}px`;
+        canvas.style.height = `${logical}px`;
+      }
+      const time = t * 0.001;
+      ctx.clearRect(0, 0, w, h);
+      const grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, "rgba(34,197,94,0.85)");
+      grad.addColorStop(1, "rgba(56,189,248,0.6)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = "rgba(15,23,42,0.7)";
+      ctx.beginPath();
+      const r = w * 0.18 + Math.sin(time) * 12 * dpr;
+      ctx.arc(w * 0.45, h * 0.45, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.7)";
+      ctx.lineWidth = 1 * dpr;
+      ctx.setLineDash([6 * dpr, 6 * dpr]);
+      ctx.beginPath();
+      ctx.moveTo(w * 0.1, h * 0.2);
+      ctx.lineTo(w * 0.9, h * 0.8);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.font = `${18 * dpr}px "Segoe UI", Arial`;
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.fillText(cfg.label, 12 * dpr, h - 16 * dpr);
+      ctx.restore();
+
+      let sample = "未读取像素";
+      if (cfg.wrf) {
+        const center = ctx.getImageData(w / 2, h / 2, 1, 1).data;
+        sample = `中心像素 RGBA: [${center.join(",")}]`;
+      }
+      card.meta.textContent = `尺寸: ${logical}px @${dpr.toFixed(2)} | ${sample}`;
+    }
+
+    function rebuildCanvas2d() {
+      canvasGrid.innerHTML = "";
+      canvasCards.length = 0;
+      canvasConfigs.forEach(c => {
+        const cfg = { ...c, wrf: c.wrf || state.wrf };
+        const card = buildCanvasCard(cfg);
+        canvasCards.push(card);
+      });
+      drawAll(performance.now());
+    }
+
+    function buildWebglCard(cfg) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "canvas-card";
+      const label = document.createElement("div");
+      label.className = "card-label";
+      label.innerHTML = `<div>${cfg.label}</div><div class="config-line">WebGL1</div>`;
+      const canvas = document.createElement("canvas");
+      const meta = document.createElement("div");
+      meta.className = "meta-row";
+      meta.textContent = "尺寸: -";
+      wrapper.appendChild(label);
+      wrapper.appendChild(canvas);
+      wrapper.appendChild(meta);
+      webglGrid.appendChild(wrapper);
+
+      const gl = canvas.getContext("webgl", {
+        preserveDrawingBuffer: cfg.preserve,
+        premultipliedAlpha: cfg.premultiply,
+        alpha: true,
+        antialias: state.aa
+      });
+      if (!gl) {
+        label.textContent = "WebGL 初始化失败";
+        meta.textContent = "无法创建上下文";
+        return { cfg, canvas, gl: null, meta };
+      }
+      const program = createWebglProgram(gl);
+      const attribs = initWebglGeometry(gl, program);
+      return { cfg, canvas, gl, program, attribs, angle: 0, meta };
+    }
+
+    function createWebglProgram(gl) {
+      const vs = `
+        attribute vec2 position;
+        attribute vec3 color;
+        varying vec3 vColor;
+        uniform float uTime;
+        void main() {
+          float c = cos(uTime);
+          float s = sin(uTime);
+          mat2 rot = mat2(c, -s, s, c);
+          gl_Position = vec4(rot * position, 0.0, 1.0);
+          vColor = color;
+        }
+      `;
+      const fs = `
+        precision mediump float;
+        varying vec3 vColor;
+        void main() {
+          gl_FragColor = vec4(vColor, 0.82);
+        }
+      `;
+      const vsObj = gl.createShader(gl.VERTEX_SHADER);
+      gl.shaderSource(vsObj, vs);
+      gl.compileShader(vsObj);
+      const fsObj = gl.createShader(gl.FRAGMENT_SHADER);
+      gl.shaderSource(fsObj, fs);
+      gl.compileShader(fsObj);
+      const program = gl.createProgram();
+      gl.attachShader(program, vsObj);
+      gl.attachShader(program, fsObj);
+      gl.linkProgram(program);
+      return program;
+    }
+
+    function initWebglGeometry(gl, program) {
+      const posLoc = gl.getAttribLocation(program, "position");
+      const colorLoc = gl.getAttribLocation(program, "color");
+      const timeLoc = gl.getUniformLocation(program, "uTime");
+      const quad = new Float32Array([
+        -1, -1,  1, 0.3, 0.3,
+         1, -1,  0.3, 1, 0.4,
+        -1,  1,  0.3, 0.5, 1,
+         1,  1,  0.9, 0.9, 0.4
+      ]);
+      const line = new Float32Array([
+        -0.9, -0.2,  1, 1, 1,
+         0.9,  0.8,  1, 1, 1
+      ]);
+      const quadBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
+
+      const lineBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, line, gl.STATIC_DRAW);
+
+      return { posLoc, colorLoc, timeLoc, quadBuffer, lineBuffer };
+    }
+
+    function drawWebgl(card, t) {
+      const { gl, canvas, program, attribs } = card;
+      if (!gl || !program) return;
+      const logical = state.size;
+      const w = logical * dpr;
+      const h = logical * dpr;
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+        canvas.style.width = `${logical}px`;
+        canvas.style.height = `${logical}px`;
+      }
+      gl.viewport(0, 0, w, h);
+      gl.clearColor(0.05, 0.08, 0.12, 0.9);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.useProgram(program);
+      gl.uniform1f(attribs.timeLoc, t * 0.001);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, attribs.quadBuffer);
+      gl.enableVertexAttribArray(attribs.posLoc);
+      gl.vertexAttribPointer(attribs.posLoc, 2, gl.FLOAT, false, 20, 0);
+      gl.enableVertexAttribArray(attribs.colorLoc);
+      gl.vertexAttribPointer(attribs.colorLoc, 3, gl.FLOAT, false, 20, 8);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, attribs.lineBuffer);
+      gl.vertexAttribPointer(attribs.posLoc, 2, gl.FLOAT, false, 20, 0);
+      gl.vertexAttribPointer(attribs.colorLoc, 3, gl.FLOAT, false, 20, 8);
+      gl.drawArrays(gl.LINES, 0, 2);
+      card.meta.textContent = `尺寸: ${logical}px @${dpr.toFixed(2)} | AA: ${state.aa ? "on" : "off"}`;
+    }
+
+    function rebuildWebgl() {
+      webglGrid.innerHTML = "";
+      webglCards.length = 0;
+      webglConfigs.forEach(cfg => {
+        const card = buildWebglCard(cfg);
+        webglCards.push(card);
+      });
+      drawAll(performance.now());
+    }
+
+    function drawAll(t) {
+      timeLabel.textContent = `${t.toFixed(0)}ms`;
+      canvasCards.forEach(card => draw2d(card, t));
+      webglCards.forEach(card => drawWebgl(card, t));
+    }
+
+    function startLoop() {
+      stopLoop();
+      const loop = (ts) => {
+        drawAll(ts);
+        if (state.animate) {
+          rafId = requestAnimationFrame(loop);
+        }
+      };
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function stopLoop() {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+
+    function rebuildAll() {
+      rebuildCanvas2d();
+      rebuildWebgl();
+      if (state.animate) startLoop();
+    }
+
+    rebuildCanvas2d();
+    rebuildWebgl();
+    startLoop();
+  </script>
+</body>
+</html>

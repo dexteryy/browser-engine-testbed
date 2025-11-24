@@ -63,6 +63,10 @@
           <span class="badge" id="ms">帧耗时: -- ms</span>
         </div>
       </div>
+      <div>
+        <label>浏览器支持</label>
+        <div class="hint"><span class="badge" id="support">检测中</span></div>
+      </div>
     </div>
   </section>
 
@@ -98,6 +102,7 @@
     const fpsBadge = document.getElementById('fps');
     const minfpsBadge = document.getElementById('minfps');
     const msBadge = document.getElementById('ms');
+    const support = document.getElementById('support');
 
     const modes = ['multiply','screen','overlay','difference','exclusion','lighten','darken'];
     let blobs = [];
@@ -105,6 +110,19 @@
     let rafId = 0;
     let last = performance.now();
     let fpsHist = [];
+
+    function hexToRgb(hex) {
+      const s = hex.replace('#','');
+      return [
+        parseInt(s.substring(0,2), 16),
+        parseInt(s.substring(2,4), 16),
+        parseInt(s.substring(4,6), 16)
+      ];
+    }
+
+    function setBlobColor(blob, alpha) {
+      blob.el.style.background = `rgba(${blob.rgb[0]},${blob.rgb[1]},${blob.rgb[2]},${alpha})`;
+    }
 
     function rand(min, max){ return Math.random()*(max-min)+min; }
     function randInt(min, max){ return Math.floor(rand(min, max)); }
@@ -122,18 +140,15 @@
         el.style.width = size + 'px';
         el.style.height = size + 'px';
         const color = randHex();
-        el.style.background = color.replace(')', ', '+a+')').replace('#','rgba('); // will fix next line
-        // fix background rgba: convert hex to rgba
-        const r = parseInt(color.substr(1,2),16);
-        const g = parseInt(color.substr(3,2),16);
-        const b = parseInt(color.substr(5,2),16);
-        el.style.background = `rgba(${r},${g},${b},${a})`;
+        const rgb = hexToRgb(color);
+        el.style.background = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
         const mode = modeEl.value === 'random' ? modes[randInt(0, modes.length)] : modeEl.value;
         el.style.mixBlendMode = mode;
         el.textContent = mode[0].toUpperCase();
         stage.appendChild(el);
         blobs.push({
           el,
+          rgb,
           x: rand(0, stage.clientWidth - size),
           y: rand(0, stage.clientHeight - size),
           vx: rand(-0.8, 0.8),
@@ -207,12 +222,7 @@
     alphaEl.addEventListener('input', ()=>{
       alphaVal.textContent = (+alphaEl.value).toFixed(2);
       blobs.forEach(o => {
-        const bg = o.el.style.background;
-        // Recompute rgba alpha by replacing after last comma
-        const parts = bg.match(/rgba\((\d+),(\d+),(\d+),([0-9.]+)\)/);
-        if (parts) {
-          o.el.style.background = `rgba(${parts[1]},${parts[2]},${parts[3]},${(+alphaEl.value).toFixed(2)})`;
-        }
+        setBlobColor(o, (+alphaEl.value).toFixed(2));
       });
     });
     modeEl.addEventListener('change', ()=>{
@@ -229,6 +239,21 @@
     stepBtn.addEventListener('click', ()=>{
       if (!running) step(performance.now());
     });
+
+    // Handle resize: keep blobs within visible area
+    window.addEventListener('resize', ()=>{
+      const size = +sizeEl.value;
+      blobs.forEach(o=>{
+        o.x = Math.min(Math.max(o.x, -size*0.5), Math.max(0, stage.clientWidth - size*0.5));
+        o.y = Math.min(Math.max(o.y, -size*0.5), Math.max(0, stage.clientHeight - size*0.5));
+        o.el.style.transform = `translate(${o.x}px, ${o.y}px) rotate(${o.rot}rad)`;
+      });
+    });
+
+    // Feature support indicator
+    const blendSupported = CSS.supports('mix-blend-mode', 'multiply');
+    support.textContent = blendSupported ? '支持 mix-blend-mode' : '不支持（可能无效）';
+    support.classList.add(blendSupported ? 'good' : 'bad');
 
     // Init
     countVal.textContent = countEl.value;

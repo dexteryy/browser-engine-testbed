@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>同页 View Transitions 网格到详情</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .hidden { display: none; }
+    .toolbar label { font-weight: 600; color: var(--muted); }
+    .meter {
+      min-width: 140px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--card);
+      border: 1px dashed var(--border);
+    }
+    .meter strong { color: var(--text); }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>View Transitions｜同页状态切换</h1>
+    <p>密集缩略图网格 → 大图详情，观察 snapshot 捕获、合成层与帧率。</p>
+  </header>
+  <main class="page">
+    <section class="toolbar">
+      <div class="group">
+        <span class="chip">模式：单页</span>
+        <span class="chip" id="vt-support">View Transitions: 检测中…</span>
+      </div>
+      <div class="group meter">
+        <div class="status-row">
+          <span class="status-dot" id="state-dot"></span>
+          <span id="state-label">当前状态：网格</span>
+        </div>
+      </div>
+      <div class="group">
+        <label for="density">缩略图数量</label>
+        <input type="range" id="density" min="8" max="28" step="4" value="16">
+        <span id="density-value">16</span>
+      </div>
+      <div class="group">
+        <label for="anim-duration">动画时长(ms)</label>
+        <input type="number" id="anim-duration" value="350" min="120" max="1200" step="20">
+      </div>
+      <button class="btn" id="regenerate">刷新缩略图</button>
+      <button class="btn primary" id="back-to-grid" disabled>回到网格</button>
+    </section>
+
+    <section class="panel" id="grid-section">
+      <h2 class="section-title">缩略图网格（S1）</h2>
+      <p class="note">点击任意缩略图触发 document.startViewTransition；所有缩略图均分配唯一的 view-transition-name。</p>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <section class="panel hidden" id="detail-section">
+      <div class="detail">
+        <div class="hero" id="detail-hero">
+          <div class="label" id="hero-label">#</div>
+        </div>
+        <div class="info">
+          <h2 class="section-title">大图详情（S2）</h2>
+          <div class="badges" id="tag-row"></div>
+          <p id="detail-desc">加载中…</p>
+          <p class="note">使用相同 view-transition-name 实现缩略图→主图的 morph，观察 Snapshot capture / Raster / Composite。</p>
+          <div class="status-row">
+            <button class="btn primary" id="return-grid">回到网格</button>
+            <button class="btn" id="next-random">下一个缩略图</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel explain">
+      <h3 class="section-title">使用说明</h3>
+      <div>
+        1）设置缩略图数量与动画时长，点击网格中的缩略图，记录 DevTools → Performance 中的 Snapshot capture / Raster / Composite 开销。
+      </div>
+      <div>
+        2）在 DevTools → Layers 查看转场期间生成的快照层数量与尺寸，重点留意大图快照是否长期常驻。
+      </div>
+      <div>
+        3）启用 Rendering → FPS meter，反复在网格与详情间切换，观察帧率稳定性，目标为 60fps。
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const dataPool = Array.from({ length: 40 }, (_, i) => ({
+      id: i + 1,
+      title: `场景 ${i + 1}`,
+      meta: `${160 + (i % 5) * 20} px`,
+      tone: (i * 47) % 360
+    }));
+
+    const state = { mode: 'grid', selected: null, density: 16 };
+    const gridEl = document.getElementById('grid');
+    const densityInput = document.getElementById('density');
+    const densityValue = document.getElementById('density-value');
+    const durationInput = document.getElementById('anim-duration');
+    const vtSupport = document.getElementById('vt-support');
+    const stateLabel = document.getElementById('state-label');
+    const stateDot = document.getElementById('state-dot');
+    const backBtn = document.getElementById('back-to-grid');
+    const gridSection = document.getElementById('grid-section');
+    const detailSection = document.getElementById('detail-section');
+    const hero = document.getElementById('detail-hero');
+    const heroLabel = document.getElementById('hero-label');
+    const tagRow = document.getElementById('tag-row');
+    const detailDesc = document.getElementById('detail-desc');
+    const nextRandom = document.getElementById('next-random');
+    const returnGrid = document.getElementById('return-grid');
+    const regen = document.getElementById('regenerate');
+
+    const supportsViewTransition = typeof document.startViewTransition === 'function';
+    vtSupport.textContent = supportsViewTransition ? 'View Transitions: 可用' : 'View Transitions: 不支持，使用静态回退';
+
+    function setState(mode, selectedId) {
+      state.mode = mode;
+      state.selected = selectedId ?? null;
+      const isDetail = mode === 'detail';
+      gridSection.classList.toggle('hidden', isDetail);
+      detailSection.classList.toggle('hidden', !isDetail);
+      backBtn.disabled = !isDetail;
+      stateLabel.textContent = `当前状态：${isDetail ? '大图' : '网格'}`;
+      stateDot.style.background = isDetail ? '#f59e0b' : '#10b981';
+    }
+
+    function renderGrid() {
+      gridEl.innerHTML = '';
+      const slice = dataPool.slice(0, state.density);
+      slice.forEach(item => {
+        const card = document.createElement('button');
+        card.className = 'thumb';
+        card.dataset.id = item.id;
+        card.setAttribute('aria-label', `选择缩略图 ${item.id}`);
+
+        const img = document.createElement('div');
+        img.className = 'img';
+        img.style.viewTransitionName = `photo-${item.id}`;
+        img.style.background = `linear-gradient(135deg, hsl(${item.tone}, 85%, 60%), hsl(${(item.tone + 32) % 360}, 82%, 52%))`;
+        img.textContent = item.id;
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.innerHTML = `<span>${item.title}</span><span>${item.meta}</span>`;
+
+        card.appendChild(img);
+        card.appendChild(meta);
+        card.addEventListener('click', () => transitionToDetail(item));
+        gridEl.appendChild(card);
+      });
+    }
+
+    function updateDuration() {
+      const v = Math.max(120, Math.min(1200, Number(durationInput.value) || 350));
+      document.documentElement.style.setProperty('--vt-duration', `${v}ms`);
+      durationInput.value = v;
+    }
+
+    function applyHero(item) {
+      hero.style.viewTransitionName = `photo-${item.id}`;
+      hero.style.background = `linear-gradient(135deg, hsl(${item.tone}, 82%, 52%), hsl(${(item.tone + 22) % 360}, 78%, 60%))`;
+      heroLabel.textContent = `大图 ${item.id}`;
+      tagRow.innerHTML = '';
+      ['Snapshot morph', 'Opacity+Scale', '单页切换'].forEach(tag => {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.textContent = tag;
+        tagRow.appendChild(chip);
+      });
+      detailDesc.textContent = `缩略图 ${item.id} → 大图详情：使用 view-transition-name=photo-${item.id}，观察快照捕获与 GPU 合成开销。`;
+    }
+
+    function startTransition(fn) {
+      updateDuration();
+      if (!supportsViewTransition) {
+        fn();
+        return;
+      }
+      document.startViewTransition(fn);
+    }
+
+    function transitionToDetail(item) {
+      startTransition(() => {
+        applyHero(item);
+        setState('detail', item.id);
+      });
+    }
+
+    function transitionToGrid() {
+      if (state.selected == null) return;
+      const thumb = document.querySelector(`.thumb[data-id="${state.selected}"] .img`);
+      if (thumb) {
+        thumb.style.viewTransitionName = `photo-${state.selected}`;
+      }
+      startTransition(() => setState('grid', null));
+    }
+
+    densityInput.addEventListener('input', () => {
+      state.density = Number(densityInput.value);
+      densityValue.textContent = state.density;
+      renderGrid();
+    });
+
+    regen.addEventListener('click', () => {
+      dataPool.sort(() => Math.random() - 0.5);
+      renderGrid();
+    });
+
+    backBtn.addEventListener('click', transitionToGrid);
+    returnGrid.addEventListener('click', transitionToGrid);
+    nextRandom.addEventListener('click', () => {
+      const candidates = dataPool.slice(0, state.density);
+      const item = candidates[Math.floor(Math.random() * candidates.length)];
+      transitionToDetail(item);
+    });
+
+    updateDuration();
+    renderGrid();
+    setState('grid', null);
+  </script>
+</body>
+</html>

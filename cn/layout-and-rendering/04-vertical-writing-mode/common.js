@@ -27,6 +27,7 @@
     // ctx should contain: target (Element), meters (Element)
     const target = ctx.target;
     const meters = ctx.meters;
+    const tcuNodes = Array.isArray(ctx.tcuNodes) && ctx.tcuNodes.length ? ctx.tcuNodes : [target];
 
     const byId = id => document.getElementById(id);
 
@@ -120,15 +121,19 @@
     const tcuAll = byId('ctrl-tcu-all');
     if(tcuDigits2){
       tcuDigits2.addEventListener('change', () => {
-        $$('.num', target).forEach(el => {
-          el.classList.toggle('tcu-d2', tcuDigits2.checked);
+        tcuNodes.forEach(node => {
+          $$('.num', node).forEach(el => {
+            el.classList.toggle('tcu-d2', tcuDigits2.checked);
+          });
         });
       });
     }
     if(tcuAll){
       tcuAll.addEventListener('change', () => {
-        $$('.num', target).forEach(el => {
-          el.classList.toggle('tcu-all', tcuAll.checked);
+        tcuNodes.forEach(node => {
+          $$('.num', node).forEach(el => {
+            el.classList.toggle('tcu-all', tcuAll.checked);
+          });
         });
       });
     }

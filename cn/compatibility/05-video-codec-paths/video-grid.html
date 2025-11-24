@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>视频编解码列表对比</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>Video 编解码与呈现路径覆盖｜列表</h1>
+      <p>多编码多分辨率小窗并行播放，观察硬件解码、缩放与合成差异。</p>
+    </header>
+    <main class="page">
+      <section class="toolbar">
+        <div class="group">
+          <span class="chip">DPR: <span id="dpr"></span></span>
+          <label>过滤编码</label>
+          <select id="codec-filter">
+            <option value="all">全部</option>
+            <option value="H.264">H.264</option>
+            <option value="VP9">VP9</option>
+            <option value="AV1">AV1</option>
+          </select>
+        </div>
+        <div class="group">
+          <label>预加载</label>
+          <select id="preload">
+            <option value="auto">auto</option>
+            <option value="metadata">metadata</option>
+            <option value="none">none</option>
+          </select>
+        </div>
+        <div class="group">
+          <label>播放速率</label>
+          <input
+            type="range"
+            id="rate"
+            min="0.5"
+            max="2"
+            step="0.1"
+            value="1" />
+          <span id="rate-label">1.0x</span>
+        </div>
+        <div class="group">
+          <label>预览高度(px)</label>
+          <input
+            type="number"
+            id="height"
+            value="180"
+            min="120"
+            max="360"
+            step="10" />
+        </div>
+        <button class="btn primary" id="play-all">全部播放</button>
+        <button class="btn" id="pause-all">全部暂停</button>
+      </section>
+
+      <section class="panel">
+        <h2 class="section-title">并行播放小窗</h2>
+        <p class="note">
+          每个 &lt;video&gt; 均静音、循环、playsinline；切换编码/预加载后观察
+          DevTools → Media 的解码器与色彩空间。
+        </p>
+        <div class="grid" id="grid"></div>
+      </section>
+
+      <section class="panel explain">
+        <h3 class="section-title">使用说明</h3>
+        <div>
+          1）打开 DevTools →
+          Media，确认解码器硬件/软件、色度抽样（4:2:0/4:2:2）、色彩空间。
+        </div>
+        <div>
+          2）Performance 录制 10s，对比不同源的主线程占用与 GPU
+          合成，关注缩放/overlay 是否额外渲染。
+        </div>
+        <div>
+          3）多实例同时播放时查看掉帧情况（getVideoPlaybackQuality
+          droppedVideoFrames）。
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const dpr = window.devicePixelRatio || 1;
+      const videos = [
+        {
+          id: "h264-720",
+          title: "H.264 720p30",
+          codec: "H.264",
+          res: "1280×720",
+          fps: 30,
+          chroma: "4:2:0",
+          src: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+          mime: "video/mp4",
+        },
+        {
+          id: "h264-1080",
+          title: "H.264 1080p30",
+          codec: "H.264",
+          res: "1920×1080",
+          fps: 30,
+          chroma: "4:2:0",
+          src: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+          mime: "video/mp4",
+        },
+        {
+          id: "vp9-720",
+          title: "VP9 720p30",
+          codec: "VP9",
+          res: "1280×720",
+          fps: 30,
+          chroma: "4:2:0",
+          src: "https://test-videos.co.uk/vids/bigbuckbunny/webm/vp9/720/Big_Buck_Bunny_720_10s_1MB.webm",
+          mime: "video/webm",
+        },
+        {
+          id: "av1-1080",
+          title: "AV1 1080p",
+          codec: "AV1",
+          res: "1920×1080",
+          fps: 24,
+          chroma: "4:2:0",
+          src: "https://test-videos.co.uk/vids/bigbuckbunny/webm/av1/1080/Big_Buck_Bunny_1080_10s_1MB.webm",
+          mime: "video/webm",
+        },
+      ];
+
+      const grid = document.getElementById("grid");
+      document.getElementById("dpr").textContent = dpr.toFixed(2);
+
+      const state = {
+        preload: "auto",
+        rate: 1,
+        height: 180,
+        filterCodec: "all",
+      };
+
+      document.getElementById("preload").addEventListener("change", e => {
+        state.preload = e.target.value;
+        applySettings();
+      });
+      document.getElementById("rate").addEventListener("input", e => {
+        state.rate = Number(e.target.value);
+        document.getElementById(
+          "rate-label",
+        ).textContent = `${state.rate.toFixed(1)}x`;
+        applySettings();
+      });
+      document.getElementById("height").addEventListener("change", e => {
+        const v = Math.max(120, Math.min(360, Number(e.target.value) || 180));
+        state.height = v;
+        e.target.value = v;
+        applySettings();
+      });
+      document.getElementById("codec-filter").addEventListener("change", e => {
+        state.filterCodec = e.target.value;
+        renderGrid();
+      });
+      document.getElementById("play-all").addEventListener("click", () => {
+        document
+          .querySelectorAll("video")
+          .forEach(v => v.play().catch(() => {}));
+      });
+      document.getElementById("pause-all").addEventListener("click", () => {
+        document.querySelectorAll("video").forEach(v => v.pause());
+      });
+
+      function renderGrid() {
+        grid.innerHTML = "";
+        const filtered =
+          state.filterCodec === "all"
+            ? videos
+            : videos.filter(v => v.codec === state.filterCodec);
+        filtered.forEach(v => {
+          const card = document.createElement("div");
+          card.className = "card";
+          const video = document.createElement("video");
+          video.setAttribute("playsinline", "");
+          video.setAttribute("muted", "");
+          video.setAttribute("loop", "");
+          video.preload = state.preload;
+          video.height = state.height;
+          video.src = v.src;
+          video.style.height = `${state.height}px`;
+          video.dataset.id = v.id;
+          video.playbackRate = state.rate;
+          video.autoplay = true;
+          const info = document.createElement("div");
+          info.className = "info";
+          const title = document.createElement("div");
+          title.className = "title";
+          title.textContent = v.title;
+          const meta = document.createElement("div");
+          meta.textContent = `${v.res} ｜ ${v.fps}fps ｜ ${v.codec}`;
+          const badgeRow = document.createElement("div");
+          badgeRow.className = "stats";
+          badgeRow.innerHTML = `
+          <span class="badge">chroma ${v.chroma}</span>
+          <span class="badge">MIME ${v.mime}</span>
+          <a class="badge" href="video-detail.html?id=${v.id}">详情/全屏</a>
+        `;
+          const stat = document.createElement("div");
+          stat.className = "badge";
+          stat.dataset.stat = v.id;
+          stat.textContent = "状态: -";
+          info.appendChild(title);
+          info.appendChild(meta);
+          info.appendChild(badgeRow);
+          info.appendChild(stat);
+          card.appendChild(video);
+          card.appendChild(info);
+          grid.appendChild(card);
+          video.addEventListener("loadeddata", () =>
+            video.play().catch(() => {}),
+          );
+        });
+        applySettings();
+      }
+
+      function applySettings() {
+        grid.querySelectorAll("video").forEach(v => {
+          v.preload = state.preload;
+          v.playbackRate = state.rate;
+          v.style.height = `${state.height}px`;
+        });
+      }
+
+      function updateStats() {
+        grid.querySelectorAll("video").forEach(v => {
+          const quality = v.getVideoPlaybackQuality
+            ? v.getVideoPlaybackQuality()
+            : null;
+          const dropped = quality ? quality.droppedVideoFrames : 0;
+          const total = quality ? quality.totalVideoFrames : 0;
+          const statEl = grid.querySelector(`[data-stat="${v.dataset.id}"]`);
+          if (statEl) {
+            statEl.textContent = `状态: readyState ${v.readyState} ｜ dropped ${dropped}/${total}`;
+          }
+        });
+        requestAnimationFrame(updateStats);
+      }
+
+      renderGrid();
+      updateStats();
+    </script>
+  </body>
+</html>

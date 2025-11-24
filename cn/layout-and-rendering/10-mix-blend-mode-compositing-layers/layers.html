@@ -23,6 +23,7 @@
       <div>
         <label>覆盖层不透明度</label>
         <input type="range" id="alpha" min="0.1" max="1" step="0.01" value="0.5"/>
+        <div class="hint">当前：<span id="alphaVal">0.50</span></div>
       </div>
       <div>
         <label>混合模式</label>
@@ -49,6 +50,10 @@
           <input type="checkbox" id="isolate"/>
           <span class="hint">对整个演示区域应用 <span class="code-like">isolation: isolate</span></span>
         </div>
+      </div>
+      <div>
+        <label>浏览器支持</label>
+        <div class="hint"><span class="badge" id="support">检测中</span></div>
       </div>
     </div>
   </section>
@@ -94,6 +99,7 @@
     const grid = document.getElementById('grid');
     const bgColor = document.getElementById('bgColor');
     const alpha = document.getElementById('alpha');
+    const alphaVal = document.getElementById('alphaVal');
     const mode = document.getElementById('mode');
     const isolate = document.getElementById('isolate');
     const showA = document.getElementById('showA');
@@ -110,6 +116,7 @@
         bg.style.background = bgColor.value;
         blend.style.mixBlendMode = mode.value;
         let a = +alpha.value;
+        alphaVal.textContent = a.toFixed(2);
         blend.style.background = `rgba(255,0,0,${a})`;
       });
       document.getElementById('boxA').style.display = showA.checked ? 'block' : 'none';
@@ -121,6 +128,13 @@
       el.addEventListener('input', apply);
       el.addEventListener('change', apply);
     });
+
+    // Feature support indicator
+    const support = document.getElementById('support');
+    const blendSupported = CSS.supports('mix-blend-mode', 'multiply');
+    support.textContent = blendSupported ? '支持 mix-blend-mode' : '不支持（可能无效）';
+    support.classList.add(blendSupported ? 'good' : 'bad');
+
     apply();
   </script>
 </body>

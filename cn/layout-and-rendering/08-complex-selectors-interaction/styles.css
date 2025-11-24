@@ -58,6 +58,25 @@ html, body {
   padding: 18px 0 12px;
 }
 
+.top-links{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 8px 0 0;
+}
+.top-links a{
+  font-size: 13px;
+  color: var(--accent-ink);
+  text-decoration: none;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+.top-links a:hover{
+  border-color: #cbd5e1;
+}
+
 .topbar h1 {
   margin: 0;
   font-size: 24px;
@@ -183,6 +202,7 @@ kbd {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  position: relative;
 }
 
 .toggle-btn {
@@ -208,6 +228,23 @@ kbd {
   background: #eef7ff;
   border-color: #b6d7ff;
   color: var(--accent-ink);
+}
+
+.actions .toggle{
+  /* Keep checkboxes focusable but visually hidden to reduce layout noise */
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+}
+
+.actions:has(.toggle:focus-visible) .toggle-btn{
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 /* Core interaction: the card becomes "open" when its internal .toggle is checked */

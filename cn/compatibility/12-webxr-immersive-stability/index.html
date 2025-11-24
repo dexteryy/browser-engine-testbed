@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>研发侧用例 12｜WebXR 沉浸式呈现与切换稳定性</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="inner">
+      <h1>研发侧用例 12｜WebXR（沉浸式）呈现与切换稳定性</h1>
+      <p class="subtitle">轻量几何与视频穹顶两场景，可进入/退出 XR，镜像到 2D 画布，观察帧率与合成层变化。</p>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar-section">
+    <div class="inner">
+      <div class="toolbar">
+        <fieldset>
+          <legend>XR 控制</legend>
+          <button id="enterXR" class="primary">进入 XR</button>
+          <button id="exitXR">退出 XR</button>
+          <label>参考空间
+            <select id="spaceSelect">
+              <option value="local-floor" selected>local-floor</option>
+              <option value="local">local</option>
+              <option value="bounded-floor">bounded-floor</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>场景/质量</legend>
+          <label><input type="radio" name="scene" value="geometry" checked /> 轻量几何</label>
+          <label><input type="radio" name="scene" value="video" /> 视频穹顶</label>
+          <label>渲染分辨率
+            <select id="resolution">
+              <option value="1">1×</option>
+              <option value="0.8">0.8×</option>
+              <option value="0.6">0.6×</option>
+            </select>
+          </label>
+          <label><input type="checkbox" id="useSRGB" checked /> sRGB framebuffer</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>镜像/状态</legend>
+          <label><input type="checkbox" id="mirrorToggle" checked /> 保持 2D 镜像绘制</label>
+          <label><input type="checkbox" id="spinToggle" checked /> 旋转动画</label>
+          <span class="badge" id="supportBadge">XR 支持：检测中</span>
+          <span class="badge" id="sessionBadge">会话：未开始</span>
+          <span class="badge" id="sceneBadge">场景：几何</span>
+          <span class="badge" id="fpsBadge">FPS：--</span>
+        </fieldset>
+      </div>
+    </div>
+  </section>
+
+  <!-- Test area -->
+  <main class="test-area">
+    <div class="inner">
+      <div class="panes">
+        <section class="pane">
+          <header class="pane-head">
+            <h2>XR 镜像画布（2D UI 保持显示）</h2>
+            <span class="hint">XR 中仍绘制镜像，便于看合成层</span>
+          </header>
+          <div class="canvas-wrap">
+            <canvas id="glCanvas"></canvas>
+            <div class="overlay"><strong>镜像</strong><span class="muted-text">XR/2D</span></div>
+            <div class="fps" id="fpsDisplay">-- fps</div>
+          </div>
+        </section>
+
+        <section class="pane">
+          <header class="pane-head">
+            <h2>事件与调试</h2>
+            <span class="hint">XR 进出/场景切换记录</span>
+          </header>
+          <div class="canvas-wrap" style="padding: 12px; overflow: auto;">
+            <div id="log" class="mono muted-text"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Explanation -->
+  <section class="explain">
+    <div class="inner">
+      <h3>解释说明</h3>
+      <h4>测试目标</h4>
+      <p>检查进入/退出 XR 会话、沉浸式渲染的帧稳定性与合成路径，验证 2D 镜像与 XR 层共存时的图层管理。</p>
+
+      <h4>测试方案</h4>
+      <ul>
+        <li>提供轻量几何场景（旋转立方体+地面网格）与视频穹顶场景（video 贴图内壁），可快速切换。</li>
+        <li>进入 XR 后保持 2D 镜像绘制，观察 Layers/Performance 是否出现额外重绘或 gamma 异常。</li>
+        <li>可调参考空间、分辨率缩放、sRGB framebuffer；在无 XR 支持时降级为仅 2D 镜像渲染，状态徽章提示。</li>
+      </ul>
+
+      <h4>使用方法</h4>
+      <ol>
+        <li>确认“XR 支持”徽章为可用，点击“进入 XR”；若提示不支持，可记录降级现象。</li>
+        <li>在 XR 中切换“轻量几何/视频穹顶”，观察帧率稳定性；调整分辨率缩放测试动态分辨率影响。</li>
+        <li>打开 DevTools → Layers/Performance，观察镜像层与 2D UI 合成关系；查看是否有黑屏、闪屏。</li>
+        <li>频繁进出 XR，会话结束后镜像应恢复正常绘制，无卡顿或残影。</li>
+      </ol>
+
+      <h4>查看/检验/评估结果的方法</h4>
+      <ul>
+        <li>设备能力范围内保持 72/90Hz；进出 XR 无长帧或卡住。</li>
+        <li>镜像输出清晰、无 gamma 错误；场景切换无黑屏；旋转/视频纹理更新平稳。</li>
+      </ul>
+    </div>
+  </section>
+
+  <script src="./app.js"></script>
+</body>
+</html>

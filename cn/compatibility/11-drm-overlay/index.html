@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>研发侧用例 11｜DRM/受保护视频与 Overlay 呈现</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="inner">
+      <h1>研发侧用例 11｜DRM/受保护视频与 Overlay 呈现路径</h1>
+      <p class="subtitle">同屏对比受保护流与普通流，检查 EME、overlay、全屏/画中画切换的稳定性和合成路径。</p>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar-section">
+    <div class="inner">
+      <div class="toolbar">
+        <fieldset>
+          <legend>流选择</legend>
+          <label>受保护
+            <select id="drmSelect">
+              <option value="dashWidevine" selected>示例 Widevine (清晰度 720p)</option>
+              <option value="hlsFallback">本地/非 DRM 占位（降级）</option>
+            </select>
+          </label>
+          <label>普通
+            <select id="clearSelect">
+              <option value="bbb">Big Buck Bunny 720p</option>
+              <option value="tos">Tears of Steel 1080p</option>
+            </select>
+          </label>
+          <button id="loadBtn" class="primary">加载/切换</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>播放控制</legend>
+          <button id="playAll">播放全部</button>
+          <button id="pauseAll">暂停全部</button>
+          <button id="toggleMute">静音/恢复</button>
+          <label>播放速率 <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1" /></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>全屏 / 画中画</legend>
+          <button id="fsProtected">受保护全屏</button>
+          <button id="fsClear">普通全屏</button>
+          <button id="pipProtected">受保护 PiP</button>
+          <button id="pipClear">普通 PiP</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>状态</legend>
+          <div class="status-row">
+            <span class="badge" id="emeStatus">EME：检测中</span>
+            <span class="badge" id="overlayStatus">Overlay：--</span>
+            <span class="badge" id="playbackStatus">播放：--</span>
+            <span class="badge" id="pipStatus">PiP：--</span>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </section>
+
+  <!-- Test area -->
+  <main class="test-area">
+    <div class="inner">
+      <div class="panes">
+        <section class="pane">
+          <header class="pane-head">
+            <h2>受保护视频（A）</h2>
+            <span class="hint">EME 初始化，可能受环境限制</span>
+          </header>
+          <div class="video-wrap">
+            <video id="videoProtected" controls playsinline></video>
+            <div class="overlay"><strong>受保护</strong><span class="muted-text">DRM</span></div>
+            <button class="pip-btn" id="pipBtnProtected">PiP</button>
+          </div>
+        </section>
+
+        <section class="pane">
+          <header class="pane-head">
+            <h2>非受保护视频（B）</h2>
+            <span class="hint">相同分辨率/码率对照</span>
+          </header>
+          <div class="video-wrap">
+            <video id="videoClear" controls playsinline></video>
+            <div class="overlay"><strong>普通</strong><span class="muted-text">Clear</span></div>
+            <button class="pip-btn" id="pipBtnClear">PiP</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Explanation -->
+  <section class="explain">
+    <div class="inner">
+      <h3>解释说明</h3>
+      <h4>测试目标</h4>
+      <p>验证受保护视频在可用平台上的 EME 播放与 overlay 呈现路径，对比普通视频在合成、内存与全屏/PiP 行为上的差异。</p>
+
+      <h4>测试方案</h4>
+      <ul>
+        <li>同屏展示受保护视频 A 与普通视频 B，分辨率一致；提供播放、静音、速率控制。</li>
+        <li>按钮触发全屏与画中画，反复切换，观察黑屏、闪烁与滞后情况。</li>
+        <li>EME 初始化失败时自动降级为本地/非 DRM 占位流，状态徽章提示当前模式。</li>
+        <li>状态栏展示 EME/overlay/PiP/播放进度信息；推荐结合 DevTools → Media 观察解码与加密状态。</li>
+      </ul>
+
+      <h4>使用方法</h4>
+      <ol>
+        <li>点击“加载/切换”完成受保护流的 EME 初始化；如失败，将降级到非 DRM 占位，状态徽章会提示。</li>
+        <li>播放两路视频，使用全屏和 PiP 按钮交替切换，观察是否存在黑屏、闪屏、窗口缩放异常。</li>
+        <li>打开 DevTools → Media，确认解码器与加密链路；Performance 录制，比较 overlay 下的合成与拷贝成本。</li>
+        <li>移动或缩放浏览器窗口，确认 overlay 跟随稳定；对比普通流的表现差异。</li>
+      </ol>
+
+      <h4>查看/检验/评估结果的方法</h4>
+      <ul>
+        <li>受保护视频渲染正确，无截屏残影；进入/退出全屏或 PiP 平滑，无黑屏。</li>
+        <li>资源占用合理，overlay 模式下合成/拷贝开销应低于普通流；播放状态与进度显示正常。</li>
+      </ul>
+    </div>
+  </section>
+
+  <script src="./app.js"></script>
+</body>
+</html>

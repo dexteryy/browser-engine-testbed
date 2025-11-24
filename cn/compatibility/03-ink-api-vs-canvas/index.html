@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>研发侧用例 03｜Ink API 硬件墨迹合成与网页绘制对比</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="inner">
+      <h1>研发侧用例 03｜Ink API 硬件墨迹合成与网页绘制对比</h1>
+      <p class="subtitle">对比 OS/合成器层面的硬件墨迹（低延迟、合成优先）与网页自身像素绘制（Canvas）的差异，观察输入速写时的帧稳定性与重绘区域大小。</p>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar-section">
+    <div class="inner">
+      <div class="toolbar">
+        <fieldset>
+          <legend>笔刷</legend>
+          <label>粗细 <input id="brushSize" type="range" min="1" max="48" value="10" /></label>
+          <label>透明度 <input id="brushAlpha" type="range" min="0" max="1" step="0.01" value="1" /></label>
+          <label>颜色 <input id="brushColor" type="color" value="#0055ff" /></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>输入事件</legend>
+          <label><input id="useRaw" type="checkbox" checked /> 使用 pointerrawupdate（更高频）</label>
+          <label><input id="useCoalesced" type="checkbox" checked /> 合并事件（getCoalescedEvents）</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>渲染/合成</legend>
+          <label><input id="inkCommitOnUp" type="checkbox" checked /> 左侧（Ink）仅在松笔时固化到画布</label>
+          <label><input id="leftComposited" type="checkbox" /> 左侧启用合成层（will-change/translateZ）</label>
+          <label><input id="rightComposited" type="checkbox" /> 右侧启用合成层（will-change/translateZ）</label>
+          <label>元素混合模式
+            <select id="mixBlend">
+              <option value="normal">normal（无）</option>
+              <option value="multiply">multiply</option>
+              <option value="screen">screen</option>
+              <option value="overlay">overlay</option>
+              <option value="darken">darken</option>
+              <option value="lighten">lighten</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>显示</legend>
+          <label>背景
+            <select id="bgSelect">
+              <option value="checker">棋盘格</option>
+              <option value="gradient">渐变</option>
+            </select>
+          </label>
+          <label>画布像素比
+            <select id="pixelRatio">
+              <option value="1">1×</option>
+              <option value="dpr" selected>设备像素比</option>
+            </select>
+          </label>
+          <button id="clearBtn">清空</button>
+          <button id="exportBtn">导出 PNG（右侧）</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>状态</legend>
+          <div class="status-row">
+            <span id="inkSupport" class="badge">Ink API 检测中…</span>
+            <span id="eventStatus" class="badge">事件：pointerrawupdate</span>
+            <span id="fps" class="badge">FPS：--</span>
+            <span id="lastArea" class="badge">右侧重绘估算：--</span>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </section>
+
+  <!-- Test area -->
+  <main class="test-area">
+    <div class="inner">
+      <div class="ticker-wrap">
+        <div id="ticker" class="ticker" aria-hidden="true"></div>
+      </div>
+
+      <div class="panes">
+        <section class="pane" id="leftPane">
+          <header class="pane-head">
+            <h2>左：硬件墨迹（Ink API）</h2>
+            <span id="leftHint" class="hint">等待输入…</span>
+          </header>
+          <div class="canvas-wrap bg-checker" id="leftWrap">
+            <canvas id="leftCanvas"></canvas>
+          </div>
+        </section>
+
+        <section class="pane" id="rightPane">
+          <header class="pane-head">
+            <h2>右：Canvas 2D 渲染</h2>
+            <span id="rightHint" class="hint">等待输入…</span>
+          </header>
+          <div class="canvas-wrap bg-checker" id="rightWrap">
+            <canvas id="rightCanvas"></canvas>
+          </div>
+        </section>
+      </div>
+
+      <!-- 捕获输入的透明层，确保两侧同步 -->
+      <div id="inputLayer" class="input-layer" role="application" aria-label="绘制输入层"></div>
+    </div>
+  </main>
+
+  <!-- Explanation -->
+  <section class="explain">
+    <div class="inner">
+      <h3>解释说明</h3>
+      <h4>测试目标</h4>
+      <p>对比 OS/合成器层面的硬件墨迹与网页自身像素绘制的差异，观察速写时的跟手性（延迟）、帧稳定性与重绘区域大小。</p>
+
+      <h4>测试方案</h4>
+      <ul>
+        <li>左侧画布使用 Ink API（如支持）进行硬件墨迹合成；右侧画布使用 Canvas 2D 实时绘制。</li>
+        <li>两侧同步同样的笔划数据（粗细、颜色、透明度一致）。左侧在绘制过程中由 OS 合成器叠加低延迟墨迹，默认仅在松笔时一次性固化到画布。</li>
+        <li>提供背景（棋盘格/渐变）、混合模式、合成层提示（will-change/translateZ）等开关以观察合成与混合效果。</li>
+        <li>顶部节拍指示器以恒速横移，肉眼观察丢帧与卡顿；状态栏显示 FPS 与右侧每次绘制的重绘区域估算。</li>
+      </ul>
+
+      <h4>使用方法</h4>
+      <ol>
+        <li>在工具栏调整笔刷、事件源、混合模式与像素比等参数。</li>
+        <li>在测试区域中快速连续书写或速写曲线，观察两侧视觉差异与节拍指示器是否平滑。</li>
+        <li>使用开发者工具：Rendering → Paint flashing（查看重绘闪烁），Performance（记录快写阶段主线程占用与丢帧），Layers（查看 Ink 是否以合成层合入）。</li>
+      </ol>
+
+      <h4>查看/检验/评估结果的方法</h4>
+      <ul>
+        <li>理想情况下，左侧 Ink 路径延迟更低，线条跟手，并且在书写过程中几乎不触发大面积 Paint；右侧 Canvas 路径可见重绘增加但无撕裂，两者最终视觉结果一致。</li>
+        <li>可切换“左侧仅在松笔时固化”以放大 Paint 差异；也可关闭以观察 Ink 与 Canvas 在同等固化频率下的相对表现。</li>
+      </ul>
+
+      <h4>备注</h4>
+      <ul>
+        <li>Ink API 通过 <code>navigator.ink.requestPresenter({ presentationArea })</code> 获取 <code>DelegatedInkTrailPresenter</code>，在每次指针更新时调用 <code>updateInkTrailStartPoint(event, { color, diameter })</code> 让 OS 级合成器在下一帧预绘墨迹。若浏览器不支持，将自动降级为普通 Pointer Events 绘制。</li>
+        <li>选择“使用 pointerrawupdate”时，输入层将监听高频的 <code>pointerrawupdate</code> 事件；若关闭，则使用 <code>pointermove</code>。</li>
+      </ul>
+    </div>
+  </section>
+
+  <script src="./app.js"></script>
+</body>
+</html>

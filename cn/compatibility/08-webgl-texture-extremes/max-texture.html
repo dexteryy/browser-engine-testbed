@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebGL 极限纹理尺寸压力测试</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>WebGL 极限纹理尺寸压力测试</h1>
+    <p>接近 MAX_TEXTURE_SIZE 的大纹理上传与采样，观察长帧、合成层与显存占用。</p>
+  </header>
+  <main class="page">
+    <section class="toolbar">
+      <div class="group">
+        <span class="chip">MAX_TEXTURE_SIZE <span id="max-size">-</span></span>
+        <span class="chip">Aniso <span id="aniso">-</span></span>
+      </div>
+      <div class="group">
+        <label>纹理尺寸</label>
+        <input type="range" id="size" min="512" max="8192" step="256" value="4096">
+        <span id="size-label">4096</span>
+      </div>
+      <div class="group">
+        <label>数据填充</label>
+        <select id="fill">
+          <option value="checker">棋盘</option>
+          <option value="gradient">渐变</option>
+          <option value="noise">噪声</option>
+        </select>
+      </div>
+      <div class="group">
+        <label>采样</label>
+        <select id="filter">
+          <option value="LINEAR">LINEAR</option>
+          <option value="NEAREST">NEAREST</option>
+        </select>
+      </div>
+      <div class="group">
+        <label><input type="checkbox" id="mip" checked> mipmap</label>
+      </div>
+      <div class="group">
+        <label><input type="checkbox" id="aniso-toggle"> 启用各向异性</label>
+      </div>
+      <button class="btn primary" id="upload">上传/重绘</button>
+    </section>
+
+    <section class="panel">
+      <h2 class="section-title">大纹理渲染</h2>
+      <div class="card">
+        <div class="label" id="status">等待上传...</div>
+        <canvas id="glcanvas"></canvas>
+      </div>
+      <div class="meta-row">
+        <span class="badge" id="info-size">-</span>
+        <span class="badge" id="info-time">-</span>
+        <span class="badge mono" id="info-log">-</span>
+      </div>
+    </section>
+
+    <section class="panel explain">
+      <h3 class="section-title">使用说明</h3>
+      <div>1）拖动纹理尺寸接近 MAX_TEXTURE_SIZE，点击上传，观察上传耗时与页面卡顿（Performance 录制）。</div>
+      <div>2）切换 mipmap/各向异性/NEAREST，检查斜角采样是否出现摩尔纹或闪烁；观察 Layers 的纹理层尺寸。</div>
+      <div>3）逐步增大到超限，验证异常处理（错误、黑屏、长帧）。</div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("glcanvas");
+    const gl = canvas.getContext("webgl");
+    const maxSizeEl = document.getElementById("max-size");
+    const sizeInput = document.getElementById("size");
+    const sizeLabel = document.getElementById("size-label");
+    const status = document.getElementById("status");
+    const infoSize = document.getElementById("info-size");
+    const infoTime = document.getElementById("info-time");
+    const infoLog = document.getElementById("info-log");
+    const filterSel = document.getElementById("filter");
+    const mipToggle = document.getElementById("mip");
+    const fillSel = document.getElementById("fill");
+    const anisoToggle = document.getElementById("aniso-toggle");
+    const anisoLabel = document.getElementById("aniso");
+    let anisoExt = null;
+    let texture = null;
+
+    function init() {
+      if (!gl) {
+        status.textContent = "WebGL 不可用";
+        return;
+      }
+      canvas.width = 900;
+      canvas.height = 520;
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      const maxSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+      maxSizeEl.textContent = maxSize;
+      sizeInput.max = maxSize;
+      sizeLabel.textContent = sizeInput.value;
+      anisoExt = gl.getExtension("EXT_texture_filter_anisotropic");
+      anisoLabel.textContent = anisoExt ? "可用" : "不支持";
+      setupProgram();
+      buildAndUpload();
+    }
+
+    function setupProgram() {
+      const vs = `
+        attribute vec2 position;
+        attribute vec2 uv;
+        varying vec2 vUv;
+        void main() {
+          gl_Position = vec4(position, 0.0, 1.0);
+          vUv = uv;
+        }
+      `;
+      const fs = `
+        precision mediump float;
+        varying vec2 vUv;
+        uniform sampler2D uTex;
+        void main() {
+          gl_FragColor = texture2D(uTex, vUv * 4.0);
+        }
+      `;
+      const vsObj = gl.createShader(gl.VERTEX_SHADER);
+      gl.shaderSource(vsObj, vs);
+      gl.compileShader(vsObj);
+      const fsObj = gl.createShader(gl.FRAGMENT_SHADER);
+      gl.shaderSource(fsObj, fs);
+      gl.compileShader(fsObj);
+      const program = gl.createProgram();
+      gl.attachShader(program, vsObj);
+      gl.attachShader(program, fsObj);
+      gl.linkProgram(program);
+      gl.useProgram(program);
+      const data = new Float32Array([
+        -1, -1, 0, 0,
+         1, -1, 1, 0,
+        -1,  1, 0, 1,
+         1,  1, 1, 1
+      ]);
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+      const posLoc = gl.getAttribLocation(program, "position");
+      const uvLoc = gl.getAttribLocation(program, "uv");
+      gl.enableVertexAttribArray(posLoc);
+      gl.enableVertexAttribArray(uvLoc);
+      gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 16, 0);
+      gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, 16, 8);
+      gl.uniform1i(gl.getUniformLocation(program, "uTex"), 0);
+    }
+
+    function createData(size) {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (fillSel.value === "checker") {
+        const step = Math.max(8, size / 16);
+        for (let y = 0; y < size; y += step) {
+          for (let x = 0; x < size; x += step) {
+            ctx.fillStyle = ((x / step + y / step) % 2 === 0) ? "#111827" : "#a5b4fc";
+            ctx.fillRect(x, y, step, step);
+          }
+        }
+      } else if (fillSel.value === "gradient") {
+        const grd = ctx.createLinearGradient(0, 0, size, size);
+        grd.addColorStop(0, "#0ea5e9");
+        grd.addColorStop(1, "#a855f7");
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, size, size);
+      } else {
+        const imgData = ctx.createImageData(size, size);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          data[i] = Math.random() * 255;
+          data[i + 1] = Math.random() * 255;
+          data[i + 2] = Math.random() * 255;
+          data[i + 3] = 255;
+        }
+        ctx.putImageData(imgData, 0, 0);
+      }
+      ctx.fillStyle = "#111827";
+      ctx.font = `${Math.max(24, size / 32)}px 'Segoe UI'`;
+      ctx.fillText(`${size}px`, size * 0.05, size * 0.1);
+      return canvas;
+    }
+
+    function buildAndUpload() {
+      if (!gl) return;
+      const size = Number(sizeInput.value);
+      sizeLabel.textContent = size;
+      const start = performance.now();
+      status.textContent = "上传中...";
+      const dataCanvas = createData(size);
+      if (!texture) texture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      const filter = gl[filterSel.value];
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mipToggle.checked ? gl.LINEAR_MIPMAP_LINEAR : filter);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, dataCanvas);
+      if (mipToggle.checked) gl.generateMipmap(gl.TEXTURE_2D);
+      if (anisoExt && anisoToggle.checked) {
+        const max = gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+        gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, max));
+      }
+      gl.clearColor(0.05, 0.08, 0.12, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      const duration = performance.now() - start;
+      status.textContent = `完成 ${size}×${size}`;
+      infoSize.textContent = `尺寸 ${size}×${size}`;
+      infoTime.textContent = `上传耗时 ${duration.toFixed(1)} ms`;
+      infoLog.textContent = `${filterSel.value} ｜ mip ${mipToggle.checked} ｜ aniso ${anisoToggle.checked}`;
+    }
+
+    document.getElementById("upload").addEventListener("click", buildAndUpload);
+    sizeInput.addEventListener("input", () => {
+      sizeLabel.textContent = sizeInput.value;
+    });
+    fillSel.addEventListener("change", () => status.textContent = "等待上传...");
+
+    init();
+  </script>
+</body>
+</html>

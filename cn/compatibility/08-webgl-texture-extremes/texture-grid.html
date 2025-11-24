@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebGL 纹理特性九宫格</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>WebGL 图⽚纹理特性九宫格</h1>
+    <p>覆盖 NPOT、mipmap、sRGB、各向异性、REPEAT/CLAMP、LINEAR/NEAREST 等组合，观察采样与光栅效果。</p>
+  </header>
+  <main class="page">
+    <section class="toolbar">
+      <div class="group">
+        <span class="chip">DPR <span id="dpr"></span></span>
+        <span class="chip" id="ext">Anisotropic: 检测中</span>
+        <span class="chip" id="srgb">sRGB: 检测中</span>
+      </div>
+      <div class="group">
+        <label>纹理尺寸</label>
+        <input type="range" id="tex-size" min="128" max="1024" step="64" value="512">
+        <span id="tex-size-label">512</span>
+      </div>
+      <div class="group">
+        <label>旋转</label>
+        <input type="checkbox" id="rotate-toggle" checked>
+      </div>
+      <div class="group">
+        <label>放大倍数</label>
+        <input type="range" id="scale" min="1" max="4" step="0.2" value="1.5">
+        <span id="scale-label">1.5</span>
+      </div>
+      <button class="btn primary" id="redraw">重绘</button>
+    </section>
+
+    <section class="panel">
+      <h2 class="section-title">九宫格纹理配置</h2>
+      <p class="mono">统一测试图样：棋盘 + 斜线 + 文本，方便观察采样、mipmap 过渡与包裹模式。</p>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <section class="panel explain">
+      <h3 class="section-title">使用说明</h3>
+      <div>1）调整纹理尺寸、缩放与旋转，观察 REPEAT/CLAMP、LINEAR/NEAREST 的采样差异以及摩尔纹。</div>
+      <div>2）切换 mipmap/on 与各向异性过滤，看斜线与远处棋盘是否过度模糊/闪烁。</div>
+      <div>3）DevTools → Performance 录制，关注 generateMipmap 与 NPOT 上传的长帧；Layers 检查纹理层尺寸。</div>
+    </section>
+  </main>
+
+  <script>
+    const dpr = window.devicePixelRatio || 1;
+    document.getElementById("dpr").textContent = dpr.toFixed(2);
+    const grid = document.getElementById("grid");
+    const sizeInput = document.getElementById("tex-size");
+    const sizeLabel = document.getElementById("tex-size-label");
+    const scaleInput = document.getElementById("scale");
+    const scaleLabel = document.getElementById("scale-label");
+    const rotateToggle = document.getElementById("rotate-toggle");
+    const extLabel = document.getElementById("ext");
+    const srgbLabel = document.getElementById("srgb");
+
+    const configs = [
+      { label: "NPOT + NEAREST + CLAMP", pot: false, mipmap: false, min: "NEAREST", mag: "NEAREST", wrap: "CLAMP_TO_EDGE", srgb: false, aniso: false },
+      { label: "NPOT + LINEAR + CLAMP", pot: false, mipmap: false, min: "LINEAR", mag: "LINEAR", wrap: "CLAMP_TO_EDGE", srgb: false, aniso: false },
+      { label: "NPOT + LINEAR + REPEAT", pot: false, mipmap: false, min: "LINEAR", mag: "LINEAR", wrap: "REPEAT", srgb: false, aniso: false },
+      { label: "POT + mipmap + REPEAT", pot: true, mipmap: true, min: "LINEAR_MIPMAP_LINEAR", mag: "LINEAR", wrap: "REPEAT", srgb: false, aniso: false },
+      { label: "POT + mipmap + aniso", pot: true, mipmap: true, min: "LINEAR_MIPMAP_LINEAR", mag: "LINEAR", wrap: "REPEAT", srgb: false, aniso: true },
+      { label: "POT + mipmap + NEAREST", pot: true, mipmap: true, min: "NEAREST_MIPMAP_NEAREST", mag: "NEAREST", wrap: "REPEAT", srgb: false, aniso: false },
+      { label: "POT + sRGB + LINEAR", pot: true, mipmap: true, min: "LINEAR_MIPMAP_LINEAR", mag: "LINEAR", wrap: "CLAMP_TO_EDGE", srgb: true, aniso: false },
+      { label: "POT + sRGB + NEAREST", pot: true, mipmap: true, min: "NEAREST_MIPMAP_LINEAR", mag: "NEAREST", wrap: "CLAMP_TO_EDGE", srgb: true, aniso: false },
+      { label: "POT + LINEAR + CLAMP", pot: true, mipmap: false, min: "LINEAR", mag: "LINEAR", wrap: "CLAMP_TO_EDGE", srgb: false, aniso: false }
+    ];
+
+    let anisoSupported = false;
+    let srgbSupported = false;
+
+    function createPattern(size) {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#0b1727";
+      ctx.fillRect(0, 0, size, size);
+      // Checkerboard
+      const step = size / 8;
+      for (let y = 0; y < size; y += step) {
+        for (let x = 0; x < size; x += step) {
+          if (((x / step) + (y / step)) % 2 === 0) {
+            ctx.fillStyle = "#e5e7eb";
+          } else {
+            ctx.fillStyle = "#6366f1";
+          }
+          ctx.fillRect(x, y, step, step);
+        }
+      }
+      // Diagonal lines
+      ctx.strokeStyle = "rgba(239,68,68,0.8)";
+      ctx.lineWidth = Math.max(1, size * 0.01);
+      for (let i = -size; i < size * 2; i += step) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i - size, size);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#0f172a";
+      ctx.font = `${Math.max(14, size / 18)}px 'Segoe UI'`;
+      ctx.fillText(`${size}px`, size * 0.08, size * 0.92);
+      return canvas;
+    }
+
+    function potSize(v) {
+      let p = 1;
+      while (p * 2 <= v) p *= 2;
+      return p;
+    }
+
+    function buildCard(config) {
+      const wrap = document.createElement("div");
+      wrap.className = "card";
+      const label = document.createElement("div");
+      label.className = "label";
+      label.textContent = config.label;
+      const canvas = document.createElement("canvas");
+      canvas.width = 320;
+      canvas.height = 200;
+      wrap.appendChild(label);
+      wrap.appendChild(canvas);
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = `${config.pot ? "POT" : "NPOT"} | mipmap ${config.mipmap} | ${config.min}/${config.mag} | ${config.wrap}`;
+      wrap.appendChild(meta);
+      grid.appendChild(wrap);
+      return { canvas, config };
+    }
+
+    function isPowerOfTwo(n) {
+      return (n & (n - 1)) === 0;
+    }
+
+    function setTextureParams(gl, cfg, anisoExt, useSrgb, sourceSize, metaEl) {
+      const wrapMode = gl[cfg.wrap];
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapMode);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapMode);
+      const canMipmap = cfg.mipmap && isPowerOfTwo(sourceSize) && !useSrgb;
+      const minFilter = canMipmap
+        ? gl[cfg.min]
+        : (cfg.min.includes("NEAREST") ? gl.NEAREST : gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl[cfg.mag]);
+      if (cfg.mipmap && !canMipmap && metaEl) {
+        metaEl.textContent += " ｜ mipmap 已跳过";
+      }
+      if (canMipmap) {
+        gl.generateMipmap(gl.TEXTURE_2D);
+      }
+      if (cfg.aniso && anisoExt) {
+        const max = gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+        gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, max));
+      }
+    }
+
+    function renderCards() {
+      grid.innerHTML = "";
+      const texSize = Number(sizeInput.value);
+      sizeLabel.textContent = texSize;
+      const patternSize = texSize;
+      const potTexSize = potSize(texSize);
+      configs.forEach(cfg => {
+        const card = buildCard(cfg);
+        const gl = card.canvas.getContext("webgl", { premultipliedAlpha: false });
+        if (!gl) {
+          card.canvas.parentElement.querySelector(".meta").textContent = "WebGL 不可用";
+          return;
+        }
+        const anisoThis = gl.getExtension("EXT_texture_filter_anisotropic");
+        if (!anisoSupported) {
+          anisoSupported = !!anisoThis;
+          extLabel.textContent = anisoSupported ? "Anisotropic: 可用" : "Anisotropic: 不支持";
+        }
+        const srgbThis = gl.getExtension("EXT_sRGB");
+        if (!srgbSupported && srgbThis) {
+          srgbSupported = true;
+          srgbLabel.textContent = "sRGB: 可用";
+        } else if (!srgbSupported) {
+          srgbLabel.textContent = "sRGB: 不支持";
+        }
+        const tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        const sourceSize = cfg.pot ? potTexSize : patternSize;
+        const pattern = createPattern(sourceSize);
+        const useSrgb = cfg.srgb && srgbThis;
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          0,
+          useSrgb ? srgbThis.SRGB_ALPHA_EXT : gl.RGBA,
+          useSrgb ? srgbThis.SRGB_ALPHA_EXT : gl.RGBA,
+          gl.UNSIGNED_BYTE,
+          pattern
+        );
+        const metaEl = card.canvas.parentElement.querySelector(".meta");
+        setTextureParams(gl, cfg, anisoThis, useSrgb, sourceSize, metaEl);
+        drawQuad(gl, cfg);
+        if (cfg.srgb && !useSrgb) {
+          metaEl.textContent = "sRGB 不支持，已回退 RGBA";
+        }
+        if (cfg.aniso && !anisoThis) {
+          metaEl.textContent += " ｜ 各向异性不支持";
+        }
+      });
+    }
+
+    function drawQuad(gl, cfg) {
+      const vs = `
+        attribute vec2 position;
+        attribute vec2 uv;
+        uniform float uScale;
+        uniform float uRotate;
+        varying vec2 vUv;
+        void main() {
+          float c = cos(uRotate);
+          float s = sin(uRotate);
+          mat2 r = mat2(c, -s, s, c);
+          vec2 pos = r * position * uScale;
+          gl_Position = vec4(pos, 0.0, 1.0);
+          vUv = uv * uScale;
+        }
+      `;
+      const fs = `
+        precision mediump float;
+        varying vec2 vUv;
+        uniform sampler2D uTex;
+        void main() {
+          gl_FragColor = texture2D(uTex, vUv);
+        }
+      `;
+      const program = gl.createProgram();
+      const vsObj = gl.createShader(gl.VERTEX_SHADER);
+      gl.shaderSource(vsObj, vs);
+      gl.compileShader(vsObj);
+      const fsObj = gl.createShader(gl.FRAGMENT_SHADER);
+      gl.shaderSource(fsObj, fs);
+      gl.compileShader(fsObj);
+      gl.attachShader(program, vsObj);
+      gl.attachShader(program, fsObj);
+      gl.linkProgram(program);
+      gl.useProgram(program);
+      const data = new Float32Array([
+        -1, -1, 0, 0,
+         1, -1, 1, 0,
+        -1,  1, 0, 1,
+         1,  1, 1, 1
+      ]);
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+      const posLoc = gl.getAttribLocation(program, "position");
+      const uvLoc = gl.getAttribLocation(program, "uv");
+      gl.enableVertexAttribArray(posLoc);
+      gl.enableVertexAttribArray(uvLoc);
+      gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 16, 0);
+      gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, 16, 8);
+      gl.uniform1i(gl.getUniformLocation(program, "uTex"), 0);
+      gl.uniform1f(gl.getUniformLocation(program, "uScale"), Number(scaleInput.value));
+      gl.uniform1f(gl.getUniformLocation(program, "uRotate"), rotateToggle.checked ? 0.6 : 0.0);
+      gl.clearColor(0.05, 0.08, 0.12, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+
+    document.getElementById("redraw").addEventListener("click", renderCards);
+    sizeInput.addEventListener("input", renderCards);
+    scaleInput.addEventListener("input", () => {
+      scaleLabel.textContent = scaleInput.value;
+      renderCards();
+    });
+    rotateToggle.addEventListener("change", renderCards);
+
+    renderCards();
+  </script>
+</body>
+</html>

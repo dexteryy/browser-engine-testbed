@@ -69,6 +69,7 @@ a:hover { text-decoration: underline; }
   font-size: 12px; color: #374151;
   transition: flex-grow var(--dur) ease, flex-basis var(--dur) ease;
 }
+.nested-fill { flex: 1 1 0; min-height: 180px; padding: 6px; border: 1px dashed #e5e7eb; border-radius: 8px; background: #ffffff; }
 .nested .n-item:hover { flex-grow: 2; }
 
 /* Hover-driven growth for main items */

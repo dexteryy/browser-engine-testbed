@@ -47,7 +47,7 @@
 
     <div class="test-area">
       <div class="holder" id="holder"></div>
-      <div class="note">说明：外部 SVG 作为图像资源呈现，<strong>页面 CSS 无法直接选择内部元素</strong>。对 &lt;object&gt; 而言，其内部是独立文档，同样不受本页面样式影响。</div>
+      <div class="note">说明：外部 SVG 作为图像资源呈现，<strong>页面 CSS 无法直接选择内部元素</strong>。对 &lt;object&gt; 而言，其内部是独立文档，同样不受本页面样式影响；勾选“页面 CSS 尝试覆盖 .dot”时，圆形仍应保持红色，若出现绿色则隔离失效。</div>
       <div class="code">&lt;img src="assets/example.svg"&gt; · &lt;object type="image/svg+xml" data="assets/example.svg"&gt;&lt;/object&gt; · &lt;embed src="assets/example.svg" type="image/svg+xml"&gt;</div>
     </div>
   </section>
@@ -55,7 +55,7 @@
   <section class="section explain">
     <h2>解释说明</h2>
     <p><strong>测试目标：</strong>验证通过不同外部引用标签加载 SVG 的行为是否一致，以及样式隔离是否符合预期。</p>
-    <p><strong>使用方法：</strong>切换上方“引用方式”，调整宽度。勾选“页面 CSS 尝试覆盖 .dot”将为本页添加 <code class="code">.attempt-css .dot { fill: #16a34a !important; }</code>，预期对图像资源<strong>不生效</strong>。</p>
+    <p><strong>使用方法：</strong>切换上方“引用方式”，调整宽度。勾选“页面 CSS 尝试覆盖 .dot”将为本页添加 <code class="code">body#external.attempt-css .dot { fill: #16a34a !important; }</code>，预期对图像资源<strong>不生效</strong>。</p>
     <p><strong>结果评估：</strong>圆形应保持文件内的红色；DevTools 中只能看到单一元素节点（或一个内嵌文档），看不到 SVG 子节点。</p>
   </section>
 
@@ -71,11 +71,12 @@
     const count = $("#count"), countVal = $("#countVal");
     const renderBtn = $("#render"), clearBtn = $("#clear");
     const stat = $("#stat");
+    const ASPECT = 160 / 260; // match wrapper height to SVG viewBox
 
     function buildOne(mode, width){
       const wrap = document.createElement("div");
       wrap.style.width = width + "px";
-      wrap.style.height = Math.round(width * 0.68) + "px";
+      wrap.style.height = Math.round(width * ASPECT) + "px";
       wrap.style.display = "grid";
       wrap.style.placeItems = "center";
       wrap.style.border = "1px solid #e5e7eb";
@@ -86,7 +87,7 @@
         el = new Image();
         el.src = "./assets/example.svg";
         el.width = width;
-        el.height = Math.round(width * 0.68);
+        el.height = Math.round(width * ASPECT);
         el.alt = "外部 SVG";
         el.decoding = "async";
       }else if(mode === "object"){
@@ -94,13 +95,13 @@
         el.type = "image/svg+xml";
         el.data = "./assets/example.svg";
         el.width = width;
-        el.height = Math.round(width * 0.68);
+        el.height = Math.round(width * ASPECT);
       }else{
         el = document.createElement("embed");
         el.type = "image/svg+xml";
         el.src = "./assets/example.svg";
         el.width = width;
-        el.height = Math.round(width * 0.68);
+        el.height = Math.round(width * ASPECT);
       }
       wrap.appendChild(el);
       return {wrap, el};

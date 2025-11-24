@@ -135,13 +135,14 @@
     const bgWrap = $("#bgWrap");
     const renderBtn = $("#render");
     const resetBtn = $("#reset");
+    const ASPECT = 160 / 260; // match the SVG viewBox ratio to avoid letterboxing
 
     // Render a single sample for each column
     function createInlineSample(w){
       const box = document.createElement("div");
       box.className = "sample-box";
       box.style.width = w + "px";
-      box.style.height = Math.round(w * 0.68) + "px";
+      box.style.height = Math.round(w * ASPECT) + "px";
       // Inline SVG node with a class .dot that page CSS can target
       box.innerHTML = `
         <svg class="sample-inline" width="100%" height="100%" viewBox="0 0 260 160" role="img" aria-label="内联 SVG">
@@ -158,12 +159,12 @@
       const box = document.createElement("div");
       box.className = "sample-box";
       box.style.width = w + "px";
-      box.style.height = Math.round(w * 0.68) + "px";
+      box.style.height = Math.round(w * ASPECT) + "px";
       const img = document.createElement("img");
       img.src = "./assets/example.svg";
       img.alt = "外部 SVG";
       img.width = w;
-      img.height = Math.round(w * 0.68);
+      img.height = Math.round(w * ASPECT);
       img.decoding = "async";
       img.loading = "eager";
       // Wait for load to measure
@@ -175,7 +176,7 @@
       const box = document.createElement("div");
       box.className = "bg-sample";
       box.style.width = w + "px";
-      box.style.height = Math.round(w * 0.68) + "px";
+      box.style.height = Math.round(w * ASPECT) + "px";
       box.style.setProperty("--bg-size", bgsize.value);
       if(showOutline.checked){
         box.style.outline = "2px solid rgba(11,87,208,0.30)";

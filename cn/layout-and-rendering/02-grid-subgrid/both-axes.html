@@ -10,9 +10,9 @@
     /* ========== Page 2C specific styles ========== */
     .grid-root.both-demo {
       /* 3 columns + 3 rows with names */
-      --cols: [left-start] 240px
-              [left-end main-start] 2fr
-              [main-end right-start] 1fr
+      --cols: [left-start] minmax(180px, 1fr)
+              [left-end main-start] minmax(280px, 1.6fr)
+              [main-end right-start] minmax(160px, 1fr)
               [right-end];
       --rows: [top-start] 64px
               [top-end mid-start] 1fr
@@ -24,14 +24,24 @@
     }
     @media (max-width: 880px) {
       .grid-root.both-demo {
-        --cols: [main-start] 3fr [main-end right-start] 2fr [right-end];
+        --cols: [left-start] minmax(0, 0.8fr)
+                [left-end main-start] minmax(0, 1.6fr)
+                [main-end right-start] minmax(0, 1fr)
+                [right-end];
+        grid-template-columns: var(--cols);
       }
+      .aside { display: none; }
     }
     @media (max-width: 620px) {
       .grid-root.both-demo {
-        --cols: [main-start] 1fr [main-end];
+        --cols: [left-start main-start] minmax(0, 1fr)
+                [left-end main-end right-start] minmax(0, 1fr)
+                [right-end];
         --rows: [top-start] auto [top-end mid-start] 1fr [mid-end bottom-start] 1fr [bottom-end];
+        grid-template-columns: var(--cols);
       }
+      .aside { display: none; }
+      .main, .mini { grid-column: main-start / right-end; }
     }
 
     .header { grid-column: left-start / right-end; grid-row: top-start / top-end; background:#f8fafc; }

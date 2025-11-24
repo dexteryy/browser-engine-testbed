@@ -94,10 +94,11 @@
 
   <script>
     window.addEventListener('DOMContentLoaded', function(){
-      // Use the first column as the "target" for live meters/controls.
       Test04.wireCommonControls({
         target: document.getElementById('vb'),
-        meters: document.getElementById('meters')
+        meters: document.getElementById('meters'),
+        // Apply number combine toggles to all vertical columns for fair comparison
+        tcuNodes: Array.from(document.querySelectorAll('.vertical-box'))
       });
     });
   </script>

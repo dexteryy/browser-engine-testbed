@@ -73,7 +73,6 @@
     bindSizeBadges([containerA, containerB], () => Number(threshold.value));
     showSize.addEventListener('change', () => {
       document.body.classList.toggle('hide-badge', !showSize.checked);
-      $$('.size-badge').forEach(b => b.style.display = showSize.checked ? '' : 'none');
     });
 
     mqDebug.addEventListener('change', () => {
@@ -84,7 +83,7 @@
       threshold.value = 400; thresholdOut.value = 400; setThreshold(400);
       widthA.value = 780; widthB.value = 320; updateA(); updateB();
       mqDebug.checked = false; document.body.classList.remove('mq-debug');
-      showSize.checked = true; $$('.size-badge').forEach(b => b.style.display = '');
+      showSize.checked = true; document.body.classList.remove('hide-badge');
     });
   }
 

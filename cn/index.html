@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="浏览器引擎测试用例集合：涵盖现代 CSS 布局、渲染、跨引擎兼容性与媒体等场景的完整测试导航。" />
+    <meta name="keywords" content="浏览器测试, CSS 渲染, WebGL, 兼容性, 性能测试, Web Demo" />
+    <meta name="author" content="Browser Engine Testbed" />
+    <meta property="og:title" content="浏览器引擎测试用例集合 · 导航入口" />
+    <meta
+      property="og:description"
+      content="浏览器引擎测试用例集合：涵盖现代 CSS 布局、渲染、跨引擎兼容性与媒体等场景的完整测试导航。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://example.com/cn/index.html" />
+    <meta property="og:image" content="https://example.com/icons/be-testbed-512.svg" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="浏览器引擎测试用例集合 · 导航入口" />
+    <meta
+      name="twitter:description"
+      content="浏览器引擎测试用例集合：涵盖现代 CSS 布局、渲染、跨引擎兼容性与媒体等场景的完整测试导航。" />
+    <meta name="twitter:image" content="https://example.com/icons/be-testbed-512.svg" />
+    <title>浏览器引擎测试用例集合 · 导航入口</title>
+    <meta name="theme-color" id="themeColor" content="#0f172a" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" sizes="192x192" href="../icons/be-testbed-192.svg" />
+    <link rel="icon" type="image/svg+xml" sizes="512x512" href="../icons/be-testbed-512.svg" />
+    <link rel="apple-touch-icon" href="../icons/be-testbed-192.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet" />
+    <style>
+      :root {
+        --radius: 16px;
+        --chip-text: #a5b4fc;
+      }
+
+      .theme-dark {
+        --page-bg: radial-gradient(
+            circle at 10% 20%,
+            #0ea5e9 0,
+            transparent 25%
+          ),
+          radial-gradient(circle at 90% 10%, #22c55e 0, transparent 20%),
+          radial-gradient(circle at 30% 90%, #f97316 0, transparent 25%),
+          #0f172a;
+        --panel-bg: rgba(13, 20, 38, 0.78);
+        --card-bg: #0b1224;
+        --border: rgba(255, 255, 255, 0.08);
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --pill: rgba(255, 255, 255, 0.06);
+        --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+        --chip-text: #a5b4fc;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--page-bg);
+        font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .top-bar {
+        width: 100%;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.08),
+          rgba(255, 255, 255, 0.03)
+        );
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+        padding: 30px 0 32px;
+      }
+
+      .page {
+        max-width: 1180px;
+        margin: 20px auto 48px;
+        padding: 0 18px 48px;
+      }
+
+      .hero {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 0 18px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13px;
+        letter-spacing: 0.02em;
+      }
+
+      .hero h1 {
+        margin: 0;
+        font-size: 28px;
+        letter-spacing: -0.02em;
+      }
+
+      .hero-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .hero-title {
+        display: grid;
+        gap: 8px;
+      }
+
+      .section-title {
+        margin: 0;
+        font-size: 16px;
+        color: #cbd5e1;
+        letter-spacing: 0.01em;
+      }
+
+      .suite-switcher {
+        margin-top: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 14px;
+      }
+
+      .suite-area {
+        display: grid;
+        gap: 8px;
+      }
+
+      .theme-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+      }
+
+      .link-icon {
+        width: 18px;
+        height: 18px;
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      .suite-card {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 18px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: transparent;
+        box-shadow: none;
+        transition: border-color 0.2s ease, background 0.2s ease;
+        cursor: pointer;
+      }
+
+      .suite-card:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .suite-meta {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .suite-title {
+        font-size: 18px;
+        margin: 0;
+      }
+
+      .suite-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .btn {
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.2s ease, border-color 0.2s ease;
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+
+      .btn.ghost {
+        background: transparent;
+      }
+
+      .active-indicator {
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .controls {
+        margin: 26px 0 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .search {
+        position: relative;
+        flex: 1;
+        min-width: 240px;
+      }
+
+      .search input {
+        width: 100%;
+        padding: 12px 14px 12px 38px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--card-bg);
+        color: var(--text);
+        font-size: 14px;
+      }
+
+      .search span {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .toggles {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .category {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel-bg);
+        margin-bottom: 12px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        transition: border-color 0.25s ease;
+      }
+
+      .category.collapsed .tests {
+        display: none;
+      }
+
+      .category-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 18px;
+        cursor: pointer;
+        gap: 12px;
+      }
+
+      .category-title {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .category-num {
+        width: 36px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: var(--pill);
+        color: var(--muted);
+        font-weight: 700;
+        border: 1px solid var(--border);
+      }
+
+      .category h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .category p {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .tags {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .tests {
+        padding: 0 18px 14px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 10px;
+      }
+
+      .test {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px;
+        background: var(--card-bg);
+        display: grid;
+        gap: 6px;
+        transition: transform 0.2s ease, border-color 0.2s ease,
+          background 0.2s ease;
+      }
+
+      .test:hover {
+        transform: translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .test .name {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--accent, #e0f2fe);
+      }
+
+      .test .desc {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .test .meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .chip {
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--pill);
+        font-size: 12px;
+        color: var(--chip-text);
+      }
+
+      .hint {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 720px) {
+        .hero {
+          padding: 18px;
+        }
+
+        .controls {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .toggles {
+          width: 100%;
+        }
+
+        .suite-actions {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body class="theme-dark">
+    <div class="top-bar">
+      <section class="hero">
+        <div class="hero-header">
+          <div class="hero-title">
+            <div class="eyebrow">Browser Engine Testbed · 测试套件导航</div>
+            <h1>浏览器引擎测试用例集合</h1>
+          </div>
+          <a
+            class="btn ghost"
+            href="https://github.com/dexteryy/browser-engine-testbed"
+            target="_blank"
+            rel="noopener noreferrer">
+            <svg
+              class="link-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg">
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M12 2C6.477 2 2 6.552 2 12.092c0 4.461 2.865 8.236 6.839 9.573.5.096.683-.22.683-.49 0-.242-.009-.883-.014-1.733-2.781.611-3.368-1.362-3.368-1.362-.455-1.164-1.11-1.474-1.11-1.474-.907-.625.069-.612.069-.612 1.003.071 1.53 1.04 1.53 1.04.892 1.545 2.341 1.099 2.91.84.091-.654.35-1.099.636-1.353-2.22-.257-4.555-1.123-4.555-4.998 0-1.104.39-2.006 1.03-2.715-.104-.258-.447-1.296.098-2.704 0 0 .842-.27 2.758 1.036A9.536 9.536 0 0 1 12 6.844c.853.004 1.712.116 2.514.341 1.914-1.307 2.755-1.036 2.755-1.036.546 1.408.203 2.446.1 2.704.64.709 1.028 1.611 1.028 2.715 0 3.884-2.339 4.737-4.566 4.988.359.314.679.93.679 1.874 0 1.353-.012 2.445-.012 2.777 0 .272.18.59.688.49 3.97-1.34 6.833-5.113 6.833-9.572C22 6.552 17.523 2 12 2Z"
+                fill="currentColor"/>
+            </svg>
+            GitHub
+          </a>
+        </div>
+        <div class="suite-area">
+          <div class="section-title">选择测试套件</div>
+          <div class="suite-switcher" id="suiteCards"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="page">
+      <div class="controls">
+        <div class="search">
+          <span>🔍</span>
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="搜索测试用例或描述…" />
+        </div>
+        <div class="toggles">
+          <button class="btn" id="expandAll">展开全部</button>
+          <button class="btn ghost" id="collapseAll">收起全部</button>
+          <button class="btn ghost" id="resetSearch">清除搜索</button>
+        </div>
+      </div>
+      <div id="categoryList"></div>
+      <div class="hint" id="hintText"></div>
+    </div>
+
+    <script>
+      const suites = {
+        layout: {
+          id: "layout",
+          name: "现代 CSS 布局与渲染",
+          badge: "Layout & Rendering",
+          accent: "#22d3ee",
+          description:
+            "覆盖 Flexbox、Grid、容器查询、混合模式、滤镜等现代特性，关注渲染正确性与性能。",
+          categories: [
+            {
+              order: "01",
+              title: "Flexbox弹性布局与动态重排",
+              description:
+                "验证主轴/侧轴对齐、间距与子项悬停扩展时的重排稳定性。",
+              tag: "布局基础",
+              tests: [
+                {
+                  title: "基础与悬停扩展",
+                  desc: "主轴/侧轴对齐与悬停扩展下的重排表现。",
+                  type: "交互",
+                  path: "layout-and-rendering/01-flexbox-dynamic-reflow/basic.html",
+                },
+                {
+                  title: "flex-grow vs flex-basis 对比",
+                  desc: "比较两种尺寸策略对重排范围与视觉稳定性的影响。",
+                  type: "对比",
+                  path: "layout-and-rendering/01-flexbox-dynamic-reflow/basis-vs-grow.html",
+                },
+                {
+                  title: "多层嵌套与对齐",
+                  desc: "多层 Flex 容器在不同对齐方式下的边界情况。",
+                  type: "嵌套",
+                  path: "layout-and-rendering/01-flexbox-dynamic-reflow/nested.html",
+                },
+                {
+                  title: "多行换行与 align-content",
+                  desc: "换行与跨行对齐在动态扩展时的重排行为。",
+                  type: "换行",
+                  path: "layout-and-rendering/01-flexbox-dynamic-reflow/wrap.html",
+                },
+              ],
+            },
+            {
+              order: "02",
+              title: "Grid子网格",
+              description: "子网格在不同方向的继承与对齐特性。",
+              tag: "现代布局",
+              tests: [
+                {
+                  title: "列方向 Subgrid 对齐",
+                  desc: "继承父网格轨道并按命名网格线对齐。",
+                  type: "列对齐",
+                  path: "layout-and-rendering/02-grid-subgrid/index.html",
+                },
+                {
+                  title: "行方向 Subgrid 对齐",
+                  desc: "行方向继承父网格轨道，跨多行区域保持边界对齐。",
+                  type: "行对齐",
+                  path: "layout-and-rendering/02-grid-subgrid/rows-subgrid.html",
+                },
+                {
+                  title: "双轴 Subgrid（列+行）",
+                  desc: "列与行同时继承父网格轨道的对齐验证。",
+                  type: "双轴",
+                  path: "layout-and-rendering/02-grid-subgrid/both-axes.html",
+                },
+              ],
+            },
+            {
+              order: "03",
+              title: "多列布局与内容分栏",
+              description: "评估多栏布局的渲染正确性与性能。",
+              tag: "分栏布局",
+              tests: [
+                {
+                  title: "多列布局总览",
+                  desc: "多栏布局的渲染正确性与性能入口。",
+                  type: "总览",
+                  path: "layout-and-rendering/03-multicolumn-fragmentation/index.html",
+                },
+                {
+                  title: "固定列数测试",
+                  desc: "固定列数下的文本/图片分栏与列分隔线。",
+                  type: "固定列数",
+                  path: "layout-and-rendering/03-multicolumn-fragmentation/fixed-count.html",
+                },
+                {
+                  title: "固定列宽测试",
+                  desc: "根据列宽自动计算列数的布局表现。",
+                  type: "固定列宽",
+                  path: "layout-and-rendering/03-multicolumn-fragmentation/column-width.html",
+                },
+                {
+                  title: "跨栏元素测试",
+                  desc: "column-span: all 的定位与衔接。",
+                  type: "跨栏",
+                  path: "layout-and-rendering/03-multicolumn-fragmentation/column-span.html",
+                },
+                {
+                  title: "复杂分栏与避断压力测试",
+                  desc: "长内容与避断规则下的重排与性能。",
+                  type: "性能",
+                  path: "layout-and-rendering/03-multicolumn-fragmentation/fragmentation-stress.html",
+                },
+                {
+                  title: "书写方向与列顺序测试",
+                  desc: "writing-mode/direction 变化下的列进展方向。",
+                  type: "书写方向",
+                  path: "layout-and-rendering/03-multicolumn-fragmentation/writing-modes.html",
+                },
+              ],
+            },
+            {
+              order: "04",
+              title: "垂直书写模式与文本方向",
+              description:
+                "vertical-rl / vertical-lr 下的中英文混排与布局定位。",
+              tag: "国际化",
+              tests: [
+                {
+                  title: "垂直书写模式目录",
+                  desc: "竖排总体场景与验证点。",
+                  type: "目录",
+                  path: "layout-and-rendering/04-vertical-writing-mode/index.html",
+                },
+                {
+                  title: "基础：vertical-rl 与水平对照",
+                  desc: "竖排与水平文本并排对比。",
+                  type: "基础",
+                  path: "layout-and-rendering/04-vertical-writing-mode/01-basic-vertical.html",
+                },
+                {
+                  title: "字符方向：mixed / upright / sideways",
+                  desc: "三种 text-orientation 的竖排对比。",
+                  type: "字符方向",
+                  path: "layout-and-rendering/04-vertical-writing-mode/02-text-orientation.html",
+                },
+                {
+                  title: "布局整合：垂直容器与 Flex / Grid 对齐",
+                  desc: "竖排容器与现代布局的尺寸计算与对齐。",
+                  type: "布局整合",
+                  path: "layout-and-rendering/04-vertical-writing-mode/03-flex-grid-integration.html",
+                },
+                {
+                  title: "标点与数字：位置、合字与括号",
+                  desc: "竖排标点位置、半角/全角对照与旋转。",
+                  type: "标点符号",
+                  path: "layout-and-rendering/04-vertical-writing-mode/04-punctuation-numerals.html",
+                },
+              ],
+            },
+            {
+              order: "05",
+              title: "媒体查询响应式布局",
+              description: "验证媒体查询支持与响应式布局稳定性。",
+              tag: "响应式",
+              tests: [
+                {
+                  title: "媒体查询响应式布局",
+                  desc: "断点切换、导航、卡片栅格的响应式行为。",
+                  type: "响应式",
+                  path: "layout-and-rendering/05-media-queries-responsive-layout/index.html",
+                },
+              ],
+            },
+            {
+              order: "06",
+              title: "容器查询自适应组件",
+              description: "组件根据父容器尺寸自适应布局。",
+              tag: "现代特性",
+              tests: [
+                {
+                  title: "容器查询自适应组件",
+                  desc: "组件随容器宽度自适应，与媒体查询解耦。",
+                  type: "基础",
+                  path: "layout-and-rendering/06-container-queries-adaptive-card/index.html",
+                },
+                {
+                  title: "命名嵌套容器与就近匹配",
+                  desc: "多个命名容器下的就近 @container 匹配。",
+                  type: "嵌套",
+                  path: "layout-and-rendering/06-container-queries-adaptive-card/nested.html",
+                },
+                {
+                  title: "大量组件的容器查询切换",
+                  desc: "快速变更容器宽度的性能观察。",
+                  type: "性能",
+                  path: "layout-and-rendering/06-container-queries-adaptive-card/stress.html",
+                },
+              ],
+            },
+            {
+              order: "07",
+              title: "Shadow DOM样式封装隔离",
+              description:
+                "覆盖基础隔离、slot 分发、:host/::slotted 选择器与性能。",
+              tag: "Web组件",
+              tests: [
+                {
+                  title: "Shadow DOM样式封装目录",
+                  desc: "多页统一风格的封装隔离验证入口。",
+                  type: "目录",
+                  path: "layout-and-rendering/07-shadow-style-encapsulation/index.html",
+                },
+                {
+                  title: "基础隔离",
+                  desc: "Shadow 内外样式隔离验证。",
+                  type: "基础",
+                  path: "layout-and-rendering/07-shadow-style-encapsulation/01-basic.html",
+                },
+                {
+                  title: "slot 分发与 ::slotted",
+                  desc: "插槽投影节点与 ::slotted 限定样式。",
+                  type: "Slot",
+                  path: "layout-and-rendering/07-shadow-style-encapsulation/02-slotted.html",
+                },
+                {
+                  title: ":host 选择器",
+                  desc: "宿主选择器的作用域验证。",
+                  type: "Host",
+                  path: "layout-and-rendering/07-shadow-style-encapsulation/03-host.html",
+                },
+                {
+                  title: "多实例与样式隔离",
+                  desc: "大量组件实例下的样式计算与渲染隔离。",
+                  type: "性能",
+                  path: "layout-and-rendering/07-shadow-style-encapsulation/04-performance.html",
+                },
+              ],
+            },
+            {
+              order: "08",
+              title: "复杂选择器与交互状态布局",
+              description:
+                "评估 :has()、:focus-within 等复杂选择器在交互下的表现。",
+              tag: "高级选择器",
+              tests: [
+                {
+                  title: "复杂选择器与交互状态布局 · 主场景",
+                  desc: "主场景覆盖 :has 与焦点状态的交互验证。",
+                  type: "主场景",
+                  path: "layout-and-rendering/08-complex-selectors-interaction/index.html",
+                },
+                {
+                  title: "嵌套表单与焦点",
+                  desc: "焦点与校验传播的嵌套表单交互。",
+                  type: "表单",
+                  path: "layout-and-rendering/08-complex-selectors-interaction/nested-forms.html",
+                },
+                {
+                  title: "性能压力",
+                  desc: "大量元素与交互引发的选择器匹配压力。",
+                  type: "性能",
+                  path: "layout-and-rendering/08-complex-selectors-interaction/performance-load.html",
+                },
+              ],
+            },
+            {
+              order: "09",
+              title: "SVG图像嵌入与引用方式",
+              description: "内联 / 外部引用 / CSS 背景三种模式对比。",
+              tag: "矢量图形",
+              tests: [
+                {
+                  title: "SVG 图像嵌入与引用方式 · 对比页",
+                  desc: "对比三种嵌入方式的渲染与控制能力。",
+                  type: "对比",
+                  path: "layout-and-rendering/09-svg-embed-modes/index.html",
+                },
+                {
+                  title: "内联 SVG",
+                  desc: "页面内联 SVG 受全局样式与 JS 控制。",
+                  type: "内联",
+                  path: "layout-and-rendering/09-svg-embed-modes/inline.html",
+                },
+                {
+                  title: "外部 SVG 引用",
+                  desc: "外部 SVG 通过 img/object/embed 引用。",
+                  type: "外部引用",
+                  path: "layout-and-rendering/09-svg-embed-modes/external.html",
+                },
+                {
+                  title: "CSS 背景 SVG",
+                  desc: "以 background-image 方式使用 SVG。",
+                  type: "CSS背景",
+                  path: "layout-and-rendering/09-svg-embed-modes/css-background.html",
+                },
+              ],
+            },
+            {
+              order: "10",
+              title: "混合模式叠加效果与合成层",
+              description: "验证 mix-blend-mode 的渲染与合成层处理。",
+              tag: "视觉效果",
+              tests: [
+                {
+                  title: "混合模式叠加效果与合成层",
+                  desc: "混合模式的基础场景验证。",
+                  type: "基础",
+                  path: "layout-and-rendering/10-mix-blend-mode-compositing-layers/index.html",
+                },
+                {
+                  title: "合成层观察",
+                  desc: "图层边界与合成行为观察。",
+                  type: "合成层",
+                  path: "layout-and-rendering/10-mix-blend-mode-compositing-layers/layers.html",
+                },
+                {
+                  title: "性能压力与帧率观测",
+                  desc: "大量混合元素与动画下的帧率表现。",
+                  type: "性能",
+                  path: "layout-and-rendering/10-mix-blend-mode-compositing-layers/perf-stress.html",
+                },
+                {
+                  title: "文本与图像的混合模式",
+                  desc: "文本、SVG 图像上的混合公式与隔离。",
+                  type: "文本图像",
+                  path: "layout-and-rendering/10-mix-blend-mode-compositing-layers/text-image.html",
+                },
+              ],
+            },
+            {
+              order: "11",
+              title: "滤镜与背景滤镜",
+              description: "滤镜效果的渲染性能与视觉正确性。",
+              tag: "视觉效果",
+              tests: [
+                {
+                  title: "背景滤镜滚动性能",
+                  desc: "固定栏 backdrop-filter: blur() 的滚动表现。",
+                  type: "性能",
+                  path: "layout-and-rendering/11-filter-backdrop/01-backdrop-scroll.html",
+                },
+                {
+                  title: "前景滤镜准确性与层合成",
+                  desc: "正文图片 filter: blur() 的视觉与层优化。",
+                  type: "合成层",
+                  path: "layout-and-rendering/11-filter-backdrop/02-foreground-filter.html",
+                },
+                {
+                  title: "综合场景（背景滤镜 + 前景滤镜）",
+                  desc: "固定栏背景模糊 + 正文前景模糊的组合。",
+                  type: "综合",
+                  path: "layout-and-rendering/11-filter-backdrop/03-combined.html",
+                },
+                {
+                  title: "滤镜测试入口",
+                  desc: "入口页跳转到背景滤镜场景。",
+                  type: "重定向",
+                  path: "layout-and-rendering/11-filter-backdrop/index.html",
+                },
+              ],
+            },
+            {
+              order: "12",
+              title: "CSS遮罩效果",
+              description: "验证 CSS mask/mask-image 支持与性能影响。",
+              tag: "遮罩裁剪",
+              tests: [
+                {
+                  title: "CSS 遮罩效果及性能",
+                  desc: "遮罩特性与性能的导航入口。",
+                  type: "导航",
+                  path: "layout-and-rendering/12-css-mask-effects/index.html",
+                },
+                {
+                  title: "基础：SVG/图像遮罩裁剪",
+                  desc: "mask-image 应用不同遮罩源的裁剪准确性。",
+                  type: "基础",
+                  path: "layout-and-rendering/12-css-mask-effects/01-basic-mask.html",
+                },
+                {
+                  title: "渐变遮罩与半透明边缘",
+                  desc: "CSS 渐变遮罩的平滑淡出与透明过渡。",
+                  type: "渐变",
+                  path: "layout-and-rendering/12-css-mask-effects/02-gradient-mask.html",
+                },
+                {
+                  title: "多图层遮罩与合成",
+                  desc: "多遮罩层与 mask-composite 运算的效果。",
+                  type: "多层",
+                  path: "layout-and-rendering/12-css-mask-effects/03-multi-mask.html",
+                },
+                {
+                  title: "性能对比与合成层观察",
+                  desc: "遮罩动画的帧率与合成层表现。",
+                  type: "性能",
+                  path: "layout-and-rendering/12-css-mask-effects/04-performance.html",
+                },
+              ],
+            },
+          ],
+        },
+        compatibility: {
+          id: "compatibility",
+          name: "跨引擎兼容性与媒体",
+          badge: "Compatibility & Media",
+          accent: "#f97316",
+          description:
+            "聚焦多媒体、WebGL、字体、视图转场、XR 等跨引擎兼容性问题，覆盖性能与边界条件。",
+          categories: [
+            {
+              order: "01",
+              title: "Renderer Pass 嵌套与离屏隔离",
+              description: "渲染层级与隔离策略对视觉与性能的影响。",
+              tag: "渲染链路",
+              tests: [
+                {
+                  title: "主场景演示",
+                  desc: "基础渲染路径与隔离的可视对照。",
+                  type: "主场景",
+                  path: "compatibility/01-renderer-pass-nesting-offscreen/index.html",
+                },
+                {
+                  title: "无隔离对照",
+                  desc: "未启用隔离的渲染差异。",
+                  type: "对照",
+                  path: "compatibility/01-renderer-pass-nesting-offscreen/no-isolation.html",
+                },
+                {
+                  title: "SVG Mask 场景",
+                  desc: "遮罩叠加下的渲染与层分配。",
+                  type: "遮罩",
+                  path: "compatibility/01-renderer-pass-nesting-offscreen/mask-svg.html",
+                },
+                {
+                  title: "SVG Filter 场景",
+                  desc: "滤镜与渲染隔离的交互影响。",
+                  type: "滤镜",
+                  path: "compatibility/01-renderer-pass-nesting-offscreen/svg-filter.html",
+                },
+              ],
+            },
+            {
+              order: "02",
+              title: "View Transitions 快照稳定性",
+              description: "跨路由与同页转场的快照准确性与降级表现。",
+              tag: "转场",
+              tests: [
+                {
+                  title: "列表跨路由转场",
+                  desc: "列表页使用视图转场的对照。",
+                  type: "列表",
+                  path: "compatibility/02-view-transitions-snapshots/cross-route-list.html",
+                },
+                {
+                  title: "详情跨路由转场",
+                  desc: "详情页快照复用与动画连贯性。",
+                  type: "详情",
+                  path: "compatibility/02-view-transitions-snapshots/cross-route-detail.html",
+                },
+                {
+                  title: "同页转场",
+                  desc: "同一路径下的视图转场表现。",
+                  type: "同页",
+                  path: "compatibility/02-view-transitions-snapshots/same-page.html",
+                },
+              ],
+            },
+            {
+              order: "03",
+              title: "Ink API vs Canvas",
+              description: "Ink API 与 Canvas 绘制在性能与轨迹上的对比。",
+              tag: "输入与绘制",
+              tests: [
+                {
+                  title: "Ink API 对比 Canvas",
+                  desc: "两种绘制方式的输入延迟与视觉稳定性。",
+                  type: "对比",
+                  path: "compatibility/03-ink-api-vs-canvas/index.html",
+                },
+              ],
+            },
+            {
+              order: "04",
+              title: "Canvas / WebGL 缓冲策略",
+              description: "不同缓冲类型对显示效果与抗锯齿的影响。",
+              tag: "图形管线",
+              tests: [
+                {
+                  title: "Canvas 与 WebGL 缓冲对比",
+                  desc: "多种缓冲类型的拼盘对照。",
+                  type: "对比",
+                  path: "compatibility/04-canvas-webgl-buffer-types/canvas-webgl-buffer-grid.html",
+                },
+                {
+                  title: "WebGL2 MSAA FBO",
+                  desc: "WebGL2 多重采样帧缓冲表现。",
+                  type: "WebGL2",
+                  path: "compatibility/04-canvas-webgl-buffer-types/webgl2-msaa-fbo.html",
+                },
+              ],
+            },
+            {
+              order: "05",
+              title: "视频编解码与渲染路径",
+              description: "多种视频格式在不同渲染路径下的表现。",
+              tag: "媒体",
+              tests: [
+                {
+                  title: "视频列表与解码路径",
+                  desc: "多格式视频的播放与降级观察。",
+                  type: "列表",
+                  path: "compatibility/05-video-codec-paths/video-grid.html",
+                },
+                {
+                  title: "视频详情帧同步",
+                  desc: "单个视频的帧同步与渲染延迟。",
+                  type: "详情",
+                  path: "compatibility/05-video-codec-paths/video-detail.html",
+                },
+              ],
+            },
+            {
+              order: "06",
+              title: "Canvas 与 Video 互操作",
+              description: "视频、Canvas、WebGL 之间的数据传递链路。",
+              tag: "媒体",
+              tests: [
+                {
+                  title: "Video ↔ Canvas ↔ WebGL",
+                  desc: "三者互操作的性能与视觉对比。",
+                  type: "互操作",
+                  path: "compatibility/06-canvas-video-interop/video-canvas-webgl.html",
+                },
+              ],
+            },
+            {
+              order: "07",
+              title: "WebGL 视频纹理",
+              description: "视频作为纹理时的兼容性与帧率。",
+              tag: "WebGL",
+              tests: [
+                {
+                  title: "视频纹理主场景",
+                  desc: "视频纹理与动画组合的帧率观察。",
+                  type: "主场景",
+                  path: "compatibility/07-webgl-video-texture/index.html",
+                },
+              ],
+            },
+            {
+              order: "08",
+              title: "极端纹理尺寸",
+              description: "超大纹理尺寸的加载、采样与退化策略。",
+              tag: "WebGL",
+              tests: [
+                {
+                  title: "纹理网格",
+                  desc: "多种超大纹理组合的显示对照。",
+                  type: "对比",
+                  path: "compatibility/08-webgl-texture-extremes/texture-grid.html",
+                },
+                {
+                  title: "最大纹理压力",
+                  desc: "单张超大纹理的极限加载与性能。",
+                  type: "压力",
+                  path: "compatibility/08-webgl-texture-extremes/max-texture.html",
+                },
+              ],
+            },
+            {
+              order: "09",
+              title: "自定义字体与阴影",
+              description: "可变字体、阴影与渲染清晰度的兼容性。",
+              tag: "排版",
+              tests: [
+                {
+                  title: "字体与阴影展示",
+                  desc: "自定义字体渲染与阴影效果对照。",
+                  type: "排版",
+                  path: "compatibility/09-custom-fonts-shadow/index.html",
+                },
+              ],
+            },
+            {
+              order: "10",
+              title: "复杂脚本与 Emoji",
+              description: "多脚本文字与 Emoji 在排版和合字上的兼容性。",
+              tag: "国际化",
+              tests: [
+                {
+                  title: "复杂脚本与 Emoji",
+                  desc: "多脚本排版、合字与 Emoji 显示的对照。",
+                  type: "排版",
+                  path: "compatibility/10-complex-script-emoji/index.html",
+                },
+              ],
+            },
+            {
+              order: "11",
+              title: "DRM 叠加层",
+              description: "媒体 DRM 叠加层的渲染与可视差异。",
+              tag: "媒体",
+              tests: [
+                {
+                  title: "DRM Overlay 演示",
+                  desc: "DRM 叠加层对视频显示的影响。",
+                  type: "DRM",
+                  path: "compatibility/11-drm-overlay/index.html",
+                },
+              ],
+            },
+            {
+              order: "12",
+              title: "WebXR 沉浸式稳定性",
+              description: "WebXR 场景的稳定性、交互与帧率观察。",
+              tag: "XR",
+              tests: [
+                {
+                  title: "WebXR 场景",
+                  desc: "沉浸式体验下的兼容性与稳定性。",
+                  type: "XR",
+                  path: "compatibility/12-webxr-immersive-stability/index.html",
+                },
+              ],
+            },
+            {
+              order: "13",
+              title: "360 视频映射",
+              description: "360 度全景视频的贴图与控制表现。",
+              tag: "媒体",
+              tests: [
+                {
+                  title: "全景视频映射",
+                  desc: "全景视频的控制与渲染稳定性。",
+                  type: "全景",
+                  path: "compatibility/13-360-video-mapping/panorama.html",
+                },
+              ],
+            },
+            {
+              order: "14",
+              title: "最大纹理尺寸",
+              description: "极大纹理在渲染与退化策略上的表现。",
+              tag: "WebGL",
+              tests: [
+                {
+                  title: "大背景纹理",
+                  desc: "超大背景纹理的加载与显示。",
+                  type: "背景",
+                  path: "compatibility/14-max-texture-size/large-background.html",
+                },
+                {
+                  title: "平铺精灵纹理",
+                  desc: "平铺精灵与纹理上限的对照。",
+                  type: "平铺",
+                  path: "compatibility/14-max-texture-size/tiled-sprite.html",
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      const defaultSuite = "layout";
+
+      function getSuiteFromUrl() {
+        const url = new URL(window.location.href);
+        const param = url.searchParams.get("suite");
+        if (param && suites[param]) {
+          return param;
+        }
+        return null;
+      }
+
+      let activeSuite = getSuiteFromUrl() || defaultSuite;
+
+      const suiteCards = document.getElementById("suiteCards");
+      const categoryList = document.getElementById("categoryList");
+      const searchInput = document.getElementById("searchInput");
+      const hintText = document.getElementById("hintText");
+      const expandAllBtn = document.getElementById("expandAll");
+      const collapseAllBtn = document.getElementById("collapseAll");
+      const resetSearchBtn = document.getElementById("resetSearch");
+
+      function renderSuiteCards() {
+        suiteCards.innerHTML = Object.values(suites)
+          .map(
+            suite => `
+              <div class="suite-card" data-suite="${
+                suite.id
+              }" style="border-left: 3px solid ${suite.accent}">
+                <div class="active-indicator" style="background: ${
+                  suite.accent
+                }1a; color: ${suite.accent}; border: 1px solid ${
+              suite.accent
+            }33;">
+                  ${suite.badge}
+                </div>
+                <h3 class="suite-title">${suite.name}</h3>
+                <div class="suite-meta">
+                  <span>${suite.description}</span>
+                </div>
+                <div class="suite-actions">
+                  <button class="btn" style="border-color: ${
+                    suite.accent
+                  }55; background: ${suite.accent}1a; color: ${suite.accent}">
+                    选择此套件
+                  </button>
+                  <div class="hint">${
+                    suite.categories.length
+                  } 个分类 · ${suite.categories.reduce(
+              (sum, cat) => sum + cat.tests.length,
+              0,
+            )} 个测试</div>
+                </div>
+              </div>
+            `,
+          )
+          .join("");
+
+        suiteCards.querySelectorAll(".suite-card").forEach(card => {
+          card.addEventListener("click", () => {
+            setActiveSuite(card.dataset.suite);
+          });
+        });
+      }
+
+      function renderCategories() {
+        const suite = suites[activeSuite];
+        document.body.style.setProperty("--accent", suite.accent);
+
+        categoryList.innerHTML = suite.categories
+          .map(
+            cat => `
+              <div class="category" data-category="${cat.order}">
+                <div class="category-header">
+                  <div class="category-title">
+                    <div class="category-num">${cat.order}</div>
+                    <div>
+                      <h2>${cat.title}</h2>
+                      <p>${cat.description}</p>
+                    </div>
+                  </div>
+                  <div class="tags">
+                    <span class="chip" style="border-color:${
+                      suite.accent
+                    }55; color:${suite.accent}">${cat.tag}</span>
+                    <span>${cat.tests.length} 个测试</span>
+                    <span aria-hidden="true">▼</span>
+                  </div>
+                </div>
+                <div class="tests">
+                  ${cat.tests
+                    .map(
+                      test => `
+                        <a class="test" target="_blank" rel="noopener noreferrer" href="${test.path}" data-search="${[
+                        test.title,
+                        test.desc,
+                        cat.title,
+                        cat.description,
+                        cat.tag,
+                      ]
+                        .join(" ")
+                        .toLowerCase()}">
+                          <div class="name">${test.title}</div>
+                          <div class="desc">${test.desc}</div>
+                          <div class="meta">
+                            <span class="chip">${test.type}</span>
+                            <span>${test.path.split("/").pop()}</span>
+                          </div>
+                        </a>
+                      `,
+                    )
+                    .join("")}
+                </div>
+              </div>
+            `,
+          )
+          .join("");
+
+        categoryList.querySelectorAll(".category-header").forEach(header => {
+          header.addEventListener("click", () => {
+            header.parentElement.classList.toggle("collapsed");
+          });
+        });
+
+        applySearchFilter();
+      }
+
+      function applySearchFilter() {
+        const term = searchInput.value.trim().toLowerCase();
+        const categories = Array.from(
+          categoryList.querySelectorAll(".category"),
+        );
+        let visibleTests = 0;
+
+        categories.forEach(cat => {
+          const tests = Array.from(cat.querySelectorAll(".test"));
+          let catVisible = false;
+
+          tests.forEach(test => {
+            const matches = term === "" || test.dataset.search.includes(term);
+            test.style.display = matches ? "grid" : "none";
+            if (matches) {
+              catVisible = true;
+              visibleTests += 1;
+            }
+          });
+
+          cat.style.display = catVisible ? "block" : "none";
+        });
+
+        hintText.textContent =
+          term === ""
+            ? `当前展示 ${visibleTests} 个测试`
+            : `已筛选出 ${visibleTests} 个测试（关键词：${term}）`;
+      }
+
+      function setActiveSuite(id) {
+        activeSuite = id;
+        const url = new URL(window.location.href);
+        url.searchParams.set("suite", id);
+        history.replaceState({}, "", url);
+        renderCategories();
+      }
+
+      expandAllBtn.addEventListener("click", () => {
+        categoryList.querySelectorAll(".category").forEach(cat => {
+          cat.classList.remove("collapsed");
+        });
+      });
+
+      collapseAllBtn.addEventListener("click", () => {
+        categoryList.querySelectorAll(".category").forEach(cat => {
+          cat.classList.add("collapsed");
+        });
+      });
+
+      resetSearchBtn.addEventListener("click", () => {
+        searchInput.value = "";
+        applySearchFilter();
+      });
+
+      searchInput.addEventListener("input", applySearchFilter);
+
+      renderSuiteCards();
+      setActiveSuite(activeSuite);
+    </script>
+  </body>
+</html>

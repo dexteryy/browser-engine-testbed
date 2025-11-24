@@ -39,6 +39,23 @@
           <option value="rtl">rtl</option>
         </select>
       </div>
+      <div class="control" style="grid-column: span 3;">
+        <label>列分隔线宽度：<output id="ruleWOut"></output></label>
+        <input id="ruleW" type="range" min="0" max="6" value="1" />
+      </div>
+      <div class="control" style="grid-column: span 3;">
+        <label>列分隔线样式</label>
+        <select id="ruleStyle">
+          <option value="none">none</option>
+          <option value="solid" selected>solid</option>
+          <option value="dashed">dashed</option>
+          <option value="dotted">dotted</option>
+        </select>
+      </div>
+      <div class="control" style="grid-column: span 3;">
+        <label>列分隔线颜色</label>
+        <input id="ruleColor" type="color" value="#dddddd" />
+      </div>
       <div class="control" style="grid-column: span 12;">
         <div id="metrics" class="meta"></div>
       </div>
@@ -69,10 +86,14 @@
       const gap = $("#gap"); const gapOut = $("#gapOut");
       const wm = $("#wm");
       const dir = $("#dir");
+      const ruleW = $("#ruleW"); const ruleWOut = $("#ruleWOut");
+      const ruleStyle = $("#ruleStyle");
+      const ruleColor = $("#ruleColor");
       const metrics = $("#metrics");
 
       bindRangeOutput(count, countOut, v => v + " 列");
       bindRangeOutput(gap, gapOut);
+      bindRangeOutput(ruleW, ruleWOut);
 
       function buildBlocks() {
         mc.innerHTML = "";
@@ -90,6 +111,7 @@
         mc.style.columnGap = gap.value + "px";
         mc.style.writingMode = wm.value;
         mc.style.direction = dir.value;
+        mc.style.columnRule = `${ruleW.value}px ${ruleStyle.value} ${ruleColor.value}`;
         renderMetrics(mc, metrics);
         // Add explicit badges for current writing-mode & direction
         const extra = document.createElement("span");
@@ -100,7 +122,7 @@
 
       buildBlocks();
       apply();
-      [count, gap, wm, dir].forEach(i => i.addEventListener("input", apply));
+      [count, gap, wm, dir, ruleW, ruleStyle, ruleColor].forEach(i => i.addEventListener("input", apply));
       window.addEventListener("resize", apply);
     });
   </script>

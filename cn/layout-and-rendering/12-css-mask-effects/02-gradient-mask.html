@@ -93,8 +93,9 @@
     </div>
   </div>
 
-  <script type="module">
-    import {qs, byId, on, copy, number} from './assets/common.js';
+  <script src="./assets/common.js"></script>
+  <script>
+    const {qs, byId, on, copy, number} = window.MaskUtils;
     const el = byId('maskTarget');
     const gType = byId('gType');
     const gMode = byId('gMode');
@@ -148,7 +149,7 @@
     }
 
     [gType,gMode,a,b,r1,r2].forEach(x=>on(x, 'input', ()=>{updateLabels(); apply();}));
-    on(copyCss,'click', ()=> navigator.clipboard.writeText(cssOut.textContent));
+    on(copyCss,'click', ()=> copy(cssOut.textContent));
 
     updateLabels(); apply();
   </script>

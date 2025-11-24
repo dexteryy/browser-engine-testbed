@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>研发侧用例 10｜复杂脚本与 Emoji 渲染</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="inner">
+      <h1>研发侧用例 10｜复杂脚本与 Emoji（阿拉伯/东南亚/Emoji）</h1>
+      <p class="subtitle">覆盖 RTL/Bidi、连写、组合附标与 ZWJ Emoji，大字号+轻微透明动画，用于观察栅格、合成与重绘稳定性。</p>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar-section">
+    <div class="inner">
+      <div class="toolbar">
+        <fieldset>
+          <legend>动画/合成</legend>
+          <label>透明度幅度 <input type="range" id="fadeMin" min="0.5" max="0.98" step="0.02" value="0.9" /></label>
+          <label>动画周期(s) <input type="range" id="duration" min="2" max="8" step="0.5" value="3" /></label>
+          <label><input type="checkbox" id="animArabic" checked /> 阿拉伯列动画</label>
+          <label><input type="checkbox" id="animSEA" checked /> 东南亚列动画</label>
+          <label><input type="checkbox" id="animEmoji" checked /> Emoji 列动画</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>内容/字体</legend>
+          <label><input type="checkbox" id="bidiMarks" checked /> 保留 Bidi 控制/标点混排</label>
+          <label><input type="checkbox" id="giantEmoji" /> 加载 256px 巨型 Emoji</label>
+          <label><input type="checkbox" id="ligatures" checked /> 启用字体连字</label>
+          <label><input type="checkbox" id="altFont" /> Emoji 列使用系统彩色字体提示</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>滚动/观察</legend>
+          <label>
+            自动滚动
+            <select id="scrollMode">
+              <option value="none">关闭</option>
+              <option value="auto" selected>轻微</option>
+            </select>
+          </label>
+          <label><input type="checkbox" id="checkerBg" checked /> 背景棋盘格</label>
+          <button id="resetBtn" class="primary">重置设置</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>状态</legend>
+          <div class="status-row">
+            <span class="badge" id="fpsBadge">滚动 FPS：--</span>
+            <span class="badge" id="animStatus">动画：开启</span>
+            <span class="badge" id="bidiStatus">Bidi：控制字符在内</span>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </section>
+
+  <!-- Test area -->
+  <main class="test-area">
+    <div class="inner">
+      <div class="panes">
+        <section class="pane" id="colArabic">
+          <header class="pane-head">
+            <h2>阿拉伯与双向混排</h2>
+            <span class="hint">包含数字/标点，测试 shaping 与 bidi 排序</span>
+          </header>
+          <div class="content checker" id="arabicContent"></div>
+        </section>
+
+        <section class="pane" id="colSEA">
+          <header class="pane-head">
+            <h2>东南亚组合附标</h2>
+            <span class="hint">包含泰语/越南语/梵文附标</span>
+          </header>
+          <div class="content checker" id="seaContent"></div>
+        </section>
+
+        <section class="pane" id="colEmoji">
+          <header class="pane-head">
+            <h2>Emoji ZWJ 序列与大字表</h2>
+            <span class="hint">肤色/性别/家庭组合，含大字号观察栅格</span>
+          </header>
+          <div class="content checker" id="emojiContent"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Explanation -->
+  <section class="explain">
+    <div class="inner">
+      <h3>解释说明</h3>
+      <h4>测试目标</h4>
+      <p>考察复杂脚本的 shaping、双向排序、组合附标与彩色 Emoji 的合成表现，验证轻度透明动画是否进入合成层、避免大面积 Paint。</p>
+
+      <h4>测试方案</h4>
+      <ul>
+        <li>三列内容：阿拉伯混排数字/标点的 RTL 段落；泰语/越南语等组合附标段落；Emoji 大字表覆盖 ZWJ 序列与肤色/性别变体。</li>
+        <li>每列默认附带轻微透明动画（幅度与周期可调），用于观察 Paint flashing 是否仍显示大面积重绘；可单独关闭。</li>
+        <li>提供巨型 Emoji（256px）开关，用于放大光栅与合成层行为；棋盘格背景辅助观察透明边缘。</li>
+        <li>自动滚动选项放大重绘场景，可结合 Performance/Layers 面板观察 FPS 与合成层。</li>
+      </ul>
+
+      <h4>使用方法</h4>
+      <ol>
+        <li>调整透明度幅度、动画周期，打开 DevTools → Rendering 勾选 Paint flashing，观察三列的重绘范围与合成层变化。</li>
+        <li>切换“巨型 Emoji”与“自动滚动”，查看高分辨率 emoji 与文本混排时的帧率与合成层。</li>
+        <li>开关“Bidi 控制/标点混排”以确认双向文本顺序与数字位置正确；切换连字开关观察字体特性作用。</li>
+        <li>性能记录 10s，关注滚动阶段主线程 Paint 占比与 FPS，验证轻度动画不引发掉帧或撕裂。</li>
+      </ol>
+
+      <h4>查看/检验/评估结果的方法</h4>
+      <ul>
+        <li>字符无丢失/错位，阿拉伯连写正常，东南亚附标位置正确；Emoji ZWJ 序列合成正确（肤色/性别/家庭/握手）。</li>
+        <li>轻度透明动画应进入合成层，Paint flashing 显示的重绘区域有限；滚动时 FPS 稳定，无明显掉帧。</li>
+        <li>棋盘格背景下，巨型 Emoji 边缘无撕裂或色块；关闭连字后文本排版即时变化无闪屏。</li>
+      </ul>
+    </div>
+  </section>
+
+  <script src="./app.js"></script>
+</body>
+</html>

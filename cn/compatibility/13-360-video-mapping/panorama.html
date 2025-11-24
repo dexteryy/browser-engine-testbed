@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全景视频球面映射 | WebGL</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>全景视频（360）球面映射</h1>
+    <p>将 equirectangular 视频作为纹理贴到球体内侧，缓慢自动旋转，观察采样、极区失真与合成帧稳定性。</p>
+  </header>
+  <main class="page">
+    <section class="toolbar">
+      <div class="group">
+        <span class="chip">DPR <span id="dpr"></span></span>
+        <span class="chip" id="video-state">视频: -</span>
+      </div>
+      <div class="group">
+        <label>视场角(FOV)</label>
+        <input type="range" id="fov" min="45" max="120" step="1" value="80">
+        <span id="fov-label">80°</span>
+      </div>
+      <div class="group">
+        <label>自转速率</label>
+        <input type="range" id="rot" min="0" max="0.8" step="0.02" value="0.2">
+        <span id="rot-label">0.20 rad/s</span>
+      </div>
+      <div class="group">
+        <label>采样</label>
+        <select id="filter">
+          <option value="linear">LINEAR</option>
+          <option value="nearest">NEAREST</option>
+        </select>
+      </div>
+      <div class="group">
+        <label><input type="checkbox" id="mipmap" checked> mipmap</label>
+      </div>
+      <button class="btn primary" id="play">播放</button>
+      <button class="btn" id="pause">暂停</button>
+    </section>
+
+    <section class="panel">
+      <h2 class="section-title">测试区域（WebGL 球面渲染）</h2>
+      <div class="canvas-wrap">
+        <canvas id="glcanvas"></canvas>
+        <div class="overlay">
+          <span class="chip" id="fps">FPS: -</span>
+          <span class="chip" id="angle">Yaw: 0</span>
+          <span class="chip" id="tex">纹理: -</span>
+        </div>
+      </div>
+      <p class="mono">视频源：JS 生成的 2:1 equirectangular 流（canvas.captureStream），确保同源可读。</p>
+    </section>
+
+    <section class="panel explain">
+      <h3 class="section-title">使用说明</h3>
+      <div>1）调整 FOV、采样模式、mipmap，观察极区拉伸与摩尔纹；打开 DevTools → Performance/Layers 记录播放+采样的帧稳定性。</div>
+      <div>2）观察自动摇摄是否出现撕裂或周期卡顿；切换 LINEAR/NEAREST 比较锐度与闪烁。</div>
+      <div>3）可在控制台修改生成源的分辨率/色块，模拟不同码率/分辨率的全景素材。</div>
+    </section>
+  </main>
+
+  <canvas id="source-canvas" class="hidden"></canvas>
+  <video id="video" class="hidden" playsinline muted loop></video>
+
+  <script>
+    const dpr = window.devicePixelRatio || 1;
+    document.getElementById("dpr").textContent = dpr.toFixed(2);
+
+    const srcCanvas = document.getElementById("source-canvas");
+    const srcCtx = srcCanvas.getContext("2d");
+    srcCanvas.width = 2048;
+    srcCanvas.height = 1024;
+
+    const video = document.getElementById("video");
+    const stream = srcCanvas.captureStream(30);
+    video.srcObject = stream;
+    video.play();
+
+    let srcTick = 0;
+    function drawSource() {
+      const { width: w, height: h } = srcCanvas;
+      srcCtx.fillStyle = "#0b1727";
+      srcCtx.fillRect(0, 0, w, h);
+      const grd = srcCtx.createLinearGradient(0, 0, w, h);
+      grd.addColorStop(0, "#0ea5e9");
+      grd.addColorStop(1, "#a855f7");
+      srcCtx.fillStyle = grd;
+      srcCtx.globalAlpha = 0.6;
+      srcCtx.fillRect(0, 0, w, h);
+      srcCtx.globalAlpha = 1;
+
+      // Moving horizon bands to emulate motion.
+      srcCtx.fillStyle = "rgba(255,255,255,0.4)";
+      for (let i = 0; i < 6; i++) {
+        const y = ((i * 160 + srcTick * 2) % h);
+        srcCtx.fillRect(0, y, w, 40);
+      }
+      // Longitudinal stripes for seam visibility.
+      srcCtx.fillStyle = "rgba(255,255,255,0.25)";
+      for (let x = 0; x < w; x += 256) {
+        srcCtx.fillRect(x, 0, 8, h);
+      }
+      // Text label
+      srcCtx.fillStyle = "rgba(15,23,42,0.8)";
+      srcCtx.font = "48px 'Segoe UI', Arial";
+      srcCtx.fillText(`Equirectangular ${w}x${h}`, 40, 80);
+      srcCtx.fillText(`t=${(srcTick / 60).toFixed(1)}s`, 40, 140);
+
+      srcTick++;
+      requestAnimationFrame(drawSource);
+    }
+    drawSource();
+
+    const glcanvas = document.getElementById("glcanvas");
+    const gl = glcanvas.getContext("webgl");
+    const videoState = document.getElementById("video-state");
+    const fpsLabel = document.getElementById("fps");
+    const angleLabel = document.getElementById("angle");
+    const texLabel = document.getElementById("tex");
+
+    let program, posLoc, uvLoc, projLoc, viewLoc;
+    let texture = null;
+    let lastTime = 0;
+    let yaw = 0;
+
+    function resize() {
+      const rect = glcanvas.parentElement.getBoundingClientRect();
+      glcanvas.width = rect.width * dpr;
+      glcanvas.height = rect.height * dpr;
+      gl.viewport(0, 0, glcanvas.width, glcanvas.height);
+    }
+    window.addEventListener("resize", resize);
+
+    function createShader(type, src) {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      return s;
+    }
+
+    function initGL() {
+      const vs = `
+        attribute vec3 position;
+        attribute vec2 uv;
+        uniform mat4 uProj;
+        uniform mat4 uView;
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = uProj * uView * vec4(position, 1.0);
+        }
+      `;
+      const fs = `
+        precision mediump float;
+        varying vec2 vUv;
+        uniform sampler2D uTex;
+        void main() {
+          vec4 c = texture2D(uTex, vec2(vUv.s, 1.0 - vUv.t));
+          gl_FragColor = c;
+        }
+      `;
+      const vsObj = createShader(gl.VERTEX_SHADER, vs);
+      const fsObj = createShader(gl.FRAGMENT_SHADER, fs);
+      program = gl.createProgram();
+      gl.attachShader(program, vsObj);
+      gl.attachShader(program, fsObj);
+      gl.linkProgram(program);
+      gl.useProgram(program);
+      posLoc = gl.getAttribLocation(program, "position");
+      uvLoc = gl.getAttribLocation(program, "uv");
+      projLoc = gl.getUniformLocation(program, "uProj");
+      viewLoc = gl.getUniformLocation(program, "uView");
+    }
+
+    function createSphere(subdiv = 64, radius = 1) {
+      const verts = [];
+      const uvs = [];
+      const indices = [];
+      for (let y = 0; y <= subdiv; y++) {
+        const v = y / subdiv;
+        const theta = v * Math.PI;
+        for (let x = 0; x <= subdiv; x++) {
+          const u = x / subdiv;
+          const phi = u * Math.PI * 2;
+          const vx = -Math.sin(theta) * Math.sin(phi);
+          const vy = Math.cos(theta);
+          const vz = Math.sin(theta) * Math.cos(phi);
+          verts.push(vx * radius, vy * radius, vz * radius);
+          uvs.push(u, v);
+        }
+      }
+      for (let y = 0; y < subdiv; y++) {
+        for (let x = 0; x < subdiv; x++) {
+          const i = y * (subdiv + 1) + x;
+          indices.push(i, i + 1, i + subdiv + 1);
+          indices.push(i + 1, i + subdiv + 2, i + subdiv + 1);
+        }
+      }
+      const vao = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vao);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([...verts, ...uvs]), gl.STATIC_DRAW);
+      const stride = 0; // not used because we bind separately
+      // positions
+      const posBuf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(posLoc);
+      gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+      // uvs
+      const uvBuf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, uvBuf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uvs), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(uvLoc);
+      gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, 0, 0);
+      // indices
+      const idxBuf = gl.createBuffer();
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, idxBuf);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+      return { count: indices.length };
+    }
+
+    function perspective(fovDeg, aspect, near, far) {
+      const f = 1.0 / Math.tan((fovDeg * Math.PI / 180) / 2);
+      const rangeInv = 1 / (near - far);
+      return new Float32Array([
+        f / aspect, 0, 0, 0,
+        0, f, 0, 0,
+        0, 0, (near + far) * rangeInv, -1,
+        0, 0, near * far * rangeInv * 2, 0
+      ]);
+    }
+
+    function rotation(yaw, pitch = 0) {
+      const cy = Math.cos(yaw), sy = Math.sin(yaw);
+      const cx = Math.cos(pitch), sx = Math.sin(pitch);
+      return new Float32Array([
+        cy, sy * sx, sy * cx, 0,
+        0, cx, -sx, 0,
+        -sy, cy * sx, cy * cx, 0,
+        0, 0, 0, 1
+      ]);
+    }
+
+    function initTexture() {
+      texture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      applyFilter();
+      texLabel.textContent = "纹理: 初始化";
+    }
+
+    function applyFilter() {
+      if (!texture) return;
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      const filterMode = document.getElementById("filter").value === "nearest" ? gl.NEAREST : gl.LINEAR;
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filterMode);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filterMode);
+    }
+
+    function updateTexture() {
+      if (!texture || video.readyState < 2) return;
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+      if (document.getElementById("mipmap").checked) {
+        gl.generateMipmap(gl.TEXTURE_2D);
+      }
+      texLabel.textContent = `纹理: ${video.videoWidth}×${video.videoHeight}`;
+    }
+
+    let sphere = null;
+
+    function render(ts) {
+      if (!lastTime) lastTime = ts;
+      const delta = (ts - lastTime) / 1000;
+      lastTime = ts;
+      const rotSpeed = Number(document.getElementById("rot").value);
+      yaw += rotSpeed * delta;
+      updateTexture();
+      const aspect = glcanvas.width / glcanvas.height;
+      const proj = perspective(Number(document.getElementById("fov").value), aspect, 0.1, 10);
+      const view = rotation(yaw, 0);
+      gl.useProgram(program);
+      gl.uniformMatrix4fv(projLoc, false, proj);
+      gl.uniformMatrix4fv(viewLoc, false, view);
+      gl.clearColor(0.02, 0.05, 0.1, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.drawElements(gl.TRIANGLES, sphere.count, gl.UNSIGNED_SHORT, 0);
+
+      angleLabel.textContent = `Yaw: ${yaw.toFixed(2)}`;
+      fpsLabel.textContent = `FPS: ${(1 / Math.max(delta, 0.0001)).toFixed(1)}`;
+      requestAnimationFrame(render);
+    }
+
+    document.getElementById("fov").addEventListener("input", e => {
+      document.getElementById("fov-label").textContent = `${e.target.value}°`;
+    });
+    document.getElementById("rot").addEventListener("input", e => {
+      document.getElementById("rot-label").textContent = `${Number(e.target.value).toFixed(2)} rad/s`;
+    });
+    document.getElementById("filter").addEventListener("change", applyFilter);
+    document.getElementById("mipmap").addEventListener("change", updateTexture);
+    document.getElementById("play").addEventListener("click", () => video.play());
+    document.getElementById("pause").addEventListener("click", () => video.pause());
+
+    video.addEventListener("loadeddata", () => {
+      videoState.textContent = `视频: readyState ${video.readyState}`;
+      updateTexture();
+    });
+    video.addEventListener("waiting", () => {
+      videoState.textContent = "视频: waiting";
+    });
+    video.addEventListener("playing", () => {
+      videoState.textContent = "视频: playing";
+    });
+
+    function init() {
+      if (!gl) {
+        alert("WebGL 不可用");
+        return;
+      }
+      resize();
+      initGL();
+      sphere = createSphere(96, 1);
+      initTexture();
+      requestAnimationFrame(render);
+    }
+
+    init();
+  </script>
+</body>
+</html>

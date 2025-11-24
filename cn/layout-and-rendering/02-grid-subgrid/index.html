@@ -10,21 +10,38 @@
     /* ========== Page 2A specific styles ========== */
     .grid-root.columns-demo {
       /* Named grid lines + fr + minmax; media queries adjust --cols. */
-      --cols: [left-start] minmax(220px, 1fr)
-              [left-end main-start] minmax(480px, 2fr)
-              [main-end right-start] minmax(280px, 1fr)
+      --cols: [left-start] minmax(180px, 1fr)
+              [left-end main-start] minmax(360px, 2fr)
+              [main-end right-start] minmax(200px, 1fr)
               [right-end];
       grid-template-columns: var(--cols);
       /* Gap controlled by toolbar via JS */
     }
     @media (max-width: 900px) {
       .grid-root.columns-demo {
-        --cols: [main-start] 1.2fr [main-end right-start] 0.8fr [right-end];
+        --cols: [left-start] minmax(140px, 1fr)
+                [left-end main-start] minmax(260px, 1.4fr)
+                [main-end right-start] minmax(140px, 1fr)
+                [right-end];
+        grid-template-columns: var(--cols);
       }
     }
     @media (max-width: 640px) {
       .grid-root.columns-demo {
-        --cols: [main-start] 1fr [main-end];
+        --cols: [left-start] minmax(0, 1fr)
+                [left-end main-start] minmax(0, 1fr)
+                [main-end right-start] minmax(0, 1fr)
+                [right-end];
+        grid-template-columns: var(--cols);
+        /* Stack items while keeping named lines alive for subgrid checks */
+        grid-auto-flow: row;
+      }
+      .grid-root.columns-demo .header,
+      .grid-root.columns-demo .left,
+      .grid-root.columns-demo .main,
+      .grid-root.columns-demo .right,
+      .grid-root.columns-demo .feature {
+        grid-column: left-start / right-end;
       }
     }
 

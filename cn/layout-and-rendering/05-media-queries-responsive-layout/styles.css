@@ -115,7 +115,13 @@ main:has(#toggle-outline:checked) .test-area * {
 .nav-toggle {
   position: absolute;
   opacity: 0;
-  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  border: 0;
+  padding: 0;
+  clip: rect(0 0 0 0);
+  overflow: hidden;
 }
 
 /* Navigation menu - mobile first (vertical, collapsible) */
@@ -167,6 +173,8 @@ main:has(#toggle-outline:checked) .test-area * {
 }
 .card h3 { margin: 8px 0; }
 .card .media {
+  display: block;
+  margin: 0 0 8px 0;
   /* Placeholder media block with fixed aspect ratio to reduce CLS */
   aspect-ratio: 16 / 9;
   width: 100%;
@@ -177,7 +185,6 @@ main:has(#toggle-outline:checked) .test-area * {
     rgba(14,165,233,.25) 12px 24px
   );
   border: 1px solid #bae6fd;
-  margin-bottom: 8px;
 }
 
 /* Hide certain menu item on small screens to test visibility */

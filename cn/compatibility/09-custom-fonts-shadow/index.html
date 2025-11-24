@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>研发侧用例 09｜自定义字体渲染与阴影对照</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="inner">
+      <h1>研发侧用例 09｜网页自定义字体（WOFF2/可变字体）渲染与缓存</h1>
+      <p class="subtitle">多段文本覆盖粗细/斜体/小型大写/连字，对比 text-shadow 与 filter: drop-shadow 对 Paint 的影响，并观察字体加载与缓存表现。</p>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar-section">
+    <div class="inner">
+      <div class="toolbar">
+        <fieldset>
+          <legend>字体选择</legend>
+          <label>可变字体
+            <select id="fontSelect">
+              <option value="InterVar" selected>Inter Var（无衬线，可变）</option>
+              <option value="SourceSerif4">Source Serif 4（衬线，静态 WOFF2）</option>
+            </select>
+          </label>
+          <label><input type="checkbox" id="useSerif" /> 右侧强制衬线对照</label>
+          <button id="reloadFonts" class="primary">重新加载字体（模拟 cache bust）</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>可变轴/字体特性</legend>
+          <label>粗细 <input type="range" id="weight" min="200" max="900" value="600" /></label>
+          <label>斜体角度 <input type="range" id="slant" min="-10" max="0" step="1" value="0" /></label>
+          <label>字距 <input type="range" id="letter" min="-1" max="2" step="0.1" value="0" /></label>
+          <label><input type="checkbox" id="ligatures" checked /> 连字 liga/clig</label>
+          <label><input type="checkbox" id="smallCaps" /> 小型大写</label>
+          <label><input type="checkbox" id="animateWeight" /> 自动往返粗细</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>阴影与渲染</legend>
+          <label>阴影偏移 <input type="range" id="shadowOffset" min="0" max="12" value="4" /></label>
+          <label>阴影模糊 <input type="range" id="shadowBlur" min="0" max="24" value="8" /></label>
+          <label><input type="checkbox" id="toggleShadow" checked /> 启用 text-shadow（左列）</label>
+          <label><input type="checkbox" id="toggleDrop" checked /> 启用 drop-shadow（右列）</label>
+          <label>
+            滚动节奏
+            <select id="scrollMode">
+              <option value="none">静止</option>
+              <option value="auto">自动上下滚动</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>状态</legend>
+          <div class="status-row">
+            <span class="badge" id="fontStatus">字体：等待加载</span>
+            <span class="badge" id="cacheStatus">缓存/命中：--</span>
+            <span class="badge" id="fpsBadge">滚动 FPS：--</span>
+            <span class="badge" id="tickStatus">合成层观察：节拍运行中</span>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </section>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="bar" id="tickerBar"></div>
+  </div>
+
+  <!-- Test area -->
+  <main class="test-area">
+    <div class="inner">
+      <div class="panes">
+        <section class="pane" id="leftPane">
+          <header class="pane-head">
+            <h2>左列：text-shadow（渲染通道对照）</h2>
+            <span class="hint">用于观察 Paint 闪烁、重绘范围</span>
+          </header>
+          <div class="content checker" id="leftContent">
+            <!-- samples injected by JS -->
+          </div>
+        </section>
+
+        <section class="pane" id="rightPane">
+          <header class="pane-head">
+            <h2>右列：filter: drop-shadow()</h2>
+            <span class="hint">滤镜可能触发合成层</span>
+          </header>
+          <div class="content checker" id="rightContent">
+            <!-- samples injected by JS -->
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Explanation -->
+  <section class="explain">
+    <div class="inner">
+      <h3>解释说明</h3>
+      <h4>测试目标</h4>
+      <p>检视自定义字体（含可变字体）的字形栅格化、缓存命中与合成表现，对比 text-shadow 与 filter: drop-shadow 在渲染与性能上的差异，观察粗细/斜体/连字切换的稳定性。</p>
+
+      <h4>测试方案</h4>
+      <ul>
+        <li>加载 WOFF2 可变字体（Inter Var）与静态 WOFF2 对照，提供粗细/斜体/字距可调，支持连字与小型大写。</li>
+        <li>左右列文本完全一致，左列应用 text-shadow，右列使用 filter: drop-shadow，对比 Paint 与合成层行为。</li>
+        <li>混排大字号、小字号、连字、数字、中文，附带亚像素边缘对照块；提供自动滚动触发重复 Paint。</li>
+        <li>提供“重新加载字体”按钮，通过 cache bust 触发 FontFace 重新下载，用以观察首帧与缓存命中差异。</li>
+      </ul>
+
+      <h4>使用方法</h4>
+      <ol>
+        <li>等待顶部状态显示字体已加载，调节粗细、斜体、字距、连字/小型大写开关，观察文本重排与渲染锐利度。</li>
+        <li>切换 text-shadow / drop-shadow，打开 DevTools → Rendering 勾选 Paint flashing，观察哪一列更频繁重绘。</li>
+        <li>启用自动滚动以放大重绘区域，记录 Performance 10 秒，查看主线程 Paint、字体缓存命中情况。</li>
+        <li>点击“重新加载字体”触发 cache bust，查看首次下载耗时与后续命中差异；在 Layers 面板确认滤镜是否生成独立合成层。</li>
+      </ol>
+
+      <h4>查看/检验/评估结果的方法</h4>
+      <ul>
+        <li>字形清晰，无错切 fallback；可变轴变化不应导致长帧卡顿；连字与小型大写应即时生效。</li>
+        <li>text-shadow 与 drop-shadow 视觉接近，后者可能单独合成但不应触发过度性能损耗；两列切换无闪屏。</li>
+        <li>自动滚动时 FPS 徽章平稳，Paint flashing 显示重绘区域符合阴影区域；字体重新加载应有明显首帧延迟记录。</li>
+      </ul>
+    </div>
+  </section>
+
+  <script src="./app.js"></script>
+</body>
+</html>

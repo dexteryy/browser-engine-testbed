@@ -10,6 +10,7 @@
   --panel-bg:#fafafa;
   --shadow: 0 1px 3px rgba(0,0,0,0.06);
   --radius: 10px;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", "Courier New", monospace;
   --fs: 18px;          /* base font-size for test content */
   --lh: 28px;          /* base line-height in px for test content */
   --letter: 0px;       /* letter spacing */
@@ -99,8 +100,8 @@ a:hover{ text-decoration: underline; }
 /* The vertical writing test box (uses logical sizes) */
 .vertical-box{
   /* These are logical sizes that swap axes with writing-mode */
-  inline-size: var(--inline-size);
-  block-size: var(--block-size);
+  inline-size: min(var(--inline-size), 100%);
+  block-size: min(var(--block-size), 100%);
   border: 1px solid #d3d6db;
   background:#fff;
   padding: 10px;
@@ -185,6 +186,7 @@ a:hover{ text-decoration: underline; }
   border:1px solid #d3d6db; background:#fff; padding:10px; border-radius:6px;
   font-size: var(--fs); line-height: var(--lh); letter-spacing: var(--letter);
   writing-mode: horizontal-tb;
+  max-width: 100%;
   max-height: 100%;
   overflow:auto;
 }
@@ -194,6 +196,7 @@ a:hover{ text-decoration: underline; }
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 16px;
+  overflow-x: auto; /* avoid overflow when flex/grid demos exceed width */
 }
 .lab .slot{ grid-column: span 6; }
 .flex-lab{

@@ -91,8 +91,9 @@
     </div>
   </div>
 
-  <script type="module">
-    import {byId, on, FpsMeter, number} from './assets/common.js';
+  <script src="./assets/common.js"></script>
+  <script>
+    const {byId, on, FpsMeter, number, maskSources} = window.MaskUtils;
     const itemsA = byId('itemsA'), itemsB = byId('itemsB');
     const count = byId('count'), countv = byId('countv');
     const animType = byId('animType'), layerHint = byId('layerHint');
@@ -119,7 +120,7 @@
         d.appendChild(ph);
         if(masked){
           // Apply a circular mask scaled to element box
-          d.style.maskImage = "url('./assets/circle.svg')";
+          d.style.maskImage = `url('${maskSources.circle}')`;
           d.style.maskSize = '100% 100%';
           d.style.maskPosition = 'center';
           d.style.maskRepeat = 'no-repeat';

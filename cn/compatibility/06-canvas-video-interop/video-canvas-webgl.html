@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas/Video 互操作：拷贝与纹理上传</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Canvas/Video 互操作：像素拷贝与纹理上传</h1>
+    <p>左：Canvas 2D drawImage(video)。右：WebGL 纹理上传并渲染。对比拷贝成本、上传与色彩一致性。</p>
+  </header>
+  <main class="page">
+    <section class="toolbar">
+      <div class="group">
+        <label>视频源</label>
+        <select id="source"></select>
+      </div>
+      <div class="group">
+        <label>播放速率</label>
+        <input type="range" id="rate" min="0.25" max="2" step="0.05" value="1">
+        <span id="rate-label">1.00x</span>
+      </div>
+      <div class="group">
+        <label>画布宽度(px)</label>
+        <input type="range" id="width" min="360" max="960" step="20" value="720">
+        <span id="width-label">720</span>
+      </div>
+      <div class="group">
+        <label><input type="checkbox" id="grid-toggle" checked> 叠加网格</label>
+        <label><input type="checkbox" id="overlay-toggle" checked> 叠加参考图样</label>
+      </div>
+      <div class="group">
+        <label>2D image-rendering</label>
+        <select id="rendering">
+          <option value="auto">auto</option>
+          <option value="pixelated">pixelated</option>
+          <option value="crisp-edges">crisp-edges</option>
+        </select>
+      </div>
+      <div class="group">
+        <label>WebGL 纹理更新</label>
+        <select id="upload-mode">
+          <option value="sub">texSubImage2D</option>
+          <option value="full">texImage2D 每帧</option>
+        </select>
+      </div>
+      <div class="group">
+        <label>WebGL 采样</label>
+        <select id="filter-mode">
+          <option value="linear">LINEAR</option>
+          <option value="nearest">NEAREST</option>
+        </select>
+      </div>
+      <button class="btn primary" id="play">播放</button>
+      <button class="btn" id="pause">暂停</button>
+    </section>
+
+    <section class="panel">
+      <h2 class="section-title">测试区域</h2>
+      <div class="layout">
+        <div>
+          <div class="canvas-card">
+            <div class="card-label">Canvas 2D drawImage(video)</div>
+            <canvas id="canvas2d"></canvas>
+          </div>
+          <div class="meta-row">
+            <span class="badge">2D FPS <span id="fps-2d">-</span></span>
+            <span class="badge">readyState <span id="ready-2d">-</span></span>
+            <span class="badge mono" id="stat-2d">-</span>
+          </div>
+        </div>
+        <div>
+          <div class="canvas-card">
+            <div class="card-label">WebGL 纹理上传 + 网格遮罩</div>
+            <canvas id="canvas-gl"></canvas>
+          </div>
+          <div class="meta-row">
+            <span class="badge">GL FPS <span id="fps-gl">-</span></span>
+            <span class="badge">上传方式 <span id="upload-label">texSubImage2D</span></span>
+            <span class="badge">滤波 <span id="filter-label">LINEAR</span></span>
+            <span class="badge mono" id="stat-gl">-</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel explain">
+      <h3 class="section-title">使用说明</h3>
+      <div>1）打开 DevTools → Performance 录制 10s，对比左/右侧拷贝上传对主线程/GPU 的影响。</div>
+      <div>2）DevTools → Layers 检查 WebGL 画布是否独立合成；切换 texImage/texSub 观察上传抖动。</div>
+      <div>3）观察缩放后锐度、色彩是否与直接 &lt;video&gt; 呈现一致；留意掉帧（bad dropped）。</div>
+    </section>
+  </main>
+
+  <video id="video-source" class="hidden" playsinline muted loop crossorigin="anonymous"></video>
+
+  <script>
+    const videoList = [
+      {
+        id: "h264-720",
+        title: "H.264 720p30",
+        src: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        codec: "H.264",
+        desc: "720p 30fps"
+      },
+      {
+        id: "vp9-720",
+        title: "VP9 720p30",
+        src: "https://test-videos.co.uk/vids/bigbuckbunny/webm/vp9/720/Big_Buck_Bunny_720_10s_1MB.webm",
+        codec: "VP9",
+        desc: "720p 30fps"
+      },
+      {
+        id: "av1-1080",
+        title: "AV1 1080p",
+        src: "https://test-videos.co.uk/vids/bigbuckbunny/webm/av1/1080/Big_Buck_Bunny_1080_10s_1MB.webm",
+        codec: "AV1",
+        desc: "1080p 24fps"
+      }
+    ];
+
+    const sourceSelect = document.getElementById("source");
+    const video = document.getElementById("video-source");
+    const canvas2d = document.getElementById("canvas2d");
+    const ctx2d = canvas2d.getContext("2d");
+    const canvasGl = document.getElementById("canvas-gl");
+    const gl = canvasGl.getContext("webgl");
+    let texture = null;
+    let program = null;
+    let uniformGridLoc = null;
+    let uniformOverlayLoc = null;
+    let texReady = false;
+    let lastFrameTs = 0;
+
+    const state = {
+      width: 720,
+      grid: true,
+      overlay: true,
+      uploadMode: "sub",
+      filter: "linear"
+    };
+
+    videoList.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v.id;
+      opt.textContent = `${v.title} (${v.codec})`;
+      sourceSelect.appendChild(opt);
+    });
+    sourceSelect.value = videoList[0].id;
+
+    if (!gl) {
+      document.getElementById("stat-gl").textContent = "WebGL 不可用";
+    }
+
+    document.getElementById("rate").addEventListener("input", e => {
+      const val = Number(e.target.value);
+      video.playbackRate = val;
+      document.getElementById("rate-label").textContent = `${val.toFixed(2)}x`;
+    });
+    document.getElementById("width").addEventListener("input", e => {
+      state.width = Number(e.target.value);
+      document.getElementById("width-label").textContent = state.width;
+      resizeCanvases();
+    });
+    document.getElementById("grid-toggle").addEventListener("change", e => {
+      state.grid = e.target.checked;
+    });
+    document.getElementById("overlay-toggle").addEventListener("change", e => {
+      state.overlay = e.target.checked;
+    });
+    document.getElementById("rendering").addEventListener("change", e => {
+      canvas2d.style.imageRendering = e.target.value;
+    });
+    document.getElementById("upload-mode").addEventListener("change", e => {
+      state.uploadMode = e.target.value;
+      document.getElementById("upload-label").textContent = e.target.value === "sub" ? "texSubImage2D" : "texImage2D";
+      texReady = false;
+    });
+    document.getElementById("filter-mode").addEventListener("change", e => {
+      state.filter = e.target.value;
+      document.getElementById("filter-label").textContent = e.target.value.toUpperCase();
+      applyTextureFilter();
+    });
+    document.getElementById("play").addEventListener("click", () => video.play().catch(() => {}));
+    document.getElementById("pause").addEventListener("click", () => video.pause());
+    sourceSelect.addEventListener("change", () => loadSource(sourceSelect.value));
+
+    function loadSource(id) {
+      const data = videoList.find(v => v.id === id) || videoList[0];
+      video.src = data.src;
+      video.playbackRate = Number(document.getElementById("rate").value);
+      video.load();
+      video.play().catch(() => {});
+      texReady = false;
+    }
+
+    function resizeCanvases() {
+      if (!video.videoWidth) return;
+      const ratio = video.videoHeight / video.videoWidth;
+      const targetW = state.width;
+      const targetH = Math.round(targetW * ratio);
+      canvas2d.width = targetW;
+      canvas2d.height = targetH;
+      canvasGl.width = targetW;
+      canvasGl.height = targetH;
+
+      const containerWidth = canvas2d.parentElement.clientWidth || targetW;
+      const displayW = Math.min(targetW, containerWidth);
+      const displayH = Math.round(displayW * ratio);
+      canvas2d.style.width = `${displayW}px`;
+      canvas2d.style.height = `${displayH}px`;
+      canvasGl.style.width = `${displayW}px`;
+      canvasGl.style.height = `${displayH}px`;
+
+      gl.viewport(0, 0, targetW, targetH);
+      document.getElementById("ready-2d").textContent = `${video.videoWidth}×${video.videoHeight}`;
+    }
+
+    function drawGrid(ctx, w, h) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.4)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x + 0.5, 0);
+        ctx.lineTo(x + 0.5, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y + 0.5);
+        ctx.lineTo(w, y + 0.5);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawOverlay(ctx, w, h) {
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,0.35)";
+      ctx.fillRect(w * 0.05, h * 0.05, w * 0.2, h * 0.12);
+      ctx.fillStyle = "#fbbf24";
+      ctx.font = "16px 'Segoe UI', Arial";
+      ctx.fillText("参考色块", w * 0.07, h * 0.1);
+      ctx.fillStyle = "rgba(59,130,246,0.8)";
+      ctx.fillRect(w * 0.7, h * 0.75, w * 0.2, h * 0.15);
+      ctx.restore();
+    }
+
+    function draw2d() {
+      if (!video.videoWidth) return;
+      const w = canvas2d.width;
+      const h = canvas2d.height;
+      ctx2d.clearRect(0, 0, w, h);
+      ctx2d.drawImage(video, 0, 0, w, h);
+      if (state.grid) drawGrid(ctx2d, w, h);
+      if (state.overlay) drawOverlay(ctx2d, w, h);
+      document.getElementById("stat-2d").textContent = `drawImage @ ${w}×${h}`;
+    }
+
+    function createGlProgram() {
+      const vs = `
+        attribute vec2 position;
+        attribute vec2 uv;
+        varying vec2 vUv;
+        void main() {
+          gl_Position = vec4(position, 0.0, 1.0);
+          vUv = uv;
+        }
+      `;
+      const fs = `
+        precision mediump float;
+        varying vec2 vUv;
+        uniform sampler2D uTex;
+        uniform bool uGrid;
+        uniform bool uOverlay;
+        void main() {
+          vec4 color = texture2D(uTex, vUv);
+          if (uGrid) {
+            float gx = step(0.98, fract(vUv.x * 10.0));
+            float gy = step(0.98, fract(vUv.y * 10.0));
+            float line = max(gx, gy);
+            color.rgb = mix(color.rgb, vec3(1.0), line * 0.25);
+          }
+          if (uOverlay) {
+            if (vUv.x > 0.7 && vUv.x < 0.9 && vUv.y > 0.75 && vUv.y < 0.9) {
+              color = mix(color, vec4(0.23, 0.51, 0.96, 0.8), 0.6);
+            }
+            if (vUv.x > 0.05 && vUv.x < 0.25 && vUv.y > 0.05 && vUv.y < 0.15) {
+              color = mix(color, vec4(0.98, 0.75, 0.14, 1.0), 0.5);
+            }
+          }
+          gl_FragColor = color;
+        }
+      `;
+      const vsObj = gl.createShader(gl.VERTEX_SHADER);
+      gl.shaderSource(vsObj, vs);
+      gl.compileShader(vsObj);
+      const fsObj = gl.createShader(gl.FRAGMENT_SHADER);
+      gl.shaderSource(fsObj, fs);
+      gl.compileShader(fsObj);
+      program = gl.createProgram();
+      gl.attachShader(program, vsObj);
+      gl.attachShader(program, fsObj);
+      gl.linkProgram(program);
+      gl.useProgram(program);
+      const positions = new Float32Array([
+        -1, -1, 0, 0,
+         1, -1, 1, 0,
+        -1,  1, 0, 1,
+         1,  1, 1, 1
+      ]);
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+      const posLoc = gl.getAttribLocation(program, "position");
+      const uvLoc = gl.getAttribLocation(program, "uv");
+      gl.enableVertexAttribArray(posLoc);
+      gl.enableVertexAttribArray(uvLoc);
+      gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 16, 0);
+      gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, 16, 8);
+      gl.uniform1i(gl.getUniformLocation(program, "uTex"), 0);
+      uniformGridLoc = gl.getUniformLocation(program, "uGrid");
+      uniformOverlayLoc = gl.getUniformLocation(program, "uOverlay");
+    }
+
+    function initTexture() {
+      if (!gl) return;
+      if (!program) createGlProgram();
+      texture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      texReady = false;
+    }
+
+    function applyTextureFilter() {
+      if (!texture) return;
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      const mode = state.filter === "nearest" ? gl.NEAREST : gl.LINEAR;
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mode);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, mode);
+    }
+
+    function uploadTexture() {
+      if (!gl || !texture) return;
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      const w = video.videoWidth;
+      const h = video.videoHeight;
+      if (!texReady || state.uploadMode === "full") {
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+        texReady = true;
+      } else {
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, video);
+      }
+      document.getElementById("stat-gl").textContent = `${state.uploadMode === "sub" ? "texSubImage2D" : "texImage2D"} @ ${w}×${h}`;
+    }
+
+    function drawGl() {
+      if (!gl || !texture) return;
+      gl.useProgram(program);
+      gl.uniform1i(uniformGridLoc, state.grid);
+      gl.uniform1i(uniformOverlayLoc, state.overlay);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+
+    function onFrame(now, meta) {
+      if (!video.videoWidth) {
+        requestVideoFrameCallback();
+        return;
+      }
+      if (canvas2d.width === 0) resizeCanvases();
+      uploadTexture();
+      draw2d();
+      drawGl();
+      updateStats(meta, now);
+      requestVideoFrameCallback();
+    }
+
+    function updateStats(meta, now) {
+      const quality = video.getVideoPlaybackQuality ? video.getVideoPlaybackQuality() : null;
+      if (lastFrameTs) {
+        const delta = now - lastFrameTs;
+        const fps = delta > 0 ? 1000 / delta : 0;
+        document.getElementById("fps-2d").textContent = fps.toFixed(1);
+        document.getElementById("fps-gl").textContent = fps.toFixed(1);
+      }
+      lastFrameTs = now;
+      document.getElementById("ready-2d").textContent = `${video.readyState} ｜ ${video.videoWidth}×${video.videoHeight}`;
+      if (quality) {
+        document.getElementById("stat-2d").textContent = `dropped ${quality.droppedVideoFrames}/${quality.totalVideoFrames}`;
+      }
+    }
+
+    function requestVideoFrameCallback() {
+      if (video.requestVideoFrameCallback) {
+        video.requestVideoFrameCallback(onFrame);
+      } else {
+        requestAnimationFrame(ts => onFrame(ts, null));
+      }
+    }
+
+    video.addEventListener("loadedmetadata", () => {
+      resizeCanvases();
+      initTexture();
+      applyTextureFilter();
+    });
+
+    loadSource(videoList[0].id);
+    requestVideoFrameCallback();
+  </script>
+</body>
+</html>

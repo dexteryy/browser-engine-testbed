@@ -112,6 +112,11 @@
           <button id="random">随机参数</button>
         </div>
       </div>
+
+      <div class="control">
+        <label>浏览器支持</label>
+        <div class="hint"><span class="badge" id="support">检测中</span></div>
+      </div>
     </div>
   </section>
 
@@ -205,6 +210,7 @@
     const resetBtn = $('#reset');
     const randomBtn = $('#random');
     const stage = $('#stage');
+    const support = $('#support');
 
     function apply() {
       // Update blend mode
@@ -320,6 +326,11 @@
       layerHint.value = hints[Math.floor(Math.random()*hints.length)];
       apply();
     });
+
+    // Feature support indicator
+    const blendSupported = CSS.supports('mix-blend-mode', 'multiply');
+    support.textContent = blendSupported ? '支持 mix-blend-mode' : '不支持（可能无效）';
+    support.classList.add(blendSupported ? 'good' : 'bad');
 
     // Initial paint
     apply();

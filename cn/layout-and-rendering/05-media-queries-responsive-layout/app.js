@@ -10,6 +10,8 @@
   const bpEl = document.getElementById('bp');
   const clsEl = document.getElementById('cls');
   const resetBtn = document.getElementById('reset-cls');
+  const navToggle = document.getElementById('nav-toggle');
+  const navLabel = document.querySelector('.toggle-label');
 
   // Breakpoint matchers (keep in sync with CSS)
   const mMobile = window.matchMedia('(max-width: 799.98px)');
@@ -91,4 +93,11 @@
   mTablet.addEventListener('change', updateBreakpoint);
   mDesktop.addEventListener('change', updateBreakpoint);
   initPO();
+
+  // Keep aria-expanded in sync with the nav checkbox (for a11y)
+  if(navToggle && navLabel){
+    const syncNav = () => { navLabel.setAttribute('aria-expanded', navToggle.checked ? 'true' : 'false'); };
+    navToggle.addEventListener('change', syncNav);
+    syncNav();
+  }
 })();

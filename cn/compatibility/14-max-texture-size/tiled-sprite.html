@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>超大雪碧图分片拼接</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .grid-wrap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .slice {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background-position: center;
+      background-repeat: no-repeat;
+      display: grid;
+      place-items: center;
+      color: #e2e8f0;
+      font-weight: 700;
+      background-size: var(--bg-size, cover);
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>超大雪碧图分片拼接</h1>
+    <p>将超过 MAX_TEXTURE_SIZE 的大图按多切片背景拼接，还原完整图像，观察拼接无缝与合成开销。</p>
+  </header>
+  <main class="page">
+    <section class="toolbar">
+      <div class="group">
+        <span class="chip">MAX_TEXTURE_SIZE <span id="max-size">-</span></span>
+        <span class="chip">DPR <span id="dpr"></span></span>
+      </div>
+      <div class="group">
+        <label>整图尺寸(px)</label>
+        <input type="range" id="sheet-size" min="4096" max="12288" step="512" value="8192">
+        <span id="sheet-label">8192</span>
+      </div>
+      <div class="group">
+        <label>切片数</label>
+        <select id="tiles">
+          <option value="2">2×2</option>
+          <option value="3" selected>3×3</option>
+          <option value="4">4×4</option>
+        </select>
+      </div>
+      <div class="group">
+        <label>background-size</label>
+        <select id="bg-size">
+          <option value="cover">cover</option>
+          <option value="contain" selected>contain</option>
+          <option value="auto">auto</option>
+        </select>
+      </div>
+      <div class="group">
+        <label><input type="checkbox" id="show-border" checked> 显示切片边框</label>
+      </div>
+      <button class="btn primary" id="regen">重新生成雪碧图</button>
+    </section>
+
+    <section class="panel">
+      <h2 class="section-title">分片拼接区域</h2>
+      <div class="meta-row">
+        <span class="badge" id="status">等待生成...</span>
+        <span class="badge mono" id="info">-</span>
+      </div>
+      <div class="scroller" id="scroller">
+        <div class="grid-wrap" id="grid"></div>
+      </div>
+    </section>
+
+    <section class="panel explain">
+      <h3 class="section-title">使用说明</h3>
+      <div>1）将整图尺寸调到超过 MAX_TEXTURE_SIZE，通过切片拼接观察无缝性；滚动与缩放看合成与重绘。</div>
+      <div>2）DevTools → Layers 查看拼接后的合成层数量与大小；Performance 录制生成雪碧图的长帧。</div>
+      <div>3）切换 background-size/切片数，对比合成负担与视觉摩尔纹。</div>
+    </section>
+  </main>
+
+  <script>
+    const maxSizeEl = document.getElementById("max-size");
+    const dprEl = document.getElementById("dpr");
+    const sheetInput = document.getElementById("sheet-size");
+    const sheetLabel = document.getElementById("sheet-label");
+    const tilesSel = document.getElementById("tiles");
+    const bgSizeSel = document.getElementById("bg-size");
+    const showBorder = document.getElementById("show-border");
+    const statusEl = document.getElementById("status");
+    const infoEl = document.getElementById("info");
+    const grid = document.getElementById("grid");
+
+    dprEl.textContent = (window.devicePixelRatio || 1).toFixed(2);
+    maxSizeEl.textContent = getMaxTextureSize();
+
+    function getMaxTextureSize() {
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext("webgl");
+      if (!gl) return "未知";
+      return gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    }
+
+    function createSheet(size) {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      const grd = ctx.createLinearGradient(0, 0, size, size);
+      grd.addColorStop(0, "#0ea5e9");
+      grd.addColorStop(1, "#22d3ee");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, size, size);
+      ctx.strokeStyle = "rgba(255,255,255,0.4)";
+      const step = Math.max(64, size / 12);
+      for (let i = 0; i < size; i += step) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, size);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(size, i);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "rgba(15,23,42,0.8)";
+      ctx.font = `${Math.max(64, size / 24)}px 'Segoe UI'`;
+      ctx.fillText(`${size}px`, size * 0.08, size * 0.18);
+      return canvas;
+    }
+
+    function regenerate() {
+      const size = Number(sheetInput.value);
+      sheetLabel.textContent = size;
+      const tiles = Number(tilesSel.value);
+      statusEl.textContent = "生成中...";
+      const start = performance.now();
+      requestAnimationFrame(() => {
+        const sheet = createSheet(size);
+        const url = sheet.toDataURL("image/png");
+        grid.style.setProperty("--bg-size", bgSizeSel.value);
+        grid.innerHTML = "";
+        const sliceSize = size / tiles;
+        for (let y = 0; y < tiles; y++) {
+          for (let x = 0; x < tiles; x++) {
+            const div = document.createElement("div");
+            div.className = "slice";
+            div.style.setProperty("--bg-size", bgSizeSel.value);
+            div.style.aspectRatio = "1 / 1";
+            div.style.backgroundImage = `url(${url})`;
+            const posX = -(x * sliceSize);
+            const posY = -(y * sliceSize);
+            div.style.backgroundPosition = `${posX}px ${posY}px`;
+            div.style.backgroundSize = `${size}px ${size}px`;
+            if (!showBorder.checked) div.style.border = "none";
+            div.textContent = `${x + 1},${y + 1}`;
+            grid.appendChild(div);
+          }
+        }
+        const cost = performance.now() - start;
+        statusEl.textContent = `生成完成 (${cost.toFixed(1)} ms)`;
+        infoEl.textContent = `整图 ${size}×${size} ｜ 切片 ${tiles}×${tiles} ｜ bg-size ${bgSizeSel.value}`;
+      });
+    }
+
+    sheetInput.addEventListener("input", () => sheetLabel.textContent = sheetInput.value);
+    tilesSel.addEventListener("change", regenerate);
+    bgSizeSel.addEventListener("change", regenerate);
+    showBorder.addEventListener("change", regenerate);
+    document.getElementById("regen").addEventListener("click", regenerate);
+
+    regenerate();
+  </script>
+</body>
+</html>

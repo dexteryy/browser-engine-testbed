@@ -13,28 +13,23 @@
       super();
       const shadow = this.attachShadow({ mode: 'open' });
       const styleEl = document.createElement('style');
-      styleEl.textContent = `
-        :host{ display:block; padding:12px; border:1px solid #ddd; border-radius:6px; background:#fff; }
-        .inside{ color:#e53935; }
-        /* By default, make ::slotted content green and bold */
-        ::slotted(.slot-item){ color:#2e7d32 !important; font-weight:600; }
-      `;
+      this._styleEl = styleEl;
+      this._baseStyles = `:host{ display:block; padding:12px; border:1px solid #ddd; border-radius:6px; background:#fff; }
+        .inside{ color:#e53935; }`;
+      this._slottedRule = `::slotted(.slot-item){ color:#2e7d32 !important; font-weight:600; }`;
       const wrapper = document.createElement('div');
       wrapper.innerHTML = `
         <p class="inside">Shadow 内部文本（应红色）</p>
         <div class="slotbox"><slot name="content"></slot></div>
       `;
       shadow.append(styleEl, wrapper);
-      this._styleEl = styleEl;
-      this._hasSlottedRule = true;
+      // Default: keep ::slotted rule off so initial view matches the toolbar (unchecked)
+      this.slottedStylesEnabled = this.hasAttribute('slotted-on');
     }
     set slottedStylesEnabled(v){
       // Toggle the ::slotted rule by rewriting stylesheet for determinism
-      const base = `:host{ display:block; padding:12px; border:1px solid #ddd; border-radius:6px; background:#fff; }
-        .inside{ color:#e53935; }`;
-      const rule = `::slotted(.slot-item){ color:#2e7d32 !important; font-weight:600; }`;
-      this._styleEl.textContent = v ? base + rule : base;
       this._hasSlottedRule = !!v;
+      this._styleEl.textContent = this._baseStyles + (v ? this._slottedRule : '');
     }
     get slottedStylesEnabled(){ return this._hasSlottedRule; }
   }
@@ -50,6 +45,7 @@
     chk.addEventListener('change', () => { link.disabled = !chk.checked; });
     out.addEventListener('change', () => { document.body.classList.toggle('global-outline', out.checked); });
     chkSlotted.addEventListener('change', () => { el.slottedStylesEnabled = chkSlotted.checked; });
+    el.slottedStylesEnabled = chkSlotted.checked; // ensure initial rule matches control
   });
   </script>
 </head>
@@ -58,13 +54,20 @@
     <div class="container">
       <h1 class="title">测试用例7：Shadow DOM 样式封装隔离 — slot 分发与 ::slotted</h1>
       <p class="subtitle">验证插槽投影节点继承外部样式；可用 ::slotted 在组件内部对其进行限定样式。</p>
+      <div class="top-links">
+        <a href="index.html">目录</a>
+        <a href="01-basic.html">01 基础隔离</a>
+        <a aria-current="page" href="02-slotted.html">02 slot 分发</a>
+        <a href="03-host.html">03 :host</a>
+        <a href="04-performance.html">04 多实例</a>
+      </div>
     </div>
   </div>
 
   <div class="container">
     <div class="toolbar">
       <label class="group"><input id="toggleGlobal" type="checkbox" checked> 启用全局干扰样式（global.css）</label>
-      <label class="group"><input id="toggleSlotted" type="checkbox" checked> 启用 ::slotted(.slot-item) 内部样式</label>
+      <label class="group"><input id="toggleSlotted" type="checkbox"> 启用 ::slotted(.slot-item) 内部样式</label>
       <label class="group"><input id="toggleOutline" type="checkbox"> 显示页面全局轮廓（辅助观察）</label>
       <span class="badge">Chromium 最新版</span>
     </div>

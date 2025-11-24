@@ -70,8 +70,8 @@
 
       <article class="item">
         <h3>外层子项B（含内层容器）</h3>
-        <p>下方为纵向的内层容器，每个子项在悬停时扩大占比；其中一个子项使用 <code>align-self</code> 覆盖内层对齐设置。</p>
-        <div class="nested inner" style="flex-direction: column;" aria-label="内层容器（纵向）">
+        <p>下方为纵向的内层容器（占满剩余高度），每个子项在悬停时扩大占比；其中一个子项使用 <code>align-self</code> 覆盖内层对齐设置。</p>
+        <div class="nested nested-fill inner" style="flex-direction: column;" aria-label="内层容器（纵向）">
           <div class="n-item" title="悬停扩展">B-1</div>
           <div class="n-item" style="align-self: center; min-height: 90px;" title="此项使用 align-self 覆盖内层对齐">B-2（align-self:center）</div>
           <div class="n-item" title="悬停扩展">B-3</div>
@@ -90,7 +90,7 @@
   <section class="explain">
     <h3>解释说明</h3>
     <p><strong>测试目标：</strong>聚焦多层嵌套的 Flex 布局在不同对齐策略下的表现；当内/外层子项悬停扩展时，应仅影响相应层级的布局。</p>
-    <p><strong>测试方案：</strong>外层为横向 Flex，内层为纵向 Flex。通过工具栏可以分别改变外层与内层的 <code>align-items</code>。部分内层子项设置 <code>align-self</code> 与较大的 <code>min-height</code> 以覆盖或约束布局。</p>
+    <p><strong>测试方案：</strong>外层为横向 Flex，内层为纵向 Flex 并占满父项剩余高度，从而在悬停放大时会推开兄弟项，触发多层级重排。通过工具栏可以分别改变外层与内层的 <code>align-items</code>。部分内层子项设置 <code>align-self</code> 与较大的 <code>min-height</code> 以覆盖或约束布局。</p>
     <p><strong>使用方法：</strong>先切换对齐参数，再在外层子项 A/C 或任意内层子项上悬停，观察另一层级是否按预期压缩/对齐，确保无遮挡与溢出。</p>
     <p><strong>查看/检验/评估结果：</strong>开启 “Show layout shift regions”，观察高亮是否主要集中在对应层级；在 Performance 中可比对外层扩展与内层扩展的重排范围差异。</p>
   </section>
