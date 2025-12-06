@@ -38,6 +38,11 @@
     // Ensure the overlay grid uses the same track list
     _applyTrackTemplate() {
       const cs = getComputedStyle(this.host);
+      // Make overlay cover the host's content box (grid lines are inside padding).
+      this.overlay.style.top = cs.paddingTop;
+      this.overlay.style.left = cs.paddingLeft;
+      this.overlay.style.right = cs.paddingRight;
+      this.overlay.style.bottom = cs.paddingBottom;
       // Column tracks
       if (this.axis === 'columns' || this.axis === 'both') {
         if (this.useSubgrid) {
@@ -158,8 +163,41 @@
 
   // Feature detection
   function supportsSubgrid() {
-    return CSS.supports('grid-template-columns', 'subgrid')
-        || CSS.supports('grid-template-rows', 'subgrid');
+    const syntaxOK = CSS.supports('grid-template-columns', 'subgrid')
+      || CSS.supports('grid-template-rows', 'subgrid');
+    if (!syntaxOK) return false;
+
+    // Runtime geometry probe to avoid false positives when the keyword parses
+    // but layout does not honor it.
+    const parent = document.createElement('div');
+    parent.style.cssText = [
+      'position:absolute', 'left:-9999px', 'top:-9999px',
+      'display:grid', 'grid-template-columns:40px 80px',
+      'grid-template-rows:12px 12px', 'gap:0', 'margin:0', 'padding:0'
+    ].join(';');
+
+    const child = document.createElement('div');
+    child.style.cssText = 'grid-column:1 / -1;grid-row:1 / -1;display:grid;grid-template-columns: subgrid;grid-template-rows: subgrid;';
+    parent.appendChild(child);
+
+    const s1 = document.createElement('div');
+    const s2 = document.createElement('div');
+    s1.style.cssText = 'grid-column:1;grid-row:1;width:1px;height:1px;';
+    s2.style.cssText = 'grid-column:2;grid-row:1;width:1px;height:1px;';
+    child.append(s1, s2);
+
+    document.body.appendChild(parent);
+    // Force layout and measure
+    const childRect = child.getBoundingClientRect();
+    const r1 = s1.getBoundingClientRect();
+    const r2 = s2.getBoundingClientRect();
+    document.body.removeChild(parent);
+
+    const expectedDelta = 40; // distance between col1 and col2 from parent tracks
+    const expectedTotal = 120; // 40 + 80 columns
+    const delta = r2.left - r1.left;
+    const childWidth = childRect.width;
+    return Math.abs(delta - expectedDelta) <= 1 && Math.abs(childWidth - expectedTotal) <= 1;
   }
 
   // Bind a range <input> to change the gap of a grid container

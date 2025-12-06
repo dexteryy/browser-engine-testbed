@@ -104,6 +104,7 @@
     const infoEl = document.getElementById("info");
     const bgArea = document.getElementById("bg-area");
     const label = document.getElementById("label");
+    let dirty = false;
 
     dprEl.textContent = (window.devicePixelRatio || 1).toFixed(2);
 
@@ -151,11 +152,17 @@
       infoEl.textContent = `背景尺寸: ${size}×${size} ｜ repeat: ${repeatToggle.checked}`;
     }
 
+    function markDirty() {
+      dirty = true;
+      statusEl.textContent = "参数已更改，点击重新生成";
+    }
+
     function regenerate() {
       const size = Number(sizeInput.value);
       sizeLabel.textContent = size;
       const start = performance.now();
       statusEl.textContent = "生成中...";
+      dirty = false;
       requestAnimationFrame(() => {
         const url = createLargeImage(size);
         applyBackground(url, size);
@@ -166,13 +173,18 @@
 
     sizeInput.addEventListener("input", () => {
       sizeLabel.textContent = sizeInput.value;
+      markDirty();
     });
     scaleInput.addEventListener("input", () => {
       scaleLabel.textContent = Number(scaleInput.value).toFixed(2);
       bgArea.style.transform = `scale(${Number(scaleInput.value)})`;
     });
-    bgSizeSel.addEventListener("change", regenerate);
-    repeatToggle.addEventListener("change", regenerate);
+    bgSizeSel.addEventListener("change", () => {
+      markDirty();
+    });
+    repeatToggle.addEventListener("change", () => {
+      markDirty();
+    });
     document.getElementById("regen").addEventListener("click", regenerate);
 
     maxSizeEl.textContent = getMaxTextureSize();

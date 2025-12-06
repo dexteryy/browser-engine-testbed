@@ -93,7 +93,7 @@
 
   <script src="./assets/common.js"></script>
   <script>
-    const {byId, on, FpsMeter, number, maskSources} = window.MaskUtils;
+    const {byId, on, FpsMeter, number, maskSources, applyMaskStyles} = window.MaskUtils;
     const itemsA = byId('itemsA'), itemsB = byId('itemsB');
     const count = byId('count'), countv = byId('countv');
     const animType = byId('animType'), layerHint = byId('layerHint');
@@ -120,11 +120,13 @@
         d.appendChild(ph);
         if(masked){
           // Apply a circular mask scaled to element box
-          d.style.maskImage = `url('${maskSources.circle}')`;
-          d.style.maskSize = '100% 100%';
-          d.style.maskPosition = 'center';
-          d.style.maskRepeat = 'no-repeat';
-          d.style.maskMode = 'alpha';
+          applyMaskStyles(d, {
+            image: `url('${maskSources.circle}')`,
+            size: '100% 100%',
+            position: 'center',
+            repeat: 'no-repeat',
+            mode: 'alpha'
+          });
         }
         container.appendChild(d);
       }

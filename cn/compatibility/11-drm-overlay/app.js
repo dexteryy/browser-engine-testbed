@@ -24,19 +24,19 @@ const dom = {
 };
 
 const streams = {
-  dashWidevine: {
-    url: "https://storage.googleapis.com/shaka-demo-assets/angel-one/dash.mpd",
-    type: "application/dash+xml",
+  widevineMp4: {
+    url: "https://storage.googleapis.com/shaka-demo-assets/angel-one-widevine/v-0576p-1400k-libx264.mp4",
+    type: 'video/mp4;codecs="avc1.42c01e"',
     keySystem: "com.widevine.alpha",
     license: "https://cwip-shaka-proxy.appspot.com/no_auth",
-    label: "Widevine demo (angel-one 720p)"
+    label: "Widevine demo (576p mp4)"
   },
   hlsFallback: {
-    url: "https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8",
-    type: "application/x-mpegURL",
+    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    type: "video/mp4",
     keySystem: null,
     license: null,
-    label: "Fallback HLS (非 DRM)"
+    label: "Fallback MP4 (非 DRM)"
   },
   bbb: {
     url: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
@@ -52,6 +52,7 @@ const streams = {
 
 let emeSession = null;
 let muted = false;
+let protectedFallbackUsed = false;
 
 function updateStatuses() {
   const pip = document.pictureInPictureElement;
@@ -77,7 +78,7 @@ async function initEME(video, config) {
   try {
     const access = await navigator.requestMediaKeySystemAccess(config.keySystem, [{
       initDataTypes: ["cenc"],
-      videoCapabilities: [{ contentType: 'video/mp4;codecs="avc1.42E01E"', robustness: "SW_SECURE_CRYPTO" }]
+      videoCapabilities: [{ contentType: config.type || 'video/mp4;codecs="avc1.42c01e"', robustness: "" }]
     }]);
     const keys = await access.createMediaKeys();
     await video.setMediaKeys(keys);
@@ -96,19 +97,23 @@ async function handleEncrypted(event, licenseUrl, mediaKeys) {
   emeSession = session;
   session.addEventListener("message", async (msgEvent) => {
     try {
+      if (!licenseUrl) {
+        switchProtectedToFallback("缺少 License URL");
+        return;
+      }
       const license = await requestLicense(licenseUrl, msgEvent.message);
       await session.update(license);
       setBadge(dom.emeStatus, "EME：License OK", true);
     } catch (err) {
       console.error("License update failed", err);
-      setBadge(dom.emeStatus, "EME：License 失败", false);
+      switchProtectedToFallback("License 失败");
     }
   });
   try {
     await session.generateRequest(event.initDataType, event.initData);
   } catch (err) {
     console.error("generateRequest failed", err);
-    setBadge(dom.emeStatus, "EME：请求失败", false);
+    switchProtectedToFallback("EME 请求失败");
   }
 }
 
@@ -132,14 +137,25 @@ function loadStream(video, info) {
   video.load();
 }
 
+function switchProtectedToFallback(reason) {
+  if (protectedFallbackUsed) return;
+  protectedFallbackUsed = true;
+  loadStream(dom.videoProtected, streams.hlsFallback);
+  dom.videoProtected.dataset.mode = "fallback";
+  setBadge(dom.emeStatus, `EME：${reason}，已降级非 DRM`, false);
+}
+
 async function setupProtected() {
   const chosen = streams[dom.drmSelect.value];
+  protectedFallbackUsed = false;
   const ok = await initEME(dom.videoProtected, chosen);
   if (!ok && chosen.keySystem) {
     // Fallback to non-DRM stream when EME unavailable
     loadStream(dom.videoProtected, streams.hlsFallback);
+    dom.videoProtected.dataset.mode = "fallback";
   } else {
     loadStream(dom.videoProtected, chosen);
+    dom.videoProtected.dataset.mode = chosen.keySystem ? "drm" : "fallback";
   }
 }
 
@@ -220,6 +236,14 @@ function attachOverlayProbe() {
   });
 }
 
+function attachProtectedErrorFallback() {
+  dom.videoProtected.addEventListener("error", () => {
+    if (dom.videoProtected.dataset.mode === "drm") {
+      switchProtectedToFallback("播放错误");
+    }
+  });
+}
+
 function attachLoadButton() {
   dom.loadBtn.addEventListener("click", async () => {
     await setupProtected();
@@ -234,8 +258,10 @@ function boot() {
   attachFullScreen();
   attachPiP();
   attachOverlayProbe();
+  attachProtectedErrorFallback();
   setupClear();
   setupProtected();
+  updateStatuses();
 }
 
 boot();

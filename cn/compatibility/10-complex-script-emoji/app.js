@@ -4,6 +4,8 @@
 const dom = {
   fadeMin: document.getElementById("fadeMin"),
   duration: document.getElementById("duration"),
+  fadeMinValue: document.getElementById("fadeMinValue"),
+  durationValue: document.getElementById("durationValue"),
   animArabic: document.getElementById("animArabic"),
   animSEA: document.getElementById("animSEA"),
   animEmoji: document.getElementById("animEmoji"),
@@ -50,7 +52,7 @@ const emojiSets = [
 ];
 
 const state = {
-  fadeMin: 0.9,
+  fadeMin: 0.5,
   duration: 3,
   animArabic: true,
   animSEA: true,
@@ -135,16 +137,26 @@ function renderColumns() {
     createGiantEmoji(dom.emojiContent);
   }
 
-  applyAnimations();
+  applyAnimations({ restart: true });
   applyFeatures();
   applyBackground();
 }
 
-function applyAnimations() {
+function applyAnimations(options = {}) {
+  const { restart = false } = options;
+  const durationText = `${state.duration}s`;
   document.documentElement.style.setProperty("--fade-min", state.fadeMin);
-  document.documentElement.style.setProperty("--anim-duration", `${state.duration}s`);
+  document.documentElement.style.setProperty("--anim-duration", durationText);
+  dom.fadeMinValue.textContent = state.fadeMin.toFixed(2);
+  dom.durationValue.textContent = `${state.duration.toFixed(1)}s`;
+
   const toggle = (container, enabled) => {
     container.querySelectorAll(".sample").forEach(el => {
+      if (restart && el.classList.contains("pulse")) {
+        el.classList.remove("pulse");
+        // Force reflow so new opacity/duration take effect immediately
+        void el.offsetWidth;
+      }
       el.classList.toggle("pulse", enabled);
       // Desync animation start to avoid lock-step blinking
       if (enabled) {
@@ -158,6 +170,9 @@ function applyAnimations() {
   toggle(dom.seaContent, state.animSEA);
   toggle(dom.emojiContent, state.animEmoji);
   dom.animStatus.textContent = `动画：${state.animArabic || state.animSEA || state.animEmoji ? "开启" : "全部关闭"}`;
+  if (state.animArabic || state.animSEA || state.animEmoji) {
+    dom.animStatus.textContent += ` · 透明度 ${state.fadeMin.toFixed(2)}→1 · 周期 ${state.duration.toFixed(1)}s`;
+  }
 }
 
 function applyFeatures() {
@@ -224,7 +239,7 @@ function startScroll() {
 }
 
 function resetSettings() {
-  state.fadeMin = 0.9;
+  state.fadeMin = 0.5;
   state.duration = 3;
   state.animArabic = true;
   state.animSEA = true;
@@ -255,23 +270,23 @@ function resetSettings() {
 function attachEvents() {
   dom.fadeMin.addEventListener("input", () => {
     state.fadeMin = Number(dom.fadeMin.value);
-    applyAnimations();
+    applyAnimations({ restart: true });
   });
   dom.duration.addEventListener("input", () => {
     state.duration = Number(dom.duration.value);
-    applyAnimations();
+    applyAnimations({ restart: true });
   });
   dom.animArabic.addEventListener("change", () => {
     state.animArabic = dom.animArabic.checked;
-    applyAnimations();
+    applyAnimations({ restart: true });
   });
   dom.animSEA.addEventListener("change", () => {
     state.animSEA = dom.animSEA.checked;
-    applyAnimations();
+    applyAnimations({ restart: true });
   });
   dom.animEmoji.addEventListener("change", () => {
     state.animEmoji = dom.animEmoji.checked;
-    applyAnimations();
+    applyAnimations({ restart: true });
   });
   dom.bidiMarks.addEventListener("change", () => {
     state.bidiMarks = dom.bidiMarks.checked;

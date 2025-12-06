@@ -92,6 +92,25 @@
     return props.map(p => `${p}: ${cs.getPropertyValue(p)};`).join('\n');
   }
 
+  // Apply mask-related styles with WebKit-prefixed fallback to cover older/blink-style engines.
+  function applyMaskStyles(el, styles) {
+    const set = (suffix, value) => {
+      if (value === undefined) return;
+      el.style['mask' + suffix] = value;
+      el.style['webkitMask' + suffix] = value;
+    };
+    if ('mask' in styles) set('', styles.mask);
+    if ('image' in styles) set('Image', styles.image);
+    if ('mode' in styles) set('Mode', styles.mode);
+    if ('size' in styles) set('Size', styles.size);
+    if ('position' in styles) set('Position', styles.position);
+    if ('repeat' in styles) set('Repeat', styles.repeat);
+    if ('composite' in styles) {
+      el.style.maskComposite = styles.composite;
+      el.style.webkitMaskComposite = styles.composite;
+    }
+  }
+
   // Inline SVG mask sources to avoid file:// CORS issues.
   const rawSvgs = {
     circle: `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" preserveAspectRatio="none"><circle cx="50" cy="50" r="50" fill="white"/></svg>`,
@@ -101,5 +120,5 @@
   };
   const maskSources = Object.fromEntries(Object.entries(rawSvgs).map(([k,v]) => [k, 'data:image/svg+xml;utf8,' + encodeURIComponent(v)]));
 
-  root.MaskUtils = { qs, qsa, on, byId, copy, toast, cssSupports, FpsMeter, setBar, number, extractMaskCSS, maskSources };
+  root.MaskUtils = { qs, qsa, on, byId, copy, toast, cssSupports, FpsMeter, setBar, number, extractMaskCSS, applyMaskStyles, maskSources };
 })(window);

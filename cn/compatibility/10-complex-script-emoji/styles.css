@@ -8,7 +8,7 @@
   --badge: #f3f4f6;
   --accent: #2563eb;
   --bg-soft: #f8fafc;
-  --fade-min: 0.9;
+  --fade-min: 0.5;
   --anim-duration: 3s;
 }
 
@@ -60,6 +60,18 @@ label {
   gap: 6px;
   margin: 4px 12px 4px 0;
   white-space: nowrap;
+}
+.value {
+  display: inline-flex;
+  align-items: center;
+  min-width: 52px;
+  padding: 2px 8px;
+  margin-left: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--badge);
+  color: #111;
+  font-variant-numeric: tabular-nums;
 }
 select, button, input[type="number"] {
   height: 30px;
@@ -181,10 +193,12 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .pulse {
   animation: fadePulse var(--anim-duration) ease-in-out infinite alternate;
   transform-origin: center center;
+  will-change: opacity;
 }
 @keyframes fadePulse {
-  from { opacity: var(--fade-min); }
-  to { opacity: 1; }
+  0% { opacity: var(--fade-min); }
+  60% { opacity: 1; }
+  100% { opacity: min(1, calc(var(--fade-min) + 0.05)); }
 }
 
 .explain .inner {

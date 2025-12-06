@@ -9,9 +9,14 @@
   .box .photo{ background-image:url('./assets/avatar.svg'); }
   .avatar, .ref{position:relative}
   .avatar.mask-target{background:#cbd5e1;}
-  .bg-choice-pure{ background:#f1f5f9; }
-  .bg-choice-gradient{ background:linear-gradient(135deg, #fda4af, #93c5fd); }
-  .bg-choice-checker{ background:#fff; }
+  .bg-choice-pure, .card.bg-choice-pure{ background:#f1f5f9; }
+  .bg-choice-gradient, .card.bg-choice-gradient{ background:linear-gradient(135deg, #fda4af, #93c5fd); }
+  .bg-choice-checker, .card.bg-choice-checker{ 
+    background-image: linear-gradient(45deg, #0000 25%, #e5e7eb 25% 50%, #0000 50% 75%, #e5e7eb 75%),
+                     linear-gradient(45deg, #e5e7eb 25%, #0000 25% 50%, #e5e7eb 50% 75%, #0000 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 8px 8px;
+  }
   </style>
 </head>
 <body>
@@ -49,7 +54,7 @@
           <option value="100% 100%">100% 100%</option>
           <option value="contain">contain</option>
           <option value="cover">cover</option>
-          <option value="custom">自定义（百分比）</option>
+          <option value="custom" selected>自定义（百分比）</option>
         </select>
         <div class="value">W <input id="msw" type="range" min="10" max="200" value="100"> <span id="mswv">100%</span></div>
         <div class="value">H <input id="msh" type="range" min="10" max="200" value="100"> <span id="mshv">100%</span></div>
@@ -120,7 +125,7 @@
 
   <script src="./assets/common.js"></script>
   <script>
-    const {byId, on, copy, cssSupports, extractMaskCSS} = window.MaskUtils;
+    const {byId, on, copy, cssSupports, extractMaskCSS, applyMaskStyles} = window.MaskUtils;
 
     const masked = byId('maskedBox');
     const ref = byId('refBox');
@@ -138,14 +143,18 @@
     const mswv = byId('mswv'); const mshv = byId('mshv');
     const mpxv = byId('mpxv');
 
+    const maskedCard = masked.closest('.card');
+    const refCard = ref.closest('.card');
+
     function updateBoxBG(){
-      masked.classList.remove('bg-choice-pure','bg-choice-gradient');
-      ref.classList.remove('bg-choice-pure','bg-choice-gradient');
-      if (bgChoice.value === 'pure'){
-        masked.classList.add('bg-choice-pure'); ref.classList.add('bg-choice-pure');
-      } else if (bgChoice.value === 'gradient'){
-        masked.classList.add('bg-choice-gradient'); ref.classList.add('bg-choice-gradient');
-      } // checker is default (via .checker)
+      const cls = bgChoice.value === 'pure' ? 'bg-choice-pure'
+                  : bgChoice.value === 'gradient' ? 'bg-choice-gradient'
+                  : 'bg-choice-checker';
+      [masked, ref, maskedCard, refCard].forEach(el=>{
+        if(!el) return;
+        el.classList.remove('bg-choice-pure','bg-choice-gradient','bg-choice-checker');
+        el.classList.add(cls);
+      });
     }
 
     const {maskSources} = window.MaskUtils;
@@ -176,18 +185,22 @@
       const repeat = maskRepeat.value;
 
       if (img === 'none'){
-        masked.style.mask = 'none';
-        masked.style.maskImage = 'none';
-        masked.style.maskSize = '';
-        masked.style.maskPosition = '';
-        masked.style.maskRepeat = '';
-        masked.style.maskMode = '';
+        applyMaskStyles(masked, {
+          mask: 'none',
+          image: 'none',
+          mode: '',
+          size: '',
+          position: '',
+          repeat: ''
+        });
       } else {
-        masked.style.maskImage = img;
-        masked.style.maskMode = mode;
-        masked.style.maskSize = size;
-        masked.style.maskPosition = pos;
-        masked.style.maskRepeat = repeat;
+        applyMaskStyles(masked, {
+          image: img,
+          mode,
+          size,
+          position: pos,
+          repeat
+        });
       }
     }
 

@@ -89,13 +89,17 @@
 
   <script src="./assets/common.js"></script>
   <script>
-    const {byId, on, cssSupports, maskSources} = window.MaskUtils;
+    const {byId, on, cssSupports, maskSources, applyMaskStyles} = window.MaskUtils;
     const t = byId('target'); const cssOut = byId('cssOut');
     const preset = byId('preset'), shapeA = byId('shapeA'), shapeB = byId('shapeB');
     const bx = byId('bx'), by = byId('by'), bs = byId('bs');
     const bxv = byId('bxv'), byv = byId('byv'), bsv = byId('bsv');
-    const support = cssSupports('mask-composite', 'intersect');
-    byId('support').textContent = support ? 'mask-composite: 支持' : 'mask-composite: 不支持（将退化为默认叠加）';
+    const supportStandard = cssSupports('mask-composite', 'intersect');
+    const supportWebkit = cssSupports('-webkit-mask-composite', 'source-in');
+    const supportLabel = supportStandard
+      ? 'mask-composite: 支持'
+      : (supportWebkit ? '-webkit-mask-composite: 支持（旧值语法）' : 'mask-composite: 不支持（将退化为默认叠加）');
+    byId('support').textContent = supportLabel;
 
     function imgFor(value){
       if (value === 'radial'){
@@ -119,25 +123,26 @@
       const posA = '50% 50%';
       const posB = `${bx.value}% ${by.value}%`;
       const repeat = 'no-repeat, no-repeat';
-      t.style.maskImage = `${a}, ${b}`;
-      t.style.maskMode = `alpha, alpha`;
-      t.style.maskSize = `${sizeA}, ${sizeB}`;
-      t.style.maskPosition = `${posA}, ${posB}`;
-      t.style.maskRepeat = repeat;
+      applyMaskStyles(t, {
+        image: `${a}, ${b}`,
+        mode: `alpha, alpha`,
+        size: `${sizeA}, ${sizeB}`,
+        position: `${posA}, ${posB}`,
+        repeat
+      });
 
-      if (support){
-        const comp = preset.value; // add | subtract | intersect | exclude
-        t.style.maskComposite = `add, ${comp}`;
-      }else{
-        t.style.maskComposite = ''; // fallback: default source-over like stacking
-      }
+      const compStd = `add, ${preset.value}`; // add | subtract | intersect | exclude
+      const mapWebkit = { add: 'source-over', subtract: 'source-out', intersect: 'source-in', exclude: 'xor' };
+      const compWebkit = `source-over, ${mapWebkit[preset.value] || 'source-over'}`;
+      t.style.maskComposite = supportStandard ? compStd : '';
+      t.style.webkitMaskComposite = supportWebkit ? compWebkit : '';
 
       cssOut.textContent = `mask-image: ${a}, ${b};
 mask-mode: alpha, alpha;
 mask-size: ${sizeA}, ${sizeB};
 mask-position: ${posA}, ${posB};
 mask-repeat: ${repeat};
-${support ? `mask-composite: add, ${preset.value};` : '/* mask-composite 不支持：已退化为默认叠加 */'}`;
+${supportStandard ? `mask-composite: ${compStd};` : (supportWebkit ? `-webkit-mask-composite: ${compWebkit};` : '/* mask-composite 不支持：已退化为默认叠加 */')}`;
       bxv.textContent = bx.value + '%';
       byv.textContent = by.value + '%';
       bsv.textContent = bs.value + '%';

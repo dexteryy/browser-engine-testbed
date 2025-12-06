@@ -55,8 +55,10 @@
       grid-column: main-start / right-end;
       display: grid;
       grid-template-columns: subgrid; /* inherit from parent area (main..right) */
-      gap: var(--gap);
-      border: 1px dashed #bfdbfe;
+      /* Do not override gap: subgrid copies parent gutters automatically */
+      outline: 1px dashed #bfdbfe; /* outline keeps the visual frame without shifting the content box */
+      border: 0;
+      padding: 0;
       background: #f9fbff;
     }
     .feature .card {

@@ -28,10 +28,11 @@
       grid-row: band-start / band-end; /* spans 1fr + 2fr area */
       display: grid;
       grid-template-rows: subgrid;  /* inherit the rows from parent */
-      gap: var(--gap);
-      border: 1px dashed #86efac;
+      /* Do not override gap so parent gutters propagate */
+      outline: 1px dashed #86efac; /* keep frame without shrinking the subgrid content box */
+      border: 0;
       background: #f6fff7;
-      padding: 8px;
+      padding: 0;
     }
     .row-card {
       background: #fff;

@@ -95,7 +95,7 @@
 
   <script src="./assets/common.js"></script>
   <script>
-    const {qs, byId, on, copy, number} = window.MaskUtils;
+    const {qs, byId, on, copy, number, applyMaskStyles} = window.MaskUtils;
     const el = byId('maskTarget');
     const gType = byId('gType');
     const gMode = byId('gMode');
@@ -138,11 +138,13 @@
 
     function apply(){
       const img = maskImage();
-      el.style.maskImage = img;
-      el.style.maskMode = gMode.value;
-      el.style.maskRepeat = 'no-repeat';
-      el.style.maskSize = '100% 100%';
-      el.style.maskPosition = 'center';
+      applyMaskStyles(el, {
+        image: img,
+        mode: gMode.value,
+        repeat: 'no-repeat',
+        size: '100% 100%',
+        position: 'center'
+      });
 
       const css = `mask-image: ${img};\nmask-mode: ${gMode.value};\nmask-size: 100% 100%;\nmask-position: center;\nmask-repeat: no-repeat;`;
       cssOut.textContent = css;

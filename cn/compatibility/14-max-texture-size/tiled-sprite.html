@@ -91,6 +91,7 @@
     const statusEl = document.getElementById("status");
     const infoEl = document.getElementById("info");
     const grid = document.getElementById("grid");
+    let dirty = false;
 
     dprEl.textContent = (window.devicePixelRatio || 1).toFixed(2);
     maxSizeEl.textContent = getMaxTextureSize();
@@ -130,12 +131,18 @@
       return canvas;
     }
 
+    function markDirty() {
+      dirty = true;
+      statusEl.textContent = "参数已更改，点击重新生成雪碧图";
+    }
+
     function regenerate() {
       const size = Number(sheetInput.value);
       sheetLabel.textContent = size;
       const tiles = Number(tilesSel.value);
       statusEl.textContent = "生成中...";
       const start = performance.now();
+      dirty = false;
       requestAnimationFrame(() => {
         const sheet = createSheet(size);
         const url = sheet.toDataURL("image/png");
@@ -164,10 +171,13 @@
       });
     }
 
-    sheetInput.addEventListener("input", () => sheetLabel.textContent = sheetInput.value);
-    tilesSel.addEventListener("change", regenerate);
-    bgSizeSel.addEventListener("change", regenerate);
-    showBorder.addEventListener("change", regenerate);
+    sheetInput.addEventListener("input", () => {
+      sheetLabel.textContent = sheetInput.value;
+      markDirty();
+    });
+    tilesSel.addEventListener("change", markDirty);
+    bgSizeSel.addEventListener("change", markDirty);
+    showBorder.addEventListener("change", markDirty);
     document.getElementById("regen").addEventListener("click", regenerate);
 
     regenerate();
