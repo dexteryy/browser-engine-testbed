@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="zh-CN" id="compare">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>test case9:SVG Image embedding and citation methods - comparison page</title>
+  <link rel="stylesheet" href="./assets/style.css">
+  <style>
+    /* Page-local styles (English comments) */
+  </style>
+</head>
+<body>
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="inner">
+      <h1>test case9:SVG Image embedding and citation methods</h1>
+      <div class="desc">inline / external citation / CSS background Side-by-side comparison of three methods</div>
+      <nav class="nav">
+        <a class="active" href="./index.html">contrast</a>
+        <a href="./inline.html">inlineSVG</a>
+        <a href="./external.html">external citation</a>
+        <a href="./css-background.html">CSS background</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="section">
+    <div class="toolbar">
+      <div class="tool-group" style="grid-column: span 4;">
+        <h3>inlinestylecontrol</h3>
+        <div class="tool-inline">
+          <label for="color">Circle fill color:</label>
+          <input type="color" id="color" value="#22c55e">
+          <label for="size">display size(px):</label>
+          <input type="range" id="size" min="120" max="360" value="220">
+          <span id="sizeVal" class="note">220</span>
+        </div>
+      </div>
+      <div class="tool-group" style="grid-column: span 4;">
+        <h3>background SVG control</h3>
+        <div class="tool-inline">
+          <label for="bgsize">background-size:</label>
+          <select id="bgsize">
+            <option value="contain" selected>contain</option>
+            <option value="cover">cover</option>
+            <option value="100% auto">100% auto</option>
+            <option value="auto 100%">auto 100%</option>
+            <option value="160px 120px">160px 120px</option>
+          </select>
+          <label><input type="checkbox" id="showOutline"> showbackgroundbox outline</label>
+        </div>
+      </div>
+      <div class="tool-group" style="grid-column: span 4;">
+        <h3>Batch and performance</h3>
+        <div class="tool-inline">
+          <label for="count">Quantity per column:</label>
+          <input type="range" id="count" min="1" max="60" value="6">
+          <span id="countVal" class="note">6</span>
+          <button id="render" class="primary">Start batch rendering</button>
+          <button id="reset">Clear</button>
+        </div>
+        <div class="tool-inline note" id="stats">Not tested yet</div>
+      </div>
+    </div>
+
+    <!-- Test Area -->
+    <div class="test-area">
+      <div class="grid-3" id="cols">
+        <!-- Inline SVG -->
+        <div class="card" id="col-inline">
+          <div class="card-head">
+            <strong>inline SVG(Available via page CSS control)</strong>
+            <span class="note">Selectable .dot Change color</span>
+          </div>
+          <div class="card-body">
+            <div class="sample-box wide" id="inlineWrap"></div>
+            <div class="note">Expected: Circle appears as from page CSS color (default green). It should remain clear and unaliased when zooming in or out.</div>
+          </div>
+        </div>
+
+        <!-- External via <img> -->
+        <div class="card" id="col-external">
+          <div class="card-head">
+            <strong>external SVG Quote (&lt;img src&gt;)</strong>
+            <span class="note">page CSS Unable to select internal elements</span>
+          </div>
+          <div class="card-body">
+            <div class="sample-box wide" id="externalWrap"></div>
+            <div class="note">expected:Circle retains red color within file,Not subject topage CSS Impact; multiple uses can be cached.</div>
+          </div>
+        </div>
+
+        <!-- CSS Background -->
+        <div class="card" id="col-bg">
+          <div class="card-head">
+            <strong>CSS background SVG(background-image)</strong>
+            <span class="note">Presented as an image resource</span>
+          </div>
+          <div class="card-body">
+            <div class="sample-box wide" id="bgWrap"></div>
+            <div class="note">expected:backgroundImage button background-size Rendered, maintaining proportions and no blur.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Explanation -->
+  <section class="section explain">
+    <h2>Explanation</h2>
+    <p><strong>Test objectives:</strong>verify Chrome for three common SVG useRendering Support and Differences in Modes:inline, external citation, CSS background.</p>
+    <p><strong>Test plan:</strong>The top shows three columns side by side with the same content (black rectangle+round).inlineversionroundwith class name <code class="code">.dot</code>,Depend on<strong>page CSS</strong>Change fill color;external citationandbackgroundversion does not expand topage DOM,its internal elements<strong>cannot be directlypage CSS choose</strong>.</p>
+    <p><strong>How to use:</strong>Adjust via toolbarinlinecircle color, element size andbackgroundgraphic <code class="code">background-size</code>.use"batch rendering"Multiple copies can be generated at one time to observe caching and rendering stability; the statistics on the right only reflect DOM insert/Load event completion time,<em>Not strictly decoding performance</em>.</p>
+    <p><strong>Result evaluation:</strong>enlargepageor in high DPI View on screen,All three columns should maintain vector clarity;inlineThe circle should followpage CSS Instant color change,andexternalandbackgroundThe version should remain red within the file.DevTools can be seen in:inlineColumns can be expanded directly SVG child element;external/backgroundcolumn only sees a single node or CSS background.</p>
+  </section>
+
+  <footer class="footer">© test case 9 - onlyuseNative HTML/CSS/JS - Adapt to the latest Chromium</footer>
+
+  <script>
+    // Utilities (English comments)
+    const $ = (s, el=document)=>el.querySelector(s);
+    const $$ = (s, el=document)=>Array.from(el.querySelectorAll(s));
+
+    const color = $("#color");
+    const size = $("#size");
+    const sizeVal = $("#sizeVal");
+    const bgsize = $("#bgsize");
+    const showOutline = $("#showOutline");
+    const count = $("#count");
+    const countVal = $("#countVal");
+    const stats = $("#stats");
+    const inlineWrap = $("#inlineWrap");
+    const externalWrap = $("#externalWrap");
+    const bgWrap = $("#bgWrap");
+    const renderBtn = $("#render");
+    const resetBtn = $("#reset");
+    const ASPECT = 160 / 260; // match the SVG viewBox ratio to avoid letterboxing
+
+    // Render a single sample for each column
+    function createInlineSample(w){
+      const box = document.createElement("div");
+      box.className = "sample-box";
+      box.style.width = w + "px";
+      box.style.height = Math.round(w * ASPECT) + "px";
+      // Inline SVG node with a class .dot that page CSS can target
+      box.innerHTML = `
+        <svg class="sample-inline" width="100%" height="100%" viewBox="0 0 260 160" role="img" aria-label="inline SVG">
+          <rect class="rect" x="30" y="60" width="200" height="60" rx="6" fill="#111" opacity=".75"></rect>
+          <circle class="dot" cx="90" cy="80" r="30"></circle>
+          <text x="135" y="95" font-size="14" fill="#fff" font-family="system-ui, -apple-system, Arial">INLINE</text>
+        </svg>
+      `;
+      box.querySelector("svg").style.setProperty("--inline-dot-fill", color.value);
+      return box;
+    }
+
+    function createExternalSample(w){
+      const box = document.createElement("div");
+      box.className = "sample-box";
+      box.style.width = w + "px";
+      box.style.height = Math.round(w * ASPECT) + "px";
+      const img = document.createElement("img");
+      img.src = "./assets/example.svg";
+      img.alt = "external SVG";
+      img.width = w;
+      img.height = Math.round(w * ASPECT);
+      img.decoding = "async";
+      img.loading = "eager";
+      // Wait for load to measure
+      box.appendChild(img);
+      return {box, img};
+    }
+
+    function createBgSample(w){
+      const box = document.createElement("div");
+      box.className = "bg-sample";
+      box.style.width = w + "px";
+      box.style.height = Math.round(w * ASPECT) + "px";
+      box.style.setProperty("--bg-size", bgsize.value);
+      if(showOutline.checked){
+        box.style.outline = "2px solid rgba(11,87,208,0.30)";
+      }else{
+        box.style.outline = "0";
+      }
+      return box;
+    }
+
+    function refreshSingles(){
+      inlineWrap.innerHTML = "";
+      externalWrap.innerHTML = "";
+      bgWrap.innerHTML = "";
+      const w = +size.value;
+      inlineWrap.appendChild(createInlineSample(w));
+      const {box, img} = createExternalSample(w);
+      externalWrap.appendChild(box);
+      // Background single
+      bgWrap.appendChild(createBgSample(w));
+      sizeVal.textContent = w;
+      stats.textContent = "Not tested yet";
+    }
+
+    // Batch render for crude performance comparison
+    async function batchRender(){
+      const n = +count.value;
+      const w = +size.value;
+      // Clear previous
+      inlineWrap.innerHTML = "";
+      externalWrap.innerHTML = "";
+      bgWrap.innerHTML = "";
+
+      // Inline: quick create
+      const t0 = performance.now();
+      for(let i=0;i<n;i++){
+        inlineWrap.appendChild(createInlineSample(w));
+      }
+      const t1 = performance.now();
+
+      // External <img>: wait for all loads
+      const t2 = performance.now();
+      const loads = [];
+      for(let i=0;i<n;i++){
+        const {box, img} = createExternalSample(w);
+        externalWrap.appendChild(box);
+        loads.push(new Promise(res=>{
+          if(img.complete) return res();
+          img.addEventListener("load", res, {once:true});
+          img.addEventListener("error", res, {once:true}); // ignore errors
+        }));
+      }
+      await Promise.all(loads);
+      const t3 = performance.now();
+
+      // CSS background: just append boxes; image is shared/cached
+      const t4 = performance.now();
+      for(let i=0;i<n;i++){
+        bgWrap.appendChild(createBgSample(w));
+      }
+      const t5 = performance.now();
+
+      stats.textContent = `result:inline DOM insert ${(t1 - t0).toFixed(1)} ms - external <img> insert+load ${(t3 - t2).toFixed(1)} ms - backgroundnodeinsert ${(t5 - t4).toFixed(1)} ms (quantity=${n},For reference only)`;
+    }
+
+    // Wire up controls
+    color.addEventListener("input", ()=>{
+      $$(".sample-inline", document).forEach(svg=>{
+        svg.style.setProperty("--inline-dot-fill", color.value);
+      });
+    });
+    size.addEventListener("input", ()=>{
+      sizeVal.textContent = size.value;
+      refreshSingles();
+    });
+    bgsize.addEventListener("change", refreshSingles);
+    showOutline.addEventListener("change", refreshSingles);
+    count.addEventListener("input", ()=>countVal.textContent = count.value);
+    renderBtn.addEventListener("click", batchRender);
+    resetBtn.addEventListener("click", refreshSingles);
+
+    // Initial render
+    refreshSingles();
+  </script>
+</body>
+</html>

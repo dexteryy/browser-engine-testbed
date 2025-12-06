@@ -1,0 +1,157 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>test case2B:row direction Subgrid Align</title>
+  <link rel="stylesheet" href="assets/style.css"/>
+  <style>
+    /* ========== Page 2B specific styles ========== */
+    .grid-root.rows-demo {
+      /* Provide explicit rows (with fr) and a fixed test height so track sizes are stable. */
+      --rows: [header-start] 72px
+              [header-end band-start] 1fr
+              [band-mid] 2fr
+              [band-end footer-start] 72px
+              [footer-end];
+      grid-template-rows: var(--rows);
+      grid-template-columns: [left] 1fr [right] 1fr; /* simple two columns for layout */
+      height: 560px; /* fixed height to make row frs measurable */
+    }
+    .header  { grid-column: left / right; grid-row: header-start / header-end; background: #f8fafc; }
+    .footer  { grid-column: left / right; grid-row: footer-start / footer-end; }
+
+    /* Subgrid box spanning the two flexible rows */
+    .stack {
+      grid-column: left / right;
+      grid-row: band-start / band-end; /* spans 1fr + 2fr area */
+      display: grid;
+      grid-template-rows: subgrid;  /* inherit the rows from parent */
+      /* Do not override gap so parent gutters propagate */
+      outline: 1px dashed #86efac; /* keep frame without shrinking the subgrid content box */
+      border: 0;
+      background: #f6fff7;
+      padding: 0;
+    }
+    .row-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    /* Place row items using both names and numeric indices */
+    .row-card.r1 { grid-row: band-start / band-mid; }
+    .row-card.r2 { grid-row: band-mid / band-end; }
+    .row-card.r3 { grid-row: 1 / -1; } /* spans entire subgrid rows */
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="inner">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;">
+        <div>
+          <h1>test case2B:row direction Subgrid Align</h1>
+          <p>Verify that the subgrid is in<strong>row direction</strong>Inherit parent grid track,spanOKRegion maintains boundariesAlign.</p>
+        </div>
+        <div class="note" id="support-note">Browser support: Detecting...</div>
+      </div>
+      <div class="pages">
+        Page navigation:
+        <a href="./index.html">2A List</a> -
+        <a href="./rows-subgrid.html">2B OK</a> -
+        <a href="./both-axes.html">2C biaxial</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="toolbar">
+      <div class="tool">
+        <label for="gap">gap(gap):</label>
+        <input id="gap" type="range" min="0" max="40" step="1" value="16" />
+        <span class="value" id="gap-val">16px</span>
+      </div>
+      <div class="tool">
+        <input id="show-parent-rows" type="checkbox" />
+        <label for="show-parent-rows">Show parent gridOKWire</label>
+      </div>
+      <div class="tool">
+        <input id="show-sub-rows" type="checkbox" />
+        <label for="show-sub-rows">Show subgridOKWire</label>
+      </div>
+      <div class="tool">
+        <button class="btn" id="measure">Measure how long a rearrangement takes</button>
+        <span class="value" id="time">–</span>
+      </div>
+    </section>
+
+    <section class="test-area">
+      <div class="grid-root rows-demo" id="root">
+        <div class="grid-item header"><strong>header</strong>(fixed height 72px)</div>
+
+        <div class="panel stack" id="stack">
+          <div class="row-card r1"><strong>OKcard 1</strong>:Use namingOK <code>band-start / band-mid</code> Align.</div>
+          <div class="row-card r2"><strong>OKcard 2</strong>:Use namingOK <code>band-mid / band-end</code> Align.</div>
+          <div class="row-card r3"><strong>OKcard 3</strong>:Use numbers <code>1 / -1</code> spans the entire subgrid.</div>
+        </div>
+
+        <div class="grid-item footer"><strong>footer</strong>(fixed height 72px)</div>
+      </div>
+      <p class="note">Description: This page fixes the height of the parent grid so that <code>fr</code> OKCan allocate space,Easy to observerow directionsubgridAlign.</p>
+    </section>
+
+    <section class="explain">
+      <h2>Explanation</h2>
+      <div class="kv">
+        <div>Test target</div>
+        <div>verify Chrome right CSS Subgrid exist<strong>row direction</strong>inheritanceandAlign,Elements inside the subgrid shouldandof parent gridOKWirecoincide.</div>
+
+        <div>test plan</div>
+        <div>Parent grid definition 4 bar explicitOKtrack:fixed(header/footer)and <code>1fr/2fr</code> elastic region; the middle region consists of subgrids <code>.stack</code> span and use <code>grid-template-rows: subgrid</code>,Internal elements are named afterOKor numeric indexAlign.</div>
+
+        <div>How to use</div>
+        <div>1) Check"Show parent gridOKWire/subgridOKWire";2) Adjustment gap;3) Observe the children of the central regionexistTwo elasticitiesOKbetweenAlignIs it accurate?;4) pass"Measure how long a rearrangement takes"Rough assessmentexistChange gap Time-consuming rearrangement.</div>
+
+        <div>Assessment results</div>
+        <div>Under normal circumstances:subgridOKWireandparent gridrightanswerOKWirecoincide;internalcardon/belowanswerfallexistsubgridOKWireLocation;Change gap or size remains consistent.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/app.js"></script>
+  <script>
+    const { $, GridOverlay, supportsSubgrid, bindGap, measureReflow } = window.GridHarness;
+    const root = $('#root');
+    const stack = $('#stack');
+
+    // Feature detection
+    const ok = supportsSubgrid();
+    $('#support-note').textContent = ok ? 'Browser support:Subgrid ✓' : 'Browser support:Subgrid ✗(The functionality of this page is limited)';
+    $('#support-note').style.color = ok ? '#0a7f49' : '#c12a2a';
+
+    bindGap($('#gap'), root, $('#gap-val'));
+
+    // Overlays for rows
+    const ovParentRows = new GridOverlay(root, 'rows');
+    const ovChildRows = new GridOverlay(stack, 'rows', { useSubgrid: true });
+    ovParentRows.setEnabled(false);
+    ovChildRows.setEnabled(false);
+
+    $('#show-parent-rows').addEventListener('change', e => ovParentRows.setEnabled(e.target.checked));
+    $('#show-sub-rows').addEventListener('change', e => ovChildRows.setEnabled(e.target.checked));
+
+    // Simple reflow timing: change root height slightly and restore
+    const measureBtn = $('#measure');
+    measureBtn.addEventListener('click', async () => {
+      const prev = root.style.height || '560px';
+      const prevNum = parseFloat(prev);
+      const ms = await measureReflow(() => {
+        root.style.height = (prevNum + 10) + 'px';
+      }, root);
+      $('#time').textContent = ms.toFixed(2) + ' ms';
+      root.style.height = prev;
+    });
+  </script>
+</body>
+</html>

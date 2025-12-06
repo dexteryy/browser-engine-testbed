@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cross routing View Transitions｜Details page</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>View Transitions｜Cross routingswitch(Details)</h1>
+    <p>Sharing large image details with list page view-transition-name,Test across documents morph.</p>
+  </header>
+  <main class="page">
+    <section class="toolbar">
+      <div class="group">
+        <span class="chip">model:Cross routing</span>
+        <span class="chip" id="vt-support">View Transitions: Under detection...</span>
+      </div>
+      <div class="group">
+        <span class="chip" id="id-chip">ID: -</span>
+      </div>
+      <button class="btn primary" id="go-back">Return to list</button>
+      <button class="btn" id="next">Next</button>
+    </section>
+
+    <section class="panel">
+      <div class="detail">
+        <div class="hero" id="hero">
+          <div class="label" id="hero-label">#</div>
+        </div>
+        <div class="info">
+          <h2 class="section-title">Details page(/cross-route-detail.html?id=N)</h2>
+          <p class="note">cross-page View Transitions Rely on the browser to capture a snapshot of the old page and composite it on the new page.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel explain">
+      <h3 class="section-title">Instructions for use</h3>
+      <div>1)examine DevTools → Layers,confirm photo-N The size and number of snapshot layers.</div>
+      <div>2)exist Performance Record the complete link from the list to the details and back again, follow Raster / Composite.</div>
+      <div>3)try different ID,Observe the difference in snapshot capture time and memory usage.</div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const id = Number(params.get('id')) || 1;
+    const vtSupport = document.getElementById('vt-support');
+    const hero = document.getElementById('hero');
+    const heroLabel = document.getElementById('hero-label');
+    const idChip = document.getElementById('id-chip');
+    const supportsViewTransition = typeof document.startViewTransition === 'function';
+    vtSupport.textContent = supportsViewTransition ? 'View Transitions: Available' : 'View Transitions: Not supported, use static jump';
+
+    function applyHero(targetId) {
+      const tone = (targetId * 37) % 360;
+      hero.style.viewTransitionName = `photo-${targetId}`;
+      hero.style.background = `linear-gradient(135deg, hsl(${tone}, 80%, 56%), hsl(${(tone + 26) % 360}, 78%, 60%))`;
+      heroLabel.textContent = `Details ${targetId}`;
+      idChip.textContent = `ID: ${targetId}`;
+    }
+
+    function goList(targetId) {
+      const navigate = () => {
+        const url = new URL(location.href);
+        const segments = url.pathname.split('/');
+        segments[segments.length - 1] = 'cross-route-list.html';
+        url.pathname = segments.join('/');
+        if (targetId) {
+          url.hash = `#from-${targetId}`;
+        }
+        window.location.href = url.toString();
+      };
+      if (!supportsViewTransition) {
+        navigate();
+        return;
+      }
+      document.startViewTransition(navigate);
+    }
+
+    document.getElementById('go-back').addEventListener('click', () => goList(id));
+    document.getElementById('next').addEventListener('click', () => {
+      const nextId = (id % 18) + 1;
+      const navigate = () => {
+        const url = new URL(location.href);
+        url.searchParams.set('id', nextId);
+        window.location.href = url.toString();
+      };
+      if (!supportsViewTransition) {
+        navigate();
+        return;
+      }
+      document.startViewTransition(navigate);
+    });
+
+    applyHero(id);
+  </script>
+</body>
+</html>

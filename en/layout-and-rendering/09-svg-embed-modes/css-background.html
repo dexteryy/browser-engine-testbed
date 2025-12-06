@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN" id="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>test case9:CSS background SVG</title>
+  <link rel="stylesheet" href="./assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="inner">
+      <h1>test case9:SVG Image embedding and citation methods</h1>
+      <div class="desc">Will SVG as CSS backgroundimage(background-image)</div>
+      <nav class="nav">
+        <a href="./index.html">contrast</a>
+        <a href="./inline.html">inlineSVG</a>
+        <a href="./external.html">external citation</a>
+        <a class="active" href="./css-background.html">CSS background</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="toolbar">
+      <div class="tool-group" style="grid-column: span 6;">
+        <h3>backgroundproperty</h3>
+        <div class="tool-inline">
+          <label>background-size:</label>
+          <select id="bgSize">
+            <option value="contain" selected>contain</option>
+            <option value="cover">cover</option>
+            <option value="100% auto">100% auto</option>
+            <option value="auto 100%">auto 100%</option>
+            <option value="160px 120px">160px 120px</option>
+          </select>
+          <label>background-position:</label>
+          <select id="bgPos">
+            <option value="center" selected>center</option>
+            <option value="top left">top left</option>
+            <option value="top right">top right</option>
+            <option value="bottom left">bottom left</option>
+            <option value="bottom right">bottom right</option>
+          </select>
+          <label><input type="checkbox" id="repeat"> background-repeat</label>
+        </div>
+      </div>
+      <div class="tool-group" style="grid-column: span 6;">
+        <h3>Container size</h3>
+        <div class="tool-inline">
+          <label>Width(px):</label><input type="range" id="w" min="160" max="540" value="300"><span id="wVal" class="note">300</span>
+          <label>high(px):</label><input type="range" id="h" min="120" max="380" value="200"><span id="hVal" class="note">200</span>
+          <label><input type="checkbox" id="outline"> Show container outline</label>
+          <button id="reset">reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-area">
+      <div class="bg-target" id="box" aria-label="background SVG test container"></div>
+      <div class="note">illustrate:SVG onlyasbackgroundimagepresent,<strong>Not here DOM middle</strong>.Pay attention to whether the rendering scale, positioning and repetition are correct.</div>
+      <div class="code">.bg-target { background-image: url("assets/example.svg"); background-size: <em>contain/cover/...</em>; background-position: center; }</div>
+    </div>
+  </section>
+
+  <section class="section explain">
+    <h2>Explanation</h2>
+    <p><strong>Test objectives:</strong>verifyWill SVG as CSS backgroundzoom whenandpositioning behavior.</p>
+    <p><strong>How to use:</strong>Adjustment <code class="code">background-size</code> and <code class="code">background-position</code>,Switch whether to repeat;ChangeContainer sizeObserve whether the zoom is proportional.</p>
+    <p><strong>Result evaluation:</strong>regardlessContainer sizehow to change,imageVector sharpness should be maintained,No stretch distortion;backgroundPictures will not be includedandpage DOM choose.</p>
+  </section>
+
+  <footer class="footer">© test case 9 - CSS backgroundWay</footer>
+
+  <script>
+    // Simple wiring (English comments)
+    const $ = (s, el=document)=>el.querySelector(s);
+    const box = $("#box");
+    const bgSize = $("#bgSize");
+    const bgPos = $("#bgPos");
+    const repeat = $("#repeat");
+    const w = $("#w"), h = $("#h");
+    const wVal = $("#wVal"), hVal = $("#hVal");
+    const outline = $("#outline");
+    const reset = $("#reset");
+
+    function apply(){
+      box.style.setProperty("--bg-size", bgSize.value);
+      box.style.setProperty("--bg-pos", bgPos.value);
+      box.style.setProperty("--bg-repeat", repeat.checked ? "repeat" : "no-repeat");
+      box.style.setProperty("--box-w", w.value + "px");
+      box.style.setProperty("--box-h", h.value + "px");
+      box.style.setProperty("--show-outline", outline.checked ? "2px" : "0");
+      wVal.textContent = w.value;
+      hVal.textContent = h.value;
+    }
+    [bgSize, bgPos, repeat, w, h, outline].forEach(el=>el.addEventListener("input", apply));
+    reset.addEventListener("click", ()=>{
+      bgSize.value = "contain"; bgPos.value = "center"; repeat.checked = false;
+      w.value = 300; h.value = 200; outline.checked = false; apply();
+    });
+    apply();
+  </script>
+</body>
+</html>

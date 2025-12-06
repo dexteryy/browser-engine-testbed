@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>test case1:FlexboxFlexible layout and dynamic rearrangement - Basics and Hover Extensions</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Page-local styles (English comments only) */
+  </style>
+</head>
+<body class="page">
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="inner">
+      <div>
+        <div class="title">test case1:FlexboxFlexible layout and dynamic rearrangement - Basics and Hover Extensions</div>
+        <div class="subtitle">Verify spindle/Correct cross-axis alignment, spacing, and reflow when children expand on hover</div>
+      </div>
+      <div><span class="badge">CSS Pure interaction - none JS</span></div>
+    </div>
+  </header>
+
+  <!-- Toolbar (CSS only, using :has to affect the demo) -->
+  <form class="toolbar" aria-label="Toolbar: Adjustments Flex Parameters (affects test area only)">
+    <fieldset class="control-group">
+      <legend>Spindle alignment</legend>
+      <input type="radio" name="jc" id="jc-start" checked>
+      <label for="jc-start">flex-start</label>
+      <input type="radio" name="jc" id="jc-center">
+      <label for="jc-center">center</label>
+      <input type="radio" name="jc" id="jc-between">
+      <label for="jc-between">space-between</label>
+    </fieldset>
+
+    <fieldset class="control-group">
+      <legend>cross axis alignment</legend>
+      <input type="radio" name="ai" id="ai-stretch" checked>
+      <label for="ai-stretch">stretch</label>
+      <input type="radio" name="ai" id="ai-center">
+      <label for="ai-center">center</label>
+      <input type="radio" name="ai" id="ai-start">
+      <label for="ai-start">flex-start</label>
+    </fieldset>
+
+    <fieldset class="control-group">
+      <legend>direction</legend>
+      <input type="radio" name="dir" id="dir-row" checked>
+      <label for="dir-row">row</label>
+      <input type="radio" name="dir" id="dir-col">
+      <label for="dir-col">column</label>
+    </fieldset>
+
+    <fieldset class="control-group">
+      <legend>spacing</legend>
+      <input type="radio" name="gap" id="gap-8">
+      <label for="gap-8">8px</label>
+      <input type="radio" name="gap" id="gap-16" checked>
+      <label for="gap-16">16px</label>
+      <input type="radio" name="gap" id="gap-24">
+      <label for="gap-24">24px</label>
+    </fieldset>
+
+    <fieldset class="control-group">
+      <legend>transition time</legend>
+      <input type="radio" name="dur" id="dur-015">
+      <label for="dur-015">0.15s</label>
+      <input type="radio" name="dur" id="dur-03" checked>
+      <label for="dur-03">0.3s</label>
+      <input type="radio" name="dur" id="dur-06">
+      <label for="dur-06">0.6s</label>
+    </fieldset>
+  </form>
+
+  <!-- Test area -->
+  <section class="test-area section">
+    <h2>test area</h2>
+    <div class="flexroot row-fixed-height" aria-label="Main container (display:flex)">
+      <article class="item hover-grow" aria-label="child1(Expandable on hover)">
+        <h3>child1(text + picture)</h3>
+        <img class="thumb" alt="placeholder image" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='100%25' height='100%25' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='36' fill='%236b7280'%3ESVG%E5%9B%BE%E5%83%8F%3C/text%3E%3C/svg%3E">
+        <p>Shouldchilddefault <code>flex: 1 1 0</code>,<strong>on hover</strong>switch to larger <code>flex-grow</code>,Observe that siblings are compressed and do not overlap.</p>
+      </article>
+
+      <article class="item" aria-label="child2(Contains nestedFlexcontainer)">
+        <h3>child2(Nestedcontainer)</h3>
+        <p>thischildInternally redefined as <code>display:flex</code>,Used to test the rearrangement of multi-layer layout when the size changes.</p>
+        <div class="nested" role="group" aria-label="Nested containers (horizontal)">
+          <div class="n-item" title="Try hovering">A(Hover expansion)</div>
+          <div class="n-item" title="Try hovering">B(Hover expansion)</div>
+          <div class="n-item" title="Try hovering">C(Hover expansion)</div>
+        </div>
+      </article>
+
+      <article class="item hover-grow" aria-label="child3(longtext)">
+        <h3>child3(longtext)</h3>
+        <p>To simulate complex content, put longer paragraphs here:Flexbox CanexistSpindledirectionAllocate remaining space on,andexistperformed on the side axisrighttogether.when a certainchildWhen increasing,otherchildwill be based on <code>flex-shrink</code> and <code>min-width</code> Wait for constraints to compress. Please pay attention to whether text wrapping is abnormal or is blocked during the compression process.</p>
+      </article>
+
+      <article class="item" aria-label="child4(Fixed minimum size)">
+        <h3>child4(Fixed minimum size)</h3>
+        <p>Shouldchildwith <code>min-width: 120px</code> and <code>min-height: 120px</code> Constraints used to verify that the minimum size is respected when siblings are expanded.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- Explanation -->
+  <section class="explain">
+    <h3>Explanation</h3>
+    <p><strong>Test objectives:</strong>verify Chrome right Flexbox spindle/cross axis alignment, multi-layerNestedandchildHover expansionIs the rearrangement of time correct?,make surenoneContent overflows or is obscured.</p>
+    <p><strong>Test plan:</strong>The main container is <code>display:flex</code>,eachchildinitial <code>flex: 1 1 0</code>.child1and3exist <code>:hover</code> time to improve <code>flex-grow</code>,child2Contains a nested Flex container,withinchildexiston hoverwill also expand.</p>
+    <p><strong>How to use:</strong>Switch via the upper toolbar <em>Spindle/cross axis alignment</em>, <em>direction</em>, <em>spacing</em> and <em>transition time</em>,Then hover your mouse over the items labeled"Hover expansion"ofchildsuperior,Observe other elementsofadaptive compressionandrearrange.</p>
+    <p><strong>Check/test/Evaluation results:</strong>exist Chrome Open <em>Rendering</em> Panel check "Show layout shift regions(Layout offset highlighting)",After the hover trigger should onlyexistRelatedcontainerA purple highlighted area appears within;exist <em>Performance</em> The panel records a hover operation and reflows (Recalculate Style / Layout)Overhead should be localized and scaled over timelongandVaries with content complexity,Pages must not flicker or break.</p>
+  </section>
+</body>
+</html>

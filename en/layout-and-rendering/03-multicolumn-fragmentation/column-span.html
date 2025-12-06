@@ -1,0 +1,116 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>hurdle element (column-span)test</title>
+<link rel="stylesheet" href="style.css" />
+<script defer src="utils.js"></script>
+</head>
+<body>
+  <header id="topbar">
+    <h1>hurdle element (column-span)test</h1>
+    <p>focus on:<code>column-span: all</code> Whether it is effective, the positioning of cross-column elements and the connection with adjacent content.</p>
+  </header>
+
+  <section id="toolbar" class="container">
+    <div class="toolbar">
+      <div class="control" style="grid-column: span 3;">
+        <label>Number of columns (column-count):<output id="countOut"></output></label>
+        <input id="count" type="range" min="2" max="8" value="3" />
+      </div>
+      <div class="control" style="grid-column: span 3;">
+        <label>column spacing (column-gap):<output id="gapOut"></output></label>
+        <input id="gap" type="range" min="0" max="48" value="24" />
+      </div>
+      <div class="control" style="grid-column: span 3;">
+        <label>Number of cross-column titles</label>
+        <input id="spanNum" type="number" min="0" max="20" value="4" />
+      </div>
+      <div class="control" style="grid-column: span 3;">
+        <label>&nbsp;</label>
+        <div class="row">
+          <button id="build" class="primary">Rebuild content</button>
+          <button id="toggleSupport" class="secondary">Detect support status</button>
+        </div>
+      </div>
+      <div class="control" style="grid-column: span 12;">
+        <div id="metrics" class="meta"></div>
+      </div>
+    </div>
+  </section>
+
+  <main id="test-area" class="container">
+    <div id="mc" class="test-card columns" style="column-count:3; column-gap:24px; column-rule: 1px solid #eee;">
+      <!-- Content injected -->
+    </div>
+  </main>
+
+  <section id="explain" class="container">
+    <h2>testillustrate</h2>
+    <ul>
+      <li>The page will insert multiple cross-column headings into the content to see if they actually span all columns and are positioned correctly.</li>
+      <li>If the browser does not support <code>column-span</code>,Cross-column headers will fall back to normal block-level elements (without crossing columns).</li>
+    </ul>
+  </section>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const mc = $("#mc");
+      const count = $("#count"); const countOut = $("#countOut");
+      const gap = $("#gap"); const gapOut = $("#gapOut");
+      const spanNum = $("#spanNum");
+      const build = $("#build");
+      const toggleSupport = $("#toggleSupport");
+      const metrics = $("#metrics");
+
+      bindRangeOutput(count, countOut, v => v + " List");
+      bindRangeOutput(gap, gapOut);
+
+      const apply = () => {
+        mc.style.columnCount = count.value;
+        mc.style.columnGap = gap.value + "px";
+        renderMetrics(mc, metrics);
+      };
+      [count, gap].forEach(i => i.addEventListener("input", apply));
+
+      function rebuild() {
+        mc.innerHTML = "";
+        // First spanning header
+        const header = document.createElement("div");
+        header.className = "span-all";
+        header.textContent = "Column heading: beginning of document";
+        mc.appendChild(header);
+
+        const totalSpan = parseInt(spanNum.value, 10);
+        let inserted = 0;
+        for (let i = 0; i < 40; i++) {
+          mc.appendChild(createSectionHeading("Section titles (to avoid disconnections)"));
+          mc.appendChild(createP());
+          if (i % 3 === 2) mc.appendChild(createFigure(220 + (i % 2) * 120, i + 1));
+          if (inserted < totalSpan && i % 5 === 4) {
+            const span = document.createElement("div");
+            span.className = "span-all";
+            span.textContent = "Column heading (middle paragraph)#" + (inserted + 1);
+            mc.appendChild(span);
+            inserted++;
+          }
+        }
+        renderMetrics(mc, metrics);
+      }
+
+      build.addEventListener("click", rebuild);
+
+      toggleSupport.addEventListener("click", () => {
+        const supported = CSS && CSS.supports && CSS.supports("column-span", "all");
+        metrics.innerHTML = `Current browser pair <code>column-span: all</code> Support:<strong>${supported ? "support" : "Nosupport/limitedsupport"}</strong>`;
+      });
+
+      rebuild();
+      apply();
+      window.addEventListener("resize", apply);
+    });
+  </script>
+</body>
+</html>

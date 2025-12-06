@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Complex column division and avoidance (Fragmentation stress) test</title>
+    <link rel="stylesheet" href="style.css" />
+    <script defer src="utils.js"></script>
+  </head>
+  <body>
+    <header id="topbar">
+      <h1>Complex column division and avoidance (Fragmentation stress) test</h1>
+      <p>Pay attention to: First render time and scrolling performance under long content, multiple images, and avoidance rules.</p>
+    </header>
+
+    <section id="toolbar" class="container">
+      <div class="toolbar">
+        <div class="control" style="grid-column: span 3">
+          <label>Number of columns (column-count):<output id="countOut"></output></label>
+          <input id="count" type="range" min="2" max="8" value="4" />
+        </div>
+        <div class="control" style="grid-column: span 3">
+          <label>column spacing (column-gap):<output id="gapOut"></output></label>
+          <input id="gap" type="range" min="0" max="48" value="24" />
+        </div>
+        <div class="control" style="grid-column: span 3">
+          <label>number of paragraphs</label>
+          <input id="paraNum" type="number" min="50" max="2000" value="400" />
+        </div>
+        <div class="control" style="grid-column: span 3">
+          <label>every N Insert picture into paragraph</label>
+          <input id="every" type="number" min="0" max="20" value="5" />
+        </div>
+        <div class="control" style="grid-column: span 3">
+          <label>Image height mode</label>
+          <select id="imgMode">
+            <option value="mix" selected>mix(140/220/320/420)</option>
+            <option value="tall">higher (360/420/480)</option>
+            <option value="short">shorter (120/160/200)</option>
+          </select>
+        </div>
+        <div class="control" style="grid-column: span 3">
+          <label>Avoidance of images and subtitles</label>
+          <select id="avoid">
+            <option value="on" selected>Enable (break-inside: avoid)</option>
+            <option value="off">Disable</option>
+          </select>
+        </div>
+        <div class="control" style="grid-column: span 6">
+          <label>&nbsp;</label>
+          <div class="row">
+            <button id="build" class="primary">Build content and measure</button>
+            <button id="autoScroll" class="secondary">
+              Automatic scrolling test (8s)
+            </button>
+            <button id="clear" class="secondary">Clear content</button>
+          </div>
+        </div>
+        <div class="control" style="grid-column: span 12">
+          <div id="metrics" class="results">Waiting for measurement...</div>
+        </div>
+      </div>
+    </section>
+
+    <main id="test-area" class="container">
+      <div
+        id="mc"
+        class="test-card columns"
+        style="
+          height: 600px;
+          overflow: auto;
+          column-count: 4;
+          column-gap: 24px;
+          column-fill: balance;
+          column-rule: 1px solid #eee;
+        ">
+        <!-- Content area -->
+      </div>
+    </main>
+
+    <section id="explain" class="container">
+      <h2>Test instructions</h2>
+      <ul>
+        <li>
+          Click"Build content and measure",The script will generate paragraphs, pictures and subtitles in batches, and measure the time taken during the construction phase and before and after the first frame (approximately).
+        </li>
+        <li>
+          "Automatic rolling test"The container will be scrolled at a fixed speed, estimating the average FPS
+          and the number of potential dropped frames (a simple heuristic based on the frame interval threshold).
+        </li>
+        <li>
+          by switching"avoid"Observe whether the overall movement of the picture or subtitle between columns is correct, and whether there is half rendering or flickering.
+        </li>
+      </ul>
+    </section>
+
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const mc = $("#mc");
+        const count = $("#count");
+        const countOut = $("#countOut");
+        const gap = $("#gap");
+        const gapOut = $("#gapOut");
+        const paraNum = $("#paraNum");
+        const every = $("#every");
+        const imgMode = $("#imgMode");
+        const avoid = $("#avoid");
+        const buildBtn = $("#build");
+        const autoBtn = $("#autoScroll");
+        const clearBtn = $("#clear");
+        const metrics = $("#metrics");
+
+        bindRangeOutput(count, countOut, v => v + " List");
+        bindRangeOutput(gap, gapOut);
+
+        const imgSets = {
+          mix: [140, 220, 320, 420],
+          tall: [360, 420, 480],
+          short: [120, 160, 200],
+        };
+
+        const applyStyle = () => {
+          mc.style.columnCount = count.value;
+          mc.style.columnGap = gap.value + "px";
+          renderMetrics(mc, metrics);
+        };
+        applyStyle();
+        [count, gap].forEach(i => i.addEventListener("input", applyStyle));
+        window.addEventListener("resize", applyStyle);
+
+        const longObs = createLongTaskObserver();
+
+        function buildAndMeasure() {
+          mc.innerHTML = "";
+          const pNum = parseInt(paraNum.value, 10);
+          const n = parseInt(every.value || "0", 10);
+          const heights = imgSets[imgMode.value];
+
+          // Toggle avoid-break classes
+          const avoidOn = avoid.value === "on";
+
+          mark("build:start");
+          // Spanning header
+          const span = document.createElement("div");
+          span.className = "span-all";
+          span.textContent = "Column title:Fragmentation stress test";
+          mc.appendChild(span);
+
+          let figIdx = 1;
+          for (let i = 0; i < pNum; i++) {
+            // heading
+            const h = document.createElement("h3");
+            h.className = "section" + (avoidOn ? " avoid-break" : "");
+            h.textContent = "Section #" + (i + 1);
+            mc.appendChild(h);
+
+            // paragraph
+            const p = createP();
+            if (avoidOn && Math.random() < 0.05) p.classList.add("avoid-break");
+            mc.appendChild(p);
+
+            // figure every N
+            if (n > 0 && i % n === n - 1) {
+              const f = document.createElement("figure");
+              if (avoidOn) f.className = "avoid-break";
+              const svg = createSVGPlaceholder(
+                800,
+                heights[i % heights.length],
+                `image ${figIdx}`,
+              );
+              const cap = document.createElement("figcaption");
+              cap.textContent =
+                "Description: This diagram is used to test the behavior of non-splitable elements in multiple columns.";
+              f.appendChild(svg);
+              f.appendChild(cap);
+              mc.appendChild(f);
+              figIdx++;
+            }
+          }
+          mark("build:end");
+
+          // Force layout and wait a frame
+          const _h = mc.clientHeight; // sync layout read
+          longObs.start();
+          return new Promise(resolve => {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                longObs.stop();
+                mark("raf:end");
+                const buildMs = measure("build", "build:start", "build:end");
+                const twoRafMs = measure(
+                  "toFirstFrame",
+                  "build:end",
+                  "raf:end",
+                );
+                const summary = longObs.summary();
+                const cols = computeEffectiveColumns(mc);
+                metrics.innerHTML = `
+                <div>Build time:<strong>${Math.round(
+                  buildMs,
+                )} ms</strong>,First frame waiting (two frames):<strong>${Math.round(
+                  twoRafMs,
+                )} ms</strong></div>
+                <div>Observed long tasks:<strong>${
+                  summary.count
+                }</strong> Numbers, maximum:<strong>${
+                  summary.max
+                } ms</strong>,average:<strong>${summary.avg} ms</strong></div>
+                <div class="meta">actualListnumber:${cols};Tip: This measurement is approximate, more details please use DevTools Performance panel.</div>
+              `;
+                resolve();
+              });
+            });
+          });
+        }
+
+        buildBtn.addEventListener("click", buildAndMeasure);
+        clearBtn.addEventListener("click", () => {
+          mc.innerHTML = "";
+          metrics.textContent = "Cleared";
+        });
+
+        autoBtn.addEventListener("click", async () => {
+          if (!mc.firstChild) await buildAndMeasure();
+          autoBtn.disabled = true;
+          const { fps, frames, drops } = await autoScroll(mc, 8000, 700);
+          autoBtn.disabled = false;
+          const cols = computeEffectiveColumns(mc);
+          const note = document.createElement("div");
+          note.innerHTML = `Automatic rolling estimates FPS:<strong>${fps}</strong>(Number of frames:${frames},The frame drop threshold exceeds the standard:${drops} Second-rate)<span class="badge">Listnumber:${cols}</span>`;
+          metrics.appendChild(note);
+        });
+      });
+    </script>
+  </body>
+</html>

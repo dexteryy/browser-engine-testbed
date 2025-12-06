@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>test case 6:container query (Container Queries)adaptive components</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="component-card.css">
+  <style id="cqDynamic"><!-- dynamic container query threshold will be injected by JS --></style>
+</head>
+<body data-page="index">
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="wrap">
+      <h1>test case 6:container query (Container Queries)adaptive components</h1>
+      <p class="subtitle">Validate components against<strong>father container</strong>Size-adaptive layout, independent of viewport media queries.</p>
+      <nav class="top-links">
+        <a aria-current="page" href="index.html">Basic example</a>
+        <a href="nested.html">Nested containers</a>
+        <a href="stress.html">Performance observations</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar">
+    <div class="wrap">
+      <form id="controls" class="controls" onsubmit="return false;">
+        <div class="group">
+          <label for="threshold">Container Threshold (px)</label>
+          <input id="threshold" type="range" min="280" max="640" step="10" value="400" />
+          <output id="thresholdOut" for="threshold">400</output>
+        </div>
+        <div class="group">
+          <label for="widthA">Main content area width (px)</label>
+          <input id="widthA" type="range" min="300" max="1000" step="10" value="780" />
+          <output id="widthAOut" for="widthA">780</output>
+        </div>
+        <div class="group">
+          <label for="widthB">sidebar width (px)</label>
+          <input id="widthB" type="range" min="240" max="520" step="10" value="320" />
+          <output id="widthBOut" for="widthB">320</output>
+        </div>
+        <div class="group">
+          <label><input id="showSize" type="checkbox" checked> Show container size</label>
+        </div>
+        <div class="group">
+          <label><input id="mqDebug" type="checkbox"> Media query comparison (≥900px viewport discoloration)</label>
+        </div>
+        <div class="group">
+          <button id="resetBtn" type="button">reset</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Test Area -->
+  <main class="wrap">
+    <section class="test-area">
+      <div class="panel">
+        <h2>Main content area (wide container)</h2>
+        <!-- The container below is the size container for the card. -->
+        <div id="containerA" class="cq-container" data-name="card" style="width: 780px;">
+          <div class="size-badge" aria-hidden="true"></div>
+          <article class="cq-card">
+            <figure class="media">
+              <!-- Inline SVG placeholder (kept local and deterministic) -->
+              <svg viewBox="0 0 400 300" role="img" aria-label="Sample image">
+                <defs>
+                  <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#cde9ff"/><stop offset="1" stop-color="#e5f4ff"/>
+                  </linearGradient>
+                </defs>
+                <rect width="400" height="300" fill="url(#g)"/>
+                <g fill="#3a7bd5">
+                  <circle cx="90" cy="140" r="36"/><circle cx="210" cy="120" r="28"/><circle cx="310" cy="180" r="40"/>
+                </g>
+              </svg>
+              <figcaption>Sample image</figcaption>
+            </figure>
+            <div class="body">
+              <h3>Adaptive card component</h3>
+              <p>When the container width reaches the threshold, the cards are changed to a side-by-side layout; otherwise, the cards are stacked up and down. Font size to use cqw Units, which vary with container width.</p>
+              <ul class="meta">
+                <li>Tag: container query</li>
+                <li>Author: Test Engineering</li>
+                <li>time:2025-09-09</li>
+              </ul>
+              <button class="action">Action button</button>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Sidebar (narrow container)</h2>
+        <!-- Another independent size container; same component behaves differently here. -->
+        <div id="containerB" class="cq-container" data-name="card" style="width: 320px;">
+          <div class="size-badge" aria-hidden="true"></div>
+          <article class="cq-card">
+            <figure class="media">
+              <svg viewBox="0 0 400 300" role="img" aria-label="Sample image">
+                <defs>
+                  <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#ffe2cc"/><stop offset="1" stop-color="#fff1e6"/>
+                  </linearGradient>
+                </defs>
+                <rect width="400" height="300" fill="url(#g2)"/>
+                <g fill="#ff8c42">
+                  <rect x="70" y="120" width="60" height="60" rx="8"/>
+                  <rect x="180" y="90" width="50" height="50" rx="8"/>
+                  <rect x="270" y="150" width="70" height="70" rx="10"/>
+                </g>
+              </svg>
+              <figcaption>Sample image</figcaption>
+            </figure>
+            <div class="body">
+              <h3>Adaptive card component</h3>
+              <p>This component is only named after the most recent <code>card</code> Container size switching style, does not rely on viewport media queries.</p>
+              <ul class="meta">
+                <li>Tag: container query</li>
+                <li>Author: Test Engineering</li>
+                <li>time:2025-09-09</li>
+              </ul>
+              <button class="action">Action button</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Explanation -->
+    <section class="explain">
+      <h2>Explanation</h2>
+      <ol>
+        <li><strong>Test objectives:</strong>verify Chrome right <em>CSS Container query</em> support;component according to itsfather containersize adaptive layout;Multiple containers do not interfere with each other in the same viewport.</li>
+        <li><strong>Test plan:</strong>The page contains two identical components, placed in containers of different sizes. Container settings <code>container-type: inline-size</code> and <code>container-name: card</code>;Component internal use <code>@container card (width &gt;= threshold)</code> Switch layout(defaultthreshold 400px).</li>
+        <li><strong>How to use:</strong>
+          <ul>
+            <li>Direct observation: cards should be side by side in wide containers and stacked on top of each other in narrow containers.</li>
+            <li>Drag the slider or drag the lower right corner of the container(Support horizontal scaling),cross overthresholdThe layout should switch instantly.</li>
+            <li>Check"Media inquiriesrightCompare",When viewport ≥ 900px The card border changes color;Note that component layout is still determined by the container,reflectandMedia inquiriesindependence.</li>
+          </ul>
+        </li>
+        <li><strong>Result evaluation:</strong>Open DevTools → Elements,View container's <code>container-name</code> and actual size; in Styles Panel confirmation <code>@container</code> Whether the rule is applied. use Performance Record the dragging process and observe that the style calculation mainly occurs locally without obvious lag.</li>
+      </ol>
+      <p class="footnote">The text on the page are examples; to ensure reproducibility, images are inline. SVG.</p>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

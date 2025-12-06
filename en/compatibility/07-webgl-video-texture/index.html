@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>R&D side use cases 07｜WebGL Video texture rendering (sampling and size)</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="inner">
+      <h1>R&D side use cases 07｜WebGL Video texture rendering (sampling and size)</h1>
+      <p class="subtitle">Full screen quadrilateral sticker video texture, quick switch to nearest neighbor/linear sampling vs. 1:1, Downsampling, upsampling, observe sampling quality and texture update stability.</p>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar-section">
+    <div class="inner">
+      <div class="toolbar">
+        <fieldset>
+          <legend>video source</legend>
+          <label>
+            Default
+            <select id="sourceSelect">
+              <option value="bunny720">Big Buck Bunny 720p (mp4)</option>
+              <option value="tos1080">Tears of Steel 1080p (mp4)</option>
+              <option value="sintel4k">Sintel 720p(Upsampling test)</option>
+            </select>
+          </label>
+          <label>local file <input id="fileInput" type="file" accept="video/*" /></label>
+          <button id="loadBtn" class="primary">load/switch</button>
+          <button id="playToggle">play/pause</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>Sampling mode</legend>
+          <label><input type="radio" name="leftFilter" value="linear" checked /> Left: Linear</label>
+          <label><input type="radio" name="leftFilter" value="nearest" /> Left: nearest neighbor</label>
+          <label><input type="radio" name="rightFilter" value="nearest" checked /> Right: nearest neighbor</label>
+          <label><input type="radio" name="rightFilter" value="linear" /> Right: Linear</label>
+          <label><input id="flipY" type="checkbox" checked /> UNPACK_FLIP_Y_WEBGL</label>
+          <label><input id="useSRGB" type="checkbox" /> sRGB Target (if available)</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Size and output</legend>
+          <label><input type="radio" name="scale" value="1" checked /> 1:1</label>
+          <label><input type="radio" name="scale" value="0.5" /> Downsampling 0.5×</label>
+          <label><input type="radio" name="scale" value="2" /> upsampling 2×</label>
+          <label>
+            Frame synchronization
+            <select id="frameDriver">
+              <option value="rvfc">requestVideoFrameCallback</option>
+              <option value="raf">requestAnimationFrame</option>
+            </select>
+          </label>
+          <label>
+            DPR Zoom
+            <select id="dprMode">
+              <option value="1" selected>ignore (original pixels)</option>
+              <option value="device">Follow device pixel ratio</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>state</legend>
+          <div class="status-row">
+            <span class="badge" id="videoInfo">video:-- × -- ｜ --fps</span>
+            <span class="badge" id="canvasInfo">canvas:-- × --</span>
+            <span class="badge" id="fpsBadge">FPS:--</span>
+            <span class="badge" id="srgbInfo">sRGB:Under detection</span>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </section>
+
+  <!-- Test area -->
+  <main class="test-area">
+    <div class="inner">
+      <div class="panes">
+        <section class="pane" id="leftPane">
+          <header class="pane-head">
+            <h2>left canvas</h2>
+            <span class="hint">Linear/nearest neighbor canswitch,Observe smoothingandsawtooth</span>
+          </header>
+          <div class="canvas-wrap">
+            <canvas id="canvasLeft"></canvas>
+            <div class="overlay" id="overlayLeft"><strong id="leftLabel">LINEAR</strong><span class="muted-text">sampling</span></div>
+            <div class="fps" id="fpsLeft">-- fps</div>
+          </div>
+        </section>
+
+        <section class="pane" id="rightPane">
+          <header class="pane-head">
+            <h2>right canvas</h2>
+            <span class="hint">Can be setforcontrol group(Another kindsampling)</span>
+          </header>
+          <div class="canvas-wrap">
+            <canvas id="canvasRight"></canvas>
+            <div class="overlay" id="overlayRight"><strong id="rightLabel">NEAREST</strong><span class="muted-text">sampling</span></div>
+            <div class="fps" id="fpsRight">-- fps</div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Explanation -->
+  <section class="explain">
+    <div class="inner">
+      <h3>Explanation</h3>
+      <h4>Test target</h4>
+      <p>Verify that the browser is WebGL China and Israel &lt;video&gt; for TEXTURE_2D stability when covering UNPACK_FLIP_Y_WEBGL, Linear/nearest neighborsamplingas well as 1:1, Downsampling, upsamplingscene,Observe whether texture updates follow the frame rate, samplingDoes the quality meet expectations?.</p>
+
+      <h4>test plan</h4>
+      <ul>
+        <li>One on each side WebGL Canvas, all use full-screen quadrilaterals to paste video textures, which can be selected separately. LINEAR and NEAREST dofor MIN/MAG filter.</li>
+        <li>supply 1:1, 0.5×, 2× The third gear output size directly affects framebuffer resolution, none CSS additionalZoom,Easy to observesamplingdifference.</li>
+        <li>Canswitch UNPACK_FLIP_Y_WEBGL;If the browser supports EXT_sRGB,then you can check sRGB Framebuffer,Contrast color differences.</li>
+        <li>frame driverCanswitch requestVideoFrameCallback and requestAnimationFrame,to check texture update stabilityandSynthetic rhythm.</li>
+      </ul>
+
+      <h4>How to use</h4>
+      <ol>
+        <li>existToolbar selectionDefaultvideo orloadlocal file,Click"load/switch",Default automaticplaycycle.</li>
+        <li>Select left and right LINEAR/NEAREST,switchSize range,naked eye observationZoomtimelysawtoothor blurry,Especially high resolutionupsampling.</li>
+        <li>exist DevTools → Rendering Check"Paint flashing",Confirm whether the canvas remains an independent composition layer;Performance Record 10s,CheckTexture update frequencyanddropped frames.</li>
+        <li>button:spaceplay/pause,N switchleft canvassampling,M switchright canvassampling,F switch UNPACK_FLIP_Y_WEBGL.</li>
+      </ol>
+
+      <h4>Check/test/How to evaluate results</h4>
+      <ul>
+        <li>No visual tearing, No flicker,samplingswitchShould take effect instantly;LINEAR should be smooth,NEAREST Grains should be evident and step edges maintained.</li>
+        <li>existhigh resolution(like 4K source + 2× output) can still maintain a stable frame rate,FPS badgeand Performance The panel should have no abnormal frame drops.</li>
+        <li>exist Layers In the panel, two canvas should each hold a composition layer,switchsamplingor size should not trigger redundant rebuilds.</li>
+      </ul>
+    </div>
+  </section>
+
+  <script src="./app.js"></script>
+</body>
+</html>

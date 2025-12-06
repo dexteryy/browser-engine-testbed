@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN" id="external">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>test case9:external SVG Quote</title>
+  <link rel="stylesheet" href="./assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="inner">
+      <h1>test case9:SVG Image embedding withQuoteWay</h1>
+      <div class="desc">external SVG file, via &lt;img&gt; / &lt;object&gt; / &lt;embed&gt; Quote</div>
+      <nav class="nav">
+        <a href="./index.html">contrast</a>
+        <a href="./inline.html">inlineSVG</a>
+        <a class="active" href="./external.html">externalQuote</a>
+        <a href="./css-background.html">CSS background</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="toolbar">
+      <div class="tool-group" style="grid-column: span 6;">
+        <h3>QuoteWay</h3>
+        <div class="tool-inline">
+          <label><input type="radio" name="mode" value="img" checked> &lt;img src&gt;</label>
+          <label><input type="radio" name="mode" value="object"> &lt;object data&gt;</label>
+          <label><input type="radio" name="mode" value="embed"> &lt;embed src&gt;</label>
+        </div>
+        <div class="tool-inline">
+          <label>display width(px):</label><input type="range" id="w" min="140" max="440" value="260"><span id="wVal" class="note">260</span>
+          <label><input type="checkbox" id="attempt"> page CSS try to override .dot</label>
+        </div>
+      </div>
+      <div class="tool-group" style="grid-column: span 6;">
+        <h3>load control</h3>
+        <div class="tool-inline">
+          <label>Number of repeats:</label><input type="range" id="count" min="1" max="40" value="6"><span id="countVal" class="note">6</span>
+          <button id="render" class="primary">generate</button>
+          <button id="clear">Clear</button>
+          <span class="note" id="stat">Not tested yet</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-area">
+      <div class="holder" id="holder"></div>
+      <div class="note">illustrate:external SVG Presented as an image resource,<strong>page CSS Internal elements cannot be selected directly</strong>.right &lt;object&gt; In terms of,Internally it is an independent document,Also not subject to thispagestyle influence;Check"page CSS try to override .dot", the circle should still remain red. If green appears, the isolation fails.</div>
+      <div class="code">&lt;img src="assets/example.svg"&gt; - &lt;object type="image/svg+xml" data="assets/example.svg"&gt;&lt;/object&gt; - &lt;embed src="assets/example.svg" type="image/svg+xml"&gt;</div>
+    </div>
+  </section>
+
+  <section class="section explain">
+    <h2>Explanation</h2>
+    <p><strong>Test objectives:</strong>Verification passes differentexternalQuoteTag loading SVG The behavior is consistent and the style isolation is as expected.</p>
+    <p><strong>How to use:</strong>Switch above"QuoteWay",Adjust width. Check"page CSS try to override .dot"will be added to this page <code class="code">body#external.attempt-css .dot { fill: #16a34a !important; }</code>,expectedrightImage resources<strong>Not effective</strong>.</p>
+    <p><strong>Result evaluation:</strong>The circle should remain red within the document;DevTools Only a single element node (or an embedded document) can be seen in the SVG child node.</p>
+  </section>
+
+  <footer class="footer">© test case 9 - externalQuoteWay</footer>
+
+  <script>
+    // Simple wiring (English comments)
+    const $ = (s, el=document)=>el.querySelector(s);
+    const $$ = (s, el=document)=>Array.from(el.querySelectorAll(s));
+    const holder = $("#holder");
+    const w = $("#w"), wVal = $("#wVal");
+    const attempt = $("#attempt");
+    const count = $("#count"), countVal = $("#countVal");
+    const renderBtn = $("#render"), clearBtn = $("#clear");
+    const stat = $("#stat");
+    const ASPECT = 160 / 260; // match wrapper height to SVG viewBox
+
+    function buildOne(mode, width){
+      const wrap = document.createElement("div");
+      wrap.style.width = width + "px";
+      wrap.style.height = Math.round(width * ASPECT) + "px";
+      wrap.style.display = "grid";
+      wrap.style.placeItems = "center";
+      wrap.style.border = "1px solid #e5e7eb";
+      wrap.style.borderRadius = "8px";
+      wrap.style.margin = "6px";
+      let el;
+      if(mode === "img"){
+        el = new Image();
+        el.src = "./assets/example.svg";
+        el.width = width;
+        el.height = Math.round(width * ASPECT);
+        el.alt = "external SVG";
+        el.decoding = "async";
+      }else if(mode === "object"){
+        el = document.createElement("object");
+        el.type = "image/svg+xml";
+        el.data = "./assets/example.svg";
+        el.width = width;
+        el.height = Math.round(width * ASPECT);
+      }else{
+        el = document.createElement("embed");
+        el.type = "image/svg+xml";
+        el.src = "./assets/example.svg";
+        el.width = width;
+        el.height = Math.round(width * ASPECT);
+      }
+      wrap.appendChild(el);
+      return {wrap, el};
+    }
+
+    function renderMany(){
+      const mode = $$("input[name=mode]").find(i=>i.checked).value;
+      const n = +count.value;
+      holder.innerHTML = "";
+      const t0 = performance.now();
+      const pending = [];
+      for(let i=0;i<n;i++){
+        const {wrap, el} = buildOne(mode, +w.value);
+        holder.appendChild(wrap);
+        pending.push(new Promise(res=>{
+          if((el.tagName === "IMG" || el.tagName === "EMBED") && el.complete){ res(); return; }
+          el.addEventListener("load", res, {once:true});
+          el.addEventListener("error", res, {once:true});
+        }));
+      }
+      Promise.all(pending).then(()=>{
+        const t1 = performance.now();
+        stat.textContent = `Finish:${n} Time spent ${(t1 - t0).toFixed(1)} ms(Contains loading/ready event)`;
+      });
+    }
+
+    // Wire
+    w.addEventListener("input", ()=>{ wVal.textContent = w.value; renderMany(); });
+    count.addEventListener("input", ()=>{ countVal.textContent = count.value; });
+    renderBtn.addEventListener("click", renderMany);
+    clearBtn.addEventListener("click", ()=>{ holder.innerHTML = ""; stat.textContent = "alreadyClear"; });
+    attempt.addEventListener("change", ()=>{
+      document.body.classList.toggle("attempt-css", attempt.checked);
+    });
+
+    // Initial render
+    renderMany();
+  </script>
+</body>
+</html>

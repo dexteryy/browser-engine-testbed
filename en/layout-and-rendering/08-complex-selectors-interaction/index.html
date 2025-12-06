@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>test case8:Complex selector and interactive state layout - main scene</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="container headline">
+      <h1>test case8:Complex selector and interactive state layout</h1>
+      <p>Evaluate Chrome right <code>:has()</code>, <code>:focus-within</code> Support and performance of complex selectors in interactive environments.</p>
+      <div class="top-links">
+        <a aria-current="page" href="index.html">main scene</a>
+        <a href="nested-forms.html">Nested forms</a>
+        <a href="performance-load.html">Performance pressure</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar">
+    <div class="container controls" role="group" aria-label="Toolbar">
+      <div class="control">
+        <input id="opt-shadow" type="checkbox">
+        <label for="opt-shadow">card shadow <span class="badge">visual aid</span></label>
+      </div>
+      <div class="control">
+        <input id="opt-columns-2" name="cols" type="radio" checked>
+        <label for="opt-columns-2">two column layout</label>
+      </div>
+      <div class="control">
+        <input id="opt-columns-3" name="cols" type="radio">
+        <label for="opt-columns-3">three column layout</label>
+      </div>
+      <div class="control">
+        <input id="opt-deep" type="checkbox" checked>
+        <label for="opt-deep">Enable deep selector combinations</label>
+      </div>
+      <div class="help">Tip: The above options pass <code>body:has(#id:checked)</code> In pure CSS Effective globally.</div>
+    </div>
+  </section>
+
+  <!-- Test Area -->
+  <main class="section">
+    <div class="container">
+      <h2>test area - Interactive card list (pure CSS fold)</h2>
+      <p class="help">Click in the upper right corner of each card"Expand details",or use <kbd>Tab</kbd> switch focus,<kbd>Space</kbd>/<kbd>Enter</kbd> Trigger expansion. verify <code>.card:has(.toggle:checked)</code> and <code>.card:focus-within</code> Is it correct.</p>
+
+      <div class="cards">
+        <!-- Card 1 -->
+        <article class="card" tabindex="-1">
+          <div class="head">
+            <div class="title">card A - basic interaction</div>
+            <div class="actions">
+              <label class="toggle-btn" for="ck-a">Expand details</label>
+              <input id="ck-a" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p>shouldcardWhen the checkbox within is selected,parent node <code>.card</code> satisfy <code>:has(.toggle:checked)</code>,This area is displayed.</p>
+            <div class="form-mini">
+              <input type="text" placeholder="Try keyboard focus here (test :focus-within)" required>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 2 -->
+        <article class="card" tabindex="-1">
+          <div class="head">
+            <div class="title">card B - tag lookahead :has(+ ...)</div>
+            <div class="actions">
+              <label class="toggle-btn" for="ck-b">Expand details</label>
+              <input id="ck-b" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p>To place the button label before the checkbox, use <code>label.toggle-btn:has(+ input:checked)</code> The selector looks forward to the status of adjacent siblings, changing the label's appearance.</p>
+            <div class="form-mini">
+              <input type="text" placeholder="Enter here(Highlightlocationcardcontainer)">
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 3 -->
+        <article class="card" tabindex="-1">
+          <div class="head">
+            <div class="title">card C - form validation :invalid</div>
+            <div class="actions">
+              <label class="toggle-btn" for="ck-c">Expand details</label>
+              <input id="ck-c" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <form class="form" action="#" novalidate>
+              <div class="row">
+                <label for="email">Mail</label>
+                <input id="email" type="email" placeholder="e.g. demo@example.com" required>
+              </div>
+              <div class="row">
+                <label for="tel">Telephone</label>
+                <input id="tel" type="tel" pattern="\\d{3}-\\d{3}-\\d{4}" placeholder="123-456-7890">
+              </div>
+              <div class="row">
+                <label for="name">Name</label>
+                <input id="name" type="text" required placeholder="Required, try submitting empty">
+              </div>
+              <p class="help">When any field is invalid, use <code>.form:has(:invalid)</code> Change form borders.</p>
+            </form>
+          </div>
+        </article>
+
+        <!-- Card 4 -->
+        <article class="card" tabindex="-1">
+          <div class="head">
+            <div class="title">card D - Multiple paragraphs of content</div>
+            <div class="actions">
+              <label class="toggle-btn" for="ck-d">Expand details</label>
+              <input id="ck-d" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p>Used to observe the layout when it is expanded/Rearrangement when folded.</p>
+            <ul class="sample-list">
+              <li>
+                <span class="title">list item 1</span>
+                <span class="meta"><strong>Meta information</strong></span>
+              </li>
+              <li>
+                <span class="title">list item 2</span>
+                <span class="meta">usually</span>
+              </li>
+              <li>
+                <span class="title">list item 3 <span class="badge">Have a badge</span></span>
+                <span class="meta">usually</span>
+              </li>
+              <li>
+                <span class="title">list item 4</span>
+                <span class="meta"><strong>Highlight</strong></span>
+              </li>
+              <li>
+                <span class="title">list item 5</span>
+                <span class="meta">usually</span>
+              </li>
+            </ul>
+            <p class="help">Check "Enable deep selector combinations」back,verify <code>:nth-child</code>, <code>:not()</code>, <code>::after</code> Wait for the combination to be hovering/Correct application when structural changes occur.</p>
+          </div>
+        </article>
+
+        <!-- Card 5 -->
+        <article class="card" tabindex="-1">
+          <div class="head">
+            <div class="title">card E - accessibilityandfocus</div>
+            <div class="actions">
+              <label class="toggle-btn" for="ck-e">Expand details</label>
+              <input id="ck-e" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p>use <kbd>Tab</kbd> Move focus into thiscardany element within,observing parentcontainerof <code>:focus-within</code> Highlightframe.</p>
+            <div class="form-mini">
+              <input type="text" placeholder="focus test 1">
+              <input type="text" placeholder="focus test 2">
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 6 -->
+        <article class="card" tabindex="-1">
+          <div class="head">
+            <div class="title">card F - combinationandnegative choice</div>
+            <div class="actions">
+              <label class="toggle-btn" for="ck-f">Expand details</label>
+              <input id="ck-f" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p>in actual projects,Be careful to overlay too many relationship selectors to avoid style recalculation overhead.thiscardA subjective experience for observing runtime overhead.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </main>
+
+  <!-- Explanation -->
+  <section class="section">
+    <div class="container explain">
+      <h2>Explanation</h2>
+      <p><strong>Test objectives:</strong>verifyBrowserrightComplex relationship selector(like <code>:has()</code>, <code>:focus-within</code>, <code>:not()</code>, <code>:nth-child</code>)analysis, matchandInstant updates in interactive state.</p>
+      <p><strong>usemethod:</strong></p>
+      <ol class="steps">
+        <li>Directly check whether static styles are rendered correctly (such as odd items hover suffix text after, underline style for non-badge items, etc.).</li>
+        <li>Click one by onecardupper right corner"Expand details",Make sure the content appears immediately after each click/Hidden, no state out of sync.</li>
+        <li>usekeyboard <kbd>Tab</kbd> existcardmove focus between,Focus on somethingcardIt's timecontainerappears blueframe(<code>:focus-within</code>),Disappears after removal.</li>
+        <li>Switch aboveToolbarOptions,Observe through <code>body:has(#id:checked)</code> Whether the driver's global layout changes take effect immediately.</li>
+      </ol>
+      <p><strong>performanceEvaluate:</strong>Open DevTools → Performance,Recording quick expansion/Put away the process and pay attention"Recalculate Style"time consuming.likeObvious jitter or lag is found,Canexist「Performance pressure」The page is made strongerrightCompare.</p>
+      <p class="help">Related pages:<a href="nested-forms.html">Nested formsandfocus</a> - <a href="performance-load.html">Performance pressure</a></p>
+    </div>
+  </section>
+</body>
+</html>

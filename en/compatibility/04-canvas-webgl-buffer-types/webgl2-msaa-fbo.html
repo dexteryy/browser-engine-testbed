@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebGL2 MSAA FBO vs Backbuffer</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .mono { font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>WebGL2｜MSAA FBO Compare to default buffering</h1>
+    <p>Compare backbuffer Anti-aliasing and custom multisampling FBO of grating and synthesis costs.</p>
+  </header>
+  <main class="page">
+    <section class="toolbar">
+      <div class="group">
+        <span class="chip">DPR: <span id="dpr"></span></span>
+        <span class="chip">frame count: <span id="frame-count">0</span></span>
+      </div>
+      <div class="group">
+        <label>canvas size(px)</label>
+        <input type="number" id="size-input" value="360" min="200" max="720" step="20">
+      </div>
+      <div class="group">
+        <label>MSAA Number of samples</label>
+        <input type="range" id="samples" min="1" max="8" step="1" value="4">
+        <span id="samples-label">4</span>
+      </div>
+      <div class="group">
+        <label>backbuffer preserve</label>
+        <input type="checkbox" id="preserve-toggle">
+      </div>
+      <div class="group">
+        <label>premultipliedAlpha</label>
+        <input type="checkbox" id="premul-toggle" checked>
+      </div>
+      <div class="group">
+        <label>backbuffer antialias</label>
+        <input type="checkbox" id="aa-toggle" checked>
+      </div>
+      <div class="group">
+        <label>automatic animation</label>
+        <input type="checkbox" id="animate-toggle" checked>
+      </div>
+      <button class="btn" id="redraw">Redraw</button>
+    </section>
+
+    <section class="panel">
+      <h2 class="section-title">Double view comparison</h2>
+      <p class="note">Left: Default backbuffer(switchable antialias/preserve/premultipliedAlpha).Right: self-built MSAA FBO(WebGL2 renderbufferStorageMultisample).Drawing rotated geometry in unity+Thin lines, observe jagged and synthetic differences.</p>
+      <div class="row">
+        <div class="canvas-card" style="flex:1;">
+          <div class="card-label">default backbuffer</div>
+          <canvas id="canvas-default"></canvas>
+          <div class="meta-row mono" id="meta-default">-</div>
+        </div>
+        <div class="canvas-card" style="flex:1;">
+          <div class="card-label">MSAA FBO</div>
+          <canvas id="canvas-msaa"></canvas>
+          <div class="meta-row mono" id="meta-msaa">-</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel explain">
+      <h3 class="section-title">Instructions for use</h3>
+      <div>1)AdjustmentNumber of samplesand preserveDrawingBuffer,Record Performance,Compare Raster/Composite and GPU Memory.</div>
+      <div>2)exist Layers View snapshot layer size in; toggle premultipliedAlpha Check for transparent edge transitions.</div>
+      <div>3)closure backbuffer anti-aliasing, preserved MSAA,Observe the sawtooth comparison on both sidesand FPS.</div>
+    </section>
+  </main>
+
+  <script>
+    const dpr = window.devicePixelRatio || 1;
+    const state = {
+      size: 360,
+      samples: 4,
+      preserve: false,
+      premul: true,
+      antialias: true,
+      animate: true
+    };
+    document.getElementById("dpr").textContent = dpr.toFixed(2);
+    const frameCountEl = document.getElementById("frame-count");
+    const sizeInput = document.getElementById("size-input");
+    const samplesInput = document.getElementById("samples");
+    const samplesLabel = document.getElementById("samples-label");
+    const preserveToggle = document.getElementById("preserve-toggle");
+    const premulToggle = document.getElementById("premul-toggle");
+    const aaToggle = document.getElementById("aa-toggle");
+    const animateToggle = document.getElementById("animate-toggle");
+    const metaDefault = document.getElementById("meta-default");
+    const metaMsaa = document.getElementById("meta-msaa");
+    const canvasDefault = document.getElementById("canvas-default");
+    const canvasMsaa = document.getElementById("canvas-msaa");
+    let glDefault = null;
+    let glMsaa = null;
+    let resourcesMsaa = null;
+    let rafId = null;
+    let frameCount = 0;
+
+    sizeInput.addEventListener("change", e => {
+      const v = clamp(Number(e.target.value) || 360, 200, 720);
+      state.size = v;
+      e.target.value = v;
+      initContexts();
+    });
+    samplesInput.addEventListener("input", e => {
+      state.samples = clamp(Number(e.target.value) || 4, 1, 8);
+      samplesLabel.textContent = state.samples;
+      initContexts();
+    });
+    preserveToggle.addEventListener("change", e => {
+      state.preserve = e.target.checked;
+      initContexts();
+    });
+    premulToggle.addEventListener("change", e => {
+      state.premul = e.target.checked;
+      initContexts();
+    });
+    aaToggle.addEventListener("change", e => {
+      state.antialias = e.target.checked;
+      initContexts();
+    });
+    animateToggle.addEventListener("change", e => {
+      state.animate = e.target.checked;
+      if (state.animate) startLoop(); else stopLoop();
+    });
+    document.getElementById("redraw").addEventListener("click", () => drawFrame(performance.now()));
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function initContexts() {
+      frameCount = 0;
+      frameCountEl.textContent = "0";
+      glDefault = canvasDefault.getContext("webgl2", {
+        antialias: state.antialias,
+        premultipliedAlpha: state.premul,
+        preserveDrawingBuffer: state.preserve,
+        alpha: true
+      });
+      glMsaa = canvasMsaa.getContext("webgl2", {
+        antialias: false,
+        premultipliedAlpha: state.premul,
+        preserveDrawingBuffer: state.preserve,
+        alpha: true
+      });
+      if (!glDefault || !glMsaa) {
+        metaDefault.textContent = "WebGL2 Initialization failed";
+        metaMsaa.textContent = "WebGL2 Initialization failed";
+        stopLoop();
+        return;
+      }
+      resizeCanvas(canvasDefault);
+      resizeCanvas(canvasMsaa);
+      resourcesMsaa = setupMsaaFbo(glMsaa, canvasMsaa.width, canvasMsaa.height, state.samples);
+      drawFrame(performance.now());
+      if (state.animate) startLoop();
+    }
+
+    function resizeCanvas(canvas) {
+      const logical = state.size;
+      canvas.width = logical * dpr;
+      canvas.height = logical * dpr;
+      canvas.style.width = `${logical}px`;
+      canvas.style.height = `${logical}px`;
+    }
+
+    function createProgram(gl, vsSource, fsSource) {
+      const vs = gl.createShader(gl.VERTEX_SHADER);
+      gl.shaderSource(vs, vsSource);
+      gl.compileShader(vs);
+      const fs = gl.createShader(gl.FRAGMENT_SHADER);
+      gl.shaderSource(fs, fsSource);
+      gl.compileShader(fs);
+      const program = gl.createProgram();
+      gl.attachShader(program, vs);
+      gl.attachShader(program, fs);
+      gl.linkProgram(program);
+      return program;
+    }
+
+    function createScene(gl, use300) {
+      const vs = use300 ? `#version 300 es
+        in vec2 position;
+        in vec3 color;
+        out vec3 vColor;
+        uniform float uTime;
+        void main() {
+          float ang = uTime;
+          float c = cos(ang);
+          float s = sin(ang);
+          mat2 rot = mat2(c, -s, s, c);
+          gl_Position = vec4(rot * position, 0.0, 1.0);
+          vColor = color;
+        }` : `
+        attribute vec2 position;
+        attribute vec3 color;
+        varying vec3 vColor;
+        uniform float uTime;
+        void main() {
+          float ang = uTime;
+          float c = cos(ang);
+          float s = sin(ang);
+          mat2 rot = mat2(c, -s, s, c);
+          gl_Position = vec4(rot * position, 0.0, 1.0);
+          vColor = color;
+        }`;
+      const fs = use300 ? `#version 300 es
+        precision highp float;
+        in vec3 vColor;
+        out vec4 outColor;
+        void main() {
+          outColor = vec4(vColor, 0.85);
+        }` : `
+        precision mediump float;
+        varying vec3 vColor;
+        void main() {
+          gl_FragColor = vec4(vColor, 0.85);
+        }`;
+      const program = createProgram(gl, vs, fs);
+      const posLoc = gl.getAttribLocation(program, "position");
+      const colorLoc = gl.getAttribLocation(program, "color");
+      const timeLoc = gl.getUniformLocation(program, "uTime");
+      const quad = new Float32Array([
+        -1, -1, 0.8, 0.3, 0.3,
+         1, -1, 0.3, 0.8, 0.4,
+        -1,  1, 0.3, 0.5, 0.9,
+         1,  1, 0.9, 0.9, 0.4
+      ]);
+      const line = new Float32Array([
+        -0.85, 0.0, 1, 1, 1,
+         0.85, 0.75, 1, 1, 1
+      ]);
+      const quadBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
+      const lineBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, line, gl.STATIC_DRAW);
+      return { program, posLoc, colorLoc, timeLoc, quadBuffer, lineBuffer };
+    }
+
+    const sceneCache = new WeakMap();
+    function getScene(gl) {
+      if (sceneCache.has(gl)) return sceneCache.get(gl);
+      const scene = createScene(gl, true);
+      sceneCache.set(gl, scene);
+      return scene;
+    }
+
+    function drawScene(gl, canvas, meta, time, useMsaa) {
+      const scene = getScene(gl);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.clearColor(0.05, 0.08, 0.12, 0.9);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.useProgram(scene.program);
+      gl.uniform1f(scene.timeLoc, time * 0.001);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, scene.quadBuffer);
+      gl.enableVertexAttribArray(scene.posLoc);
+      gl.vertexAttribPointer(scene.posLoc, 2, gl.FLOAT, false, 20, 0);
+      gl.enableVertexAttribArray(scene.colorLoc);
+      gl.vertexAttribPointer(scene.colorLoc, 3, gl.FLOAT, false, 20, 8);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, scene.lineBuffer);
+      gl.vertexAttribPointer(scene.posLoc, 2, gl.FLOAT, false, 20, 0);
+      gl.vertexAttribPointer(scene.colorLoc, 3, gl.FLOAT, false, 20, 8);
+      gl.drawArrays(gl.LINES, 0, 2);
+
+      meta.textContent = `${useMsaa ? "MSAA FBO" : "backbuffer"} | ${canvas.width}×${canvas.height} px | AA: ${useMsaa ? state.samples : state.antialias ? "on" : "off"} | preserve: ${state.preserve} | premul: ${state.premul}`;
+    }
+
+    function setupMsaaFbo(gl, width, height, samples) {
+      const fbo = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      const color = gl.createRenderbuffer();
+      gl.bindRenderbuffer(gl.RENDERBUFFER, color);
+      gl.renderbufferStorageMultisample(gl.RENDERBUFFER, samples, gl.RGBA8, width, height);
+      gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, color);
+
+      const depth = gl.createRenderbuffer();
+      gl.bindRenderbuffer(gl.RENDERBUFFER, depth);
+      gl.renderbufferStorageMultisample(gl.RENDERBUFFER, samples, gl.DEPTH_COMPONENT16, width, height);
+      gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth);
+
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      return { fbo, color, depth, width, height, samples };
+    }
+
+    function drawFrame(ts) {
+      if (!glDefault || !glMsaa) return;
+      frameCount += 1;
+      frameCountEl.textContent = frameCount.toString();
+      // Default backbuffer
+      glDefault.bindFramebuffer(glDefault.FRAMEBUFFER, null);
+      drawScene(glDefault, canvasDefault, metaDefault, ts, false);
+
+      // MSAA FBO then blit to default
+      glMsaa.bindFramebuffer(glMsaa.FRAMEBUFFER, resourcesMsaa.fbo);
+      drawScene(glMsaa, canvasMsaa, metaMsaa, ts, true);
+      glMsaa.bindFramebuffer(glMsaa.READ_FRAMEBUFFER, resourcesMsaa.fbo);
+      glMsaa.bindFramebuffer(glMsaa.DRAW_FRAMEBUFFER, null);
+      glMsaa.blitFramebuffer(
+        0, 0, resourcesMsaa.width, resourcesMsaa.height,
+        0, 0, resourcesMsaa.width, resourcesMsaa.height,
+        glMsaa.COLOR_BUFFER_BIT, glMsaa.NEAREST
+      );
+      glMsaa.bindFramebuffer(glMsaa.READ_FRAMEBUFFER, null);
+      glMsaa.bindFramebuffer(glMsaa.DRAW_FRAMEBUFFER, null);
+    }
+
+    function startLoop() {
+      stopLoop();
+      const loop = (ts) => {
+        drawFrame(ts);
+        if (state.animate) {
+          rafId = requestAnimationFrame(loop);
+        }
+      };
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function stopLoop() {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+
+    initContexts();
+  </script>
+</body>
+</html>

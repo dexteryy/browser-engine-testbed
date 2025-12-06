@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>12-1 Base:SVG/Image mask cropping</title>
+  <link rel="stylesheet" href="./assets/common.css">
+  <style>
+  .box .photo{ background-image:url('./assets/avatar.svg'); }
+  .avatar, .ref{position:relative}
+  .avatar.mask-target{background:#cbd5e1;}
+  .bg-choice-pure, .card.bg-choice-pure{ background:#f1f5f9; }
+  .bg-choice-gradient, .card.bg-choice-gradient{ background:linear-gradient(135deg, #fda4af, #93c5fd); }
+  .bg-choice-checker, .card.bg-choice-checker{ 
+    background-image: linear-gradient(45deg, #0000 25%, #e5e7eb 25% 50%, #0000 50% 75%, #e5e7eb 75%),
+                     linear-gradient(45deg, #e5e7eb 25%, #0000 25% 50%, #e5e7eb 50% 75%, #0000 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 8px 8px;
+  }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="container">
+      <h1 class="title">12-1 Base:SVG/Image mask cropping</h1>
+      <p class="desc">use mask-image Give the element shoulduse SVG/image/Gradient mask to verify the accuracy of visible area cropping and transparency.</p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="container">
+      <div class="control">
+        <label>Mask source</label>
+        <select id="maskSrc">
+          <option value="svg-circle">SVG round</option>
+          <option value="svg-star">SVG star shape</option>
+          <option value="svg-ring">SVG ring</option>
+          <option value="svg-soft">SVG soft round gradient</option>
+          <option value="css-radial">CSS radial gradient</option>
+          <option value="css-linear">CSS linear gradient</option>
+          <option value="none">Turn off mask</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>mask-mode</label>
+        <select id="maskMode">
+          <option value="alpha">alpha(by transparency)</option>
+          <option value="luminance">luminance(by brightness)</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>mask-size</label>
+        <select id="maskSize">
+          <option value="100% 100%">100% 100%</option>
+          <option value="contain">contain</option>
+          <option value="cover">cover</option>
+          <option value="custom" selected>Custom (percentage)</option>
+        </select>
+        <div class="value">W <input id="msw" type="range" min="10" max="200" value="100"> <span id="mswv">100%</span></div>
+        <div class="value">H <input id="msh" type="range" min="10" max="200" value="100"> <span id="mshv">100%</span></div>
+      </div>
+      <div class="control">
+        <label>mask-position(%)</label>
+        <div class="value">X <input id="mpx" type="range" min="0" max="100" value="50"> <span id="mpxv">50%</span></div>
+        <div class="value">Y <input id="mpy" type="range" min="0" max="100" value="50"> <span id="mpyv">50%</span></div>
+      </div>
+      <div class="control">
+        <label>mask-repeat</label>
+        <select id="maskRepeat">
+          <option value="no-repeat">no-repeat</option>
+          <option value="repeat">repeat</option>
+          <option value="repeat-x">repeat-x</option>
+          <option value="repeat-y">repeat-y</option>
+          <option value="round">round</option>
+          <option value="space">space</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Test background</label>
+        <select id="bgChoice">
+          <option value="checker">Checkerboard (transparent visualization)</option>
+          <option value="pure">solid color</option>
+          <option value="gradient">Gradient</option>
+        </select>
+      </div>
+      <button class="btn" id="copyCss">copy current CSS</button>
+      <div class="status">
+        <span class="badge" id="supportMC">mask-composite: Under detection...</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section container">
+    <div class="grid">
+      <div class="card">
+        <h3>Mask element</h3>
+        <div class="box avatar mask-target checker" id="maskedBox">
+          <div class="transparent-backdrop"></div>
+          <div class="photo"></div>
+        </div>
+        <p class="small-note">The outside of the mask should be completely transparent, showing through the underlying color bar background; the edges should be smooth.</p>
+      </div>
+      <div class="card">
+        <h3>Reference element (no mask)</h3>
+        <div class="box ref checker" id="refBox">
+          <div class="transparent-backdrop"></div>
+          <div class="photo"></div>
+        </div>
+        <p class="small-note">useIn comparison:layoutandSame size,should notuse mask property.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section container">
+    <div class="explain">
+      <h2>Explanation</h2>
+      <ul class="list">
+        <li><strong>Test objectives:</strong>Verify that the mask is cropped accurately (only the inside of the mask shape is visible), that the outside is truly transparent, and that the edges are anti-aliased.</li>
+        <li><strong>makeusemethod:</strong>Switch on the toolbar aboveMask source, size, position and repetition;Switch the background color to observe the transparent area showing through.</li>
+        <li><strong>Inspection method:</strong>Open DevTools → Rendering,Check <span class="kbd">Layer borders</span> and <span class="kbd">Paint flashing</span>,CheckMask elementWhether it is promoted to a composite layer and whether unnecessary redrawing occurs.</li>
+        <li><strong>expected:</strong>Chrome correct responseuse <code>mask-image</code> and other attributes, the outside of the element is transparent; the first drawing performance is within an acceptable range.</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="./assets/common.js"></script>
+  <script>
+    const {byId, on, copy, cssSupports, extractMaskCSS, applyMaskStyles} = window.MaskUtils;
+
+    const masked = byId('maskedBox');
+    const ref = byId('refBox');
+
+    // Controls
+    const maskSrc = byId('maskSrc');
+    const maskMode = byId('maskMode');
+    const maskSize = byId('maskSize');
+    const msw = byId('msw'); const msh = byId('msh');
+    const mpx = byId('mpx'); const mpy = byId('mpy');
+    const maskRepeat = byId('maskRepeat');
+    const bgChoice = byId('bgChoice');
+    const copyCss = byId('copyCss');
+
+    const mswv = byId('mswv'); const mshv = byId('mshv');
+    const mpxv = byId('mpxv');
+
+    const maskedCard = masked.closest('.card');
+    const refCard = ref.closest('.card');
+
+    function updateBoxBG(){
+      const cls = bgChoice.value === 'pure' ? 'bg-choice-pure'
+                  : bgChoice.value === 'gradient' ? 'bg-choice-gradient'
+                  : 'bg-choice-checker';
+      [masked, ref, maskedCard, refCard].forEach(el=>{
+        if(!el) return;
+        el.classList.remove('bg-choice-pure','bg-choice-gradient','bg-choice-checker');
+        el.classList.add(cls);
+      });
+    }
+
+    const {maskSources} = window.MaskUtils;
+
+    function maskImageValue(){
+      switch(maskSrc.value){
+        case 'svg-circle': return `url('${maskSources.circle}')`;
+        case 'svg-star': return `url('${maskSources.star}')`;
+        case 'svg-ring': return `url('${maskSources.ring}')`;
+        case 'svg-soft': return `url('${maskSources.soft}')`;
+        case 'css-radial': {
+          // Smooth alpha fade using alpha channel (for alpha mode)
+          const center = `${mpx.value}% ${mpy.value}%`;
+          return `radial-gradient(circle at ${center}, rgba(0,0,0,1) 48%, rgba(0,0,0,0) 68%)`;
+        }
+        case 'css-linear': {
+          return `linear-gradient(135deg, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 70%)`;
+        }
+        default: return 'none';
+      }
+    }
+
+    function applyMask(){
+      const img = maskImageValue();
+      const mode = maskMode.value;
+      let size = maskSize.value === 'custom' ? `${msw.value}% ${msh.value}%` : maskSize.value;
+      const pos = `${mpx.value}% ${mpy.value}%`;
+      const repeat = maskRepeat.value;
+
+      if (img === 'none'){
+        applyMaskStyles(masked, {
+          mask: 'none',
+          image: 'none',
+          mode: '',
+          size: '',
+          position: '',
+          repeat: ''
+        });
+      } else {
+        applyMaskStyles(masked, {
+          image: img,
+          mode,
+          size,
+          position: pos,
+          repeat
+        });
+      }
+    }
+
+    function updateLabels(){
+      mswv.textContent = msw.value + '%';
+      mshv.textContent = msh.value + '%';
+      mpxv.textContent = mpx.value + '%';
+      byId('mpyv').textContent = mpy.value + '%';
+    }
+
+    function syncCustomSizeEnabled(){
+      const custom = maskSize.value === 'custom';
+      msw.disabled = msh.disabled = !custom;
+    }
+
+    on(maskSrc, 'change', applyMask);
+    on(maskMode, 'change', applyMask);
+    on(maskSize, 'change', ()=>{ 
+      syncCustomSizeEnabled();
+      applyMask(); 
+    });
+    [msw,msh,mpx,mpy,maskRepeat,bgChoice].forEach(el=>on(el,'input',()=>{updateLabels(); applyMask(); if (el===bgChoice) updateBoxBG();}));
+    on(copyCss,'click', ()=> copy(extractMaskCSS(masked)) );
+
+    // init
+    syncCustomSizeEnabled();
+    updateLabels(); applyMask(); updateBoxBG();
+
+    // feature detection for mask-composite (informational)
+    const support = cssSupports('mask-composite','intersect');
+    byId('supportMC').textContent = support ? 'mask-composite: support' : 'mask-composite: Nosupport(information)';
+  </script>
+</body>
+</html>

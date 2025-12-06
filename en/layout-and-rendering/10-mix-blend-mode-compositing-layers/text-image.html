@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>test case10:Text and image blending modes</title>
+  <link rel="stylesheet" href="css/shared.css"/>
+  <style>
+    /* Page-specific micro styles */
+    .panel .controls {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      background: rgba(255,255,255,.9);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px;
+      display: grid;
+      gap: 6px;
+      font-size: 12px;
+    }
+    .panel .controls label { font-size: 12px; font-weight: 600; }
+    .panel .controls select, .panel .controls input { width: 190px; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="inner">
+      <h1>test case10:Text and image blending modes</h1>
+      <p>across different content types (text,SVG Image) to verify hybrid formulas with isolated behavior</p>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="toolbar">
+      <div>
+        <label>Text area background</label>
+        <select id="textBg">
+          <option value="solid" selected>Solid color (blue)</option>
+          <option value="gradient">Gradient</option>
+          <option value="checker">Checkerboard</option>
+        </select>
+      </div>
+      <div>
+        <label>Text blending mode</label>
+        <select id="textMode">
+          <option>normal</option>
+          <option selected>multiply</option>
+          <option>screen</option>
+          <option>overlay</option>
+          <option>difference</option>
+          <option>exclusion</option>
+          <option>lighten</option>
+          <option>darken</option>
+        </select>
+      </div>
+      <div>
+        <label>Text size</label>
+        <input type="range" id="fontSize" min="24" max="96" step="1" value="48"/>
+        <div class="hint">current:<span id="fontVal">48px</span></div>
+      </div>
+      <div>
+        <label>Group isolation (text side)</label>
+        <div class="inline">
+          <input type="checkbox" id="textIsolate"/>
+          <span class="hint">father container <span class="code-like">isolation: isolate</span></span>
+        </div>
+      </div>
+      <div>
+        <label>Image blending modes</label>
+        <select id="imgMode">
+          <option>normal</option>
+          <option selected>screen</option>
+          <option>multiply</option>
+          <option>overlay</option>
+          <option>difference</option>
+          <option>exclusion</option>
+          <option>lighten</option>
+          <option>darken</option>
+        </select>
+      </div>
+      <div>
+        <label>Image opacity</label>
+        <input type="range" id="imgAlpha" min="0.1" max="1" step="0.01" value="0.85"/>
+        <div class="hint">current:<span id="imgAlphaVal">0.85</span></div>
+      </div>
+      <div>
+        <label>Group isolation (picture side)</label>
+        <div class="inline">
+          <input type="checkbox" id="imgIsolate"/>
+          <span class="hint">father container <span class="code-like">isolation: isolate</span></span>
+        </div>
+      </div>
+      <div>
+        <label>Browser support</label>
+        <div class="hint"><span class="badge" id="support">Under detection</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-title">text blending</div>
+        <div class="text-area" id="textArea">
+          <div class="text-sample" id="textSample">
+            <div class="white" id="whiteText" style="mix-blend-mode: multiply;">WHITE text</div>
+            <div class="black" id="blackText" style="mix-blend-mode: multiply;">BLACK text</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">image blend(SVG)</div>
+        <div class="img-area" id="imgArea">
+          <img id="svgImg" src="assets/sample.svg" alt="Example SVG" style="mix-blend-mode: screen; opacity: 0.85;" onerror="this.replaceWith(document.createTextNode('Image loading failed: please confirm assets/sample.svg exists'))"/>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="explain">
+      <h3>illustrate</h3>
+      <ul>
+        <li>White on the left/blacktextMixed performance on different backgrounds,Color on the right SVG A blend of images and dark backgrounds.</li>
+        <li>switch"group isolation"Contrast the difference between elements being mixed within the same overlay context versus being mixed within an isolated context.</li>
+        <li>textSame as image follow CSS A mixed formula, but the visual look and feel differs due to different content distribution and color gamut.</li>
+      </ul>
+    </div>
+  </section>
+
+  <script>
+    // Elements
+    const textBg = document.getElementById('textBg');
+    const textMode = document.getElementById('textMode');
+    const fontSize = document.getElementById('fontSize');
+    const textIsolate = document.getElementById('textIsolate');
+    const imgMode = document.getElementById('imgMode');
+    const imgAlpha = document.getElementById('imgAlpha');
+    const imgIsolate = document.getElementById('imgIsolate');
+    const fontVal = document.getElementById('fontVal');
+    const imgAlphaVal = document.getElementById('imgAlphaVal');
+    const support = document.getElementById('support');
+
+    const textArea = document.getElementById('textArea');
+    const whiteText = document.getElementById('whiteText');
+    const blackText = document.getElementById('blackText');
+    const imgArea = document.getElementById('imgArea');
+    const svgImg = document.getElementById('svgImg');
+    const textSample = document.getElementById('textSample');
+
+    function applyTextBg() {
+      if (textBg.value === 'solid') {
+        textArea.style.background = '#1140ff';
+      } else if (textBg.value === 'gradient') {
+        textArea.style.background = 'linear-gradient(135deg, #1140ff, #00c2ff)';
+      } else {
+        textArea.style.backgroundImage =
+          'linear-gradient(45deg, #f5f5f5 25%, transparent 25%),'+
+          'linear-gradient(-45deg, #f5f5f5 25%, transparent 25%),'+
+          'linear-gradient(45deg, transparent 75%, #f5f5f5 75%),'+
+          'linear-gradient(-45deg, transparent 75%, #f5f5f5 75%)';
+        textArea.style.backgroundSize = '20px 20px';
+        textArea.style.backgroundPosition = '0 0, 0 10px, 10px -10px, -10px 0px';
+      }
+    }
+    function applyAll() {
+      applyTextBg();
+      whiteText.style.mixBlendMode = textMode.value;
+      blackText.style.mixBlendMode = textMode.value;
+      whiteText.style.fontSize = fontSize.value + 'px';
+      blackText.style.fontSize = fontSize.value + 'px';
+      fontVal.textContent = fontSize.value + 'px';
+      textArea.style.isolation = textIsolate.checked ? 'isolate' : 'auto';
+
+      svgImg.style.mixBlendMode = imgMode.value;
+      svgImg.style.opacity = imgAlpha.value;
+      imgAlphaVal.textContent = (+imgAlpha.value).toFixed(2);
+      imgArea.style.isolation = imgIsolate.checked ? 'isolate' : 'auto';
+    }
+
+    [textBg, textMode, fontSize, textIsolate, imgMode, imgAlpha, imgIsolate].forEach(el=>{
+      el.addEventListener('input', applyAll);
+      el.addEventListener('change', applyAll);
+    });
+
+    // Feature support indicator
+    const blendSupported = CSS.supports('mix-blend-mode', 'multiply');
+    support.textContent = blendSupported ? 'support mix-blend-mode' : 'Nosupport(May not be valid)';
+    support.classList.add(blendSupported ? 'good' : 'bad');
+
+    applyAll();
+  </script>
+</body>
+</html>

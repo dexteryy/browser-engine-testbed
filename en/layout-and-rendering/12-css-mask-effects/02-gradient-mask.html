@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>12-2 Gradient masks and translucent edges</title>
+  <link rel="stylesheet" href="./assets/common.css">
+  <style>
+  .workbench{display:flex;gap:18px;align-items:flex-start;}
+  .workbench .box{width:520px;height:320px;border-radius:12px;}
+  .note{font-size:12px;color:#6b7280;}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="container">
+      <h1 class="title">12-2 Gradient masks and translucent edges</h1>
+      <p class="desc">use CSS Use the gradient as a mask and observe whether the smooth fade and transparent transition of the edges are correct.</p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="container">
+      <div class="control">
+        <label>gradient type</label>
+        <select id="gType">
+          <option value="radial">radial gradient</option>
+          <option value="linear">linear gradient</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>mask-mode</label>
+        <select id="gMode">
+          <option value="alpha">alpha(Transition with transparency)</option>
+          <option value="luminance">luminance(Use light and dark transitions)</option>
+        </select>
+      </div>
+      <div class="control">
+        <label><span id="labelA">centerX</span></label>
+        <input id="a" type="range" min="0" max="100" value="50"/>
+        <div class="value"><span id="av">50%</span></div>
+      </div>
+      <div class="control">
+        <label><span id="labelB">centerY/angle</span></label>
+        <input id="b" type="range" min="0" max="100" value="50"/>
+        <div class="value"><span id="bv">50%</span></div>
+      </div>
+      <div class="control">
+        <label>Inside/Outer radius or starting and ending positions</label>
+        <input id="r1" type="range" min="0" max="100" value="40"/>
+        <div class="value">Inside:<span id="r1v">40%</span></div>
+        <input id="r2" type="range" min="0" max="100" value="70"/>
+        <div class="value">outside:<span id="r2v">70%</span></div>
+      </div>
+      <button class="btn" id="copyCss">copy current CSS</button>
+      <div class="status"><span class="badge">Live preview</span></div>
+    </div>
+  </div>
+
+  <div class="section container">
+    <div class="workbench">
+      <div class="card">
+        <h3>Mask element</h3>
+        <div class="box mask-target checker" id="maskTarget">
+          <div class="transparent-backdrop"></div>
+          <div class="photo"></div>
+        </div>
+      </div>
+      <div class="card" style="flex:1">
+        <h3>current CSS</h3>
+        <pre><code id="cssOut"></code></pre>
+        <p class="note">Tip: When <code>mask-mode = alpha</code> time, gradients of various colors <strong>alpha value</strong> Determines the mask strength; when <code>luminance</code> hour,<strong>Color brightness</strong>(black→White) determines the mask strength.</p>
+        <table class="metrix">
+          <thead><tr><th>index</th><th>numbervalue</th></tr></thead>
+          <tbody>
+            <tr><td>Visible edge smoothing</td><td>There should be no obvious jagged edges</td></tr>
+            <tr><td>transparent transition</td><td>Should transition smoothly from fully opaque to fully transparent</td></tr>
+            <tr><td>layout impact</td><td>Masking does not change the element box model</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section container">
+    <div class="explain">
+      <h2>Explanation</h2>
+      <ul class="list">
+        <li><strong>Test objectives:</strong>Verify the visual quality and correct scaling of the translucent gradient mask.</li>
+        <li><strong>usemethod:</strong>adjustcenter/angle, InsideOuter radius or starting and ending positions,observeInsideWhether the content fades out as expected, Transparent areas allow background color to show through.</li>
+        <li><strong>Inspection method:</strong>zoom window and DPR(Check whether the edge quality is stable under high-resolution screen).</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="./assets/common.js"></script>
+  <script>
+    const {qs, byId, on, copy, number, applyMaskStyles} = window.MaskUtils;
+    const el = byId('maskTarget');
+    const gType = byId('gType');
+    const gMode = byId('gMode');
+    const a = byId('a'); const b = byId('b'); const r1 = byId('r1'); const r2 = byId('r2');
+    const av = byId('av'); const bv = byId('bv'); const r1v=byId('r1v'); const r2v=byId('r2v');
+    const labelA = byId('labelA'); const labelB = byId('labelB');
+    const cssOut = byId('cssOut'); const copyCss = byId('copyCss');
+
+    function updateLabels(){
+      av.textContent = a.value + '%';
+      if (gType.value==='linear'){ bv.textContent = (Math.round(b.value*3.6)) + '°'; }
+      else { bv.textContent = b.value + '%'; }
+      r1v.textContent = r1.value + '%'; r2v.textContent = r2.value + '%';
+      labelA.textContent = gType.value==='linear' ? 'Direction (reserved)' : 'centerX';
+      labelB.textContent = gType.value==='linear' ? 'angle' : 'centerY/angle';
+    }
+
+    function maskImage(){
+      const mode = gMode.value;
+      if (gType.value === 'radial'){
+        const cx = a.value, cy = b.value;
+        const inner = Math.min(r1.value, r2.value);
+        const outer = Math.max(r1.value, r2.value);
+        if(mode==='alpha'){
+          return `radial-gradient(circle at ${cx}% ${cy}%, rgba(0,0,0,1) ${inner}%, rgba(0,0,0,0) ${outer}%)`;
+        }else{
+          return `radial-gradient(circle at ${cx}% ${cy}%, hsl(0 0% 100%) ${inner}%, hsl(0 0% 0%) ${outer}%)`;
+        }
+      }else{ // linear
+        const angle = Math.round(b.value*3.6);
+        const start = Math.min(r1.value, r2.value);
+        const end = Math.max(r1.value, r2.value);
+        if(gMode.value==='alpha'){
+          return `linear-gradient(${angle}deg, rgba(0,0,0,1) ${start}%, rgba(0,0,0,0) ${end}%)`;
+        }else{
+          return `linear-gradient(${angle}deg, hsl(0 0% 100%) ${start}%, hsl(0 0% 0%) ${end}%)`;
+        }
+      }
+    }
+
+    function apply(){
+      const img = maskImage();
+      applyMaskStyles(el, {
+        image: img,
+        mode: gMode.value,
+        repeat: 'no-repeat',
+        size: '100% 100%',
+        position: 'center'
+      });
+
+      const css = `mask-image: ${img};\nmask-mode: ${gMode.value};\nmask-size: 100% 100%;\nmask-position: center;\nmask-repeat: no-repeat;`;
+      cssOut.textContent = css;
+    }
+
+    [gType,gMode,a,b,r1,r2].forEach(x=>on(x, 'input', ()=>{updateLabels(); apply();}));
+    on(copyCss,'click', ()=> copy(cssOut.textContent));
+
+    updateLabels(); apply();
+  </script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>test case11-3:Comprehensive scene (background filter + foreground filter)</title>
+  <link rel="stylesheet" href="./shared.css">
+  <script src="./perf-hud.js" defer></script>
+  <script defer>
+    (function(){
+      function $(s,ctx){ return (ctx||document).querySelector(s); }
+      var hud = null;
+      var state = {
+        bdEnabled:true, bdBlur:5, bdAlpha:.6, bdWC:false, bdLayer:false,
+        imEnabled:true, imBlur:5, imWC:false, imLayer:false,
+        auto:false, speed:2
+      };
+      var rafId = 0;
+
+      function apply(){
+        document.documentElement.style.setProperty('--backdrop-blur', state.bdBlur + 'px');
+        document.documentElement.style.setProperty('--backdrop-alpha', String(state.bdAlpha));
+        document.documentElement.style.setProperty('--img-blur', state.imBlur + 'px');
+
+        var hd = $('.masthead');
+        if (hd){
+          hd.classList.toggle('masthead--glass', state.bdEnabled);
+          hd.style.willChange = state.bdWC ? 'backdrop-filter' : '';
+          hd.style.transform = state.bdLayer ? 'translateZ(0)' : '';
+        }
+        var img = $('.photo');
+        if (img){
+          img.dataset.enabled = state.imEnabled ? 'true' : 'false';
+          img.style.willChange = state.imWC ? 'filter' : '';
+          img.style.transform = state.imLayer ? 'translateZ(0)' : '';
+        }
+        $('#bdBlurVal').textContent = state.bdBlur + 'px';
+        $('#bdAlphaVal').textContent = Math.round(state.bdAlpha * 100) + '%';
+        $('#imBlurVal').textContent = state.imBlur + 'px';
+      }
+
+      function loop(){
+        if(!state.auto) return;
+        window.scrollBy(0, state.speed);
+        if ((window.innerHeight + window.scrollY) >= document.body.scrollHeight || window.scrollY <= 0) {
+          state.speed = -state.speed;
+        }
+        rafId = requestAnimationFrame(loop);
+      }
+      function toggleAuto(on){
+        cancelAnimationFrame(rafId);
+        state.auto = on;
+        if(on) rafId = requestAnimationFrame(loop);
+      }
+
+      document.addEventListener('DOMContentLoaded', function(){
+        hud = new window.PerfHUD();
+
+        // Bind controls
+        $('#bdEnable').addEventListener('change', function(e){ state.bdEnabled = e.target.checked; apply(); });
+        $('#bdBlur').addEventListener('input', function(e){ state.bdBlur = +e.target.value; apply(); });
+        $('#bdAlpha').addEventListener('input', function(e){ state.bdAlpha = +e.target.value; apply(); });
+        $('#bdWC').addEventListener('change', function(e){ state.bdWC = e.target.checked; apply(); });
+        $('#bdLayer').addEventListener('change', function(e){ state.bdLayer = e.target.checked; apply(); });
+
+        $('#imEnable').addEventListener('change', function(e){ state.imEnabled = e.target.checked; apply(); });
+        $('#imBlur').addEventListener('input', function(e){ state.imBlur = +e.target.value; apply(); });
+        $('#imWC').addEventListener('change', function(e){ state.imWC = e.target.checked; apply(); });
+        $('#imLayer').addEventListener('change', function(e){ state.imLayer = e.target.checked; apply(); });
+
+        $('#auto').addEventListener('change', function(e){ toggleAuto(e.target.checked); });
+        $('#speed').addEventListener('input', function(e){ state.speed = +e.target.value; });
+        $('#hud').addEventListener('change', function(e){ e.target.checked ? hud.start() : hud.stop(); });
+        $('#reset').addEventListener('click', function(){
+          Object.assign(state, {bdEnabled:true, bdBlur:5, bdAlpha:.6, bdWC:false, bdLayer:false, imEnabled:true, imBlur:5, imWC:false, imLayer:false, auto:false, speed:2});
+          $('#bdEnable').checked=true; $('#bdBlur').value=5; $('#bdAlpha').value=.6; $('#bdWC').checked=false; $('#bdLayer').checked=false;
+          $('#imEnable').checked=true; $('#imBlur').value=5; $('#imWC').checked=false; $('#imLayer').checked=false;
+          $('#auto').checked=false; $('#speed').value=2; $('#hud').checked=false; hud.stop();
+          apply(); window.scrollTo({top:0});
+        });
+
+        apply();
+      });
+    })();
+  </script>
+</head>
+<body>
+  <!-- Top bar (glassy state, also used as the measured background filter element) -->
+  <header class="masthead masthead--glass">
+    <div class="container title">
+      <h1>test case11-3:Comprehensive scene</h1>
+      <span class="sub">Fixed translucent bar (background blur) + Text image (blurred foreground)</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="toolbar" aria-label="Toolbar">
+      <div class="row">
+        <span class="badge">background filter</span>
+        <div class="group"><label><input id="bdEnable" type="checkbox" checked> enable backdrop-filter</label></div>
+        <div class="group"><label>Vague <input id="bdBlur" type="range" min="0" max="20" value="5"></label><span class="num" id="bdBlurVal">5px</span></div>
+        <div class="group"><label>transparency <input id="bdAlpha" type="range" min="0.2" max="0.95" step="0.01" value="0.6"></label><span class="num" id="bdAlphaVal">60%</span></div>
+        <div class="group"><label><input id="bdWC" type="checkbox"> will-change</label></div>
+        <div class="group"><label><input id="bdLayer" type="checkbox"> composition layer</label></div>
+      </div>
+      <div class="row">
+        <span class="badge">foreground filter</span>
+        <div class="group"><label><input id="imEnable" type="checkbox" checked> enable filter</label></div>
+        <div class="group"><label>Vague <input id="imBlur" type="range" min="0" max="20" value="5"></label><span class="num" id="imBlurVal">5px</span></div>
+        <div class="group"><label><input id="imWC" type="checkbox"> will-change</label></div>
+        <div class="group"><label><input id="imLayer" type="checkbox"> composition layer</label></div>
+      </div>
+      <div class="row">
+        <div class="group"><label><input id="auto" type="checkbox"> autoscroll</label></div>
+        <div class="group"><label>speed <input id="speed" type="range" min="1" max="12" step="1" value="2"></label><span class="num">px/frame</span></div>
+        <div class="group"><label><input id="hud" type="checkbox"> Turn on performanceHUD</label></div>
+        <button id="reset">reset</button>
+      </div>
+    </section>
+
+    <section class="test-area">
+      <div class="section">
+        <h2>Test area: scroll + Overlay of two types of filters</h2>
+        <p class="meta">Let different content pass behind the top bar,Observe the text pictures at the same timeofVagueEffectandOverall fluency.</p>
+      </div>
+      <div class="scroller long-list">
+        <p>paragraph 1:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+<p>paragraph 2:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+<p>paragraph 3:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+<p>paragraph 4:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+<p>paragraph 5:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+<p>paragraph 6:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+<p>paragraph 7:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+<p>paragraph 8:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+<p>paragraph 9:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+<p>paragraph 10:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+<p>paragraph 11:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+<p>paragraph 12:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+<p>paragraph 13:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+<p>paragraph 14:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+<p>paragraph 15:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+<p>paragraph 16:for scrollingofplaceholder text.backgroundandforeground filterWhen superimposed,Watch for penetration or masking errors.</p>
+        <div class="photo-wrap">
+          <img class="photo" src="./assets/pattern.svg" alt="Color gridbackground(for observationVagueEffect)" data-enabled="true" onerror="this.replaceWith(document.createTextNode('Image loading failed: please confirm assets/pattern.svg exists'))">
+        </div>
+        <p>paragraph 17:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 18:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 19:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 20:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 21:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 22:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 23:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 24:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 25:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 26:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 27:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 28:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 29:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 30:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 31:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 32:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 33:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 34:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 35:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 36:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 37:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 38:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 39:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 40:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 41:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 42:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 43:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 44:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 45:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 46:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 47:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 48:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 49:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 50:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 51:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 52:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 53:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+<p>paragraph 54:keep scrolling,Pay attention to the top barofVaguewhetherandpictureofprospectVaguemutual influence(In theory, they do not affect each other).</p>
+      </div>
+    </section>
+
+    <section class="explain" aria-label="Explanation">
+      <div class="section">
+        <h3>Test target</h3>
+        <ul>
+          <li>verifyforeground filterandbackground filteron the same pageofWhen superimposedofRendering correctness.</li>
+          <li>contrastenable/Scrolling and compositing performance when various optimization hints are disabled.</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h3>How to use</h3>
+        <ul>
+          <li>After scrolling the page and observing the top barofcontentVaguewhetherStablize,pictureVaguewhetherAlways effective.</li>
+          <li>Switch item by item will-change and"composition layer",try to quantify HUD of FPS and P95 framehour.</li>
+          <li>Obvious loss when encounteringframehour,Gradually reduceVagueradius,Observation threshold.</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h3>Outcome evaluation</h3>
+        <ul>
+          <li>Ideal performance: Two types of filters are synthesized independently; scrolling is mainly performed by GPU Synthesis completed; no penetration/Masking artifacts.</li>
+          <li>suspicious behavior:Appear notVagueofoneframe, The edge of the top rail is whitish, or HUD Show a lot Jank/LongTasks.</li>
+        </ul>
+      </div>
+    </section>
+
+    <nav class="footer-nav">
+      <a href="./01-backdrop-scroll.html">return 11-1:background filter</a>
+      <a href="./02-foreground-filter.html">return 11-2:foreground filter</a>
+    </nav>
+  </main>
+</body>
+</html>

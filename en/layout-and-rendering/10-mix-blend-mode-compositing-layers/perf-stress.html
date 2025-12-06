@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>test case10:Performance pressure and frame rate observation</title>
+  <link rel="stylesheet" href="css/shared.css"/>
+  <style>
+    /* Perf page small styles */
+    .legend { font-size: 12px; color: #555; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="inner">
+      <h1>test case10:Performance pressure and frame rate observation</h1>
+      <p>In the case of a large number of mixed elements and continuous animation, observe the frame rate and smoothness</p>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="toolbar">
+      <div>
+        <label>Number of elements</label>
+        <input type="range" id="count" min="0" max="600" step="1" value="120"/>
+        <div class="hint"><span id="countVal">120</span> indivual</div>
+      </div>
+      <div>
+        <label>element size (px)</label>
+        <input type="range" id="size" min="12" max="120" step="1" value="40"/>
+        <div class="hint"><span id="sizeVal">40</span> px</div>
+      </div>
+      <div>
+        <label>blend mode</label>
+        <select id="mode">
+          <option value="random" selected>random</option>
+          <option>multiply</option>
+          <option>screen</option>
+          <option>overlay</option>
+          <option>difference</option>
+          <option>exclusion</option>
+          <option>lighten</option>
+          <option>darken</option>
+        </select>
+      </div>
+      <div>
+        <label>color transparency</label>
+        <input type="range" id="alpha" min="0.1" max="1" step="0.01" value="0.6"/>
+        <div class="hint">Alpha:<span id="alphaVal">0.60</span></div>
+      </div>
+      <div>
+        <label>animation</label>
+        <div class="inline">
+          <button id="toggle">start</button>
+          <button id="step">single step frame</button>
+        </div>
+      </div>
+      <div>
+        <label>Performance indicators</label>
+        <div class="badges">
+          <span class="badge" id="fps">FPS: --</span>
+          <span class="badge" id="minfps">lowest: --</span>
+          <span class="badge" id="ms">Frame time: -- ms</span>
+        </div>
+      </div>
+      <div>
+        <label>Browser support</label>
+        <div class="hint"><span class="badge" id="support">Under detection</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="stage-wrap">
+      <div class="perf-stage" id="stage"></div>
+      <p class="small-note legend">Recommendation: open DevTools Performance Record rolling oranimation,confirmexistAre there obvious redraws or frame drops when mixing a large number of elements?.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="explain">
+      <h3>Test method</h3>
+      <ol>
+        <li>AdjustmentNumber of elementswith size,Click"start"Watch the frame rate.</li>
+        <li>Willblend modeset to"random"to simulate complex scenarios,or fixed to a certainindivualmode for targeted testing.</li>
+        <li>exist DevTools Check <em>Layer borders</em>,Watch for the appearance of a large number of independent composite layers and their boundaries.</li>
+      </ol>
+    </div>
+  </section>
+
+  <script>
+    const stage = document.getElementById('stage');
+    const countEl = document.getElementById('count');
+    const sizeEl = document.getElementById('size');
+    const modeEl = document.getElementById('mode');
+    const alphaEl = document.getElementById('alpha');
+    const countVal = document.getElementById('countVal');
+    const sizeVal = document.getElementById('sizeVal');
+    const alphaVal = document.getElementById('alphaVal');
+    const toggleBtn = document.getElementById('toggle');
+    const stepBtn = document.getElementById('step');
+    const fpsBadge = document.getElementById('fps');
+    const minfpsBadge = document.getElementById('minfps');
+    const msBadge = document.getElementById('ms');
+    const support = document.getElementById('support');
+
+    const modes = ['multiply','screen','overlay','difference','exclusion','lighten','darken'];
+    let blobs = [];
+    let running = false;
+    let rafId = 0;
+    let last = performance.now();
+    let fpsHist = [];
+
+    function hexToRgb(hex) {
+      const s = hex.replace('#','');
+      return [
+        parseInt(s.substring(0,2), 16),
+        parseInt(s.substring(2,4), 16),
+        parseInt(s.substring(4,6), 16)
+      ];
+    }
+
+    function setBlobColor(blob, alpha) {
+      blob.el.style.background = `rgba(${blob.rgb[0]},${blob.rgb[1]},${blob.rgb[2]},${alpha})`;
+    }
+
+    function rand(min, max){ return Math.random()*(max-min)+min; }
+    function randInt(min, max){ return Math.floor(rand(min, max)); }
+    function randHex(){ return '#'+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0'); }
+
+    function createBlobs(n) {
+      // remove existing
+      blobs.forEach(b => b.el.remove());
+      blobs = [];
+      const size = +sizeEl.value;
+      const a = +alphaEl.value;
+      for (let i=0;i<n;i++) {
+        const el = document.createElement('div');
+        el.className = 'blob';
+        el.style.width = size + 'px';
+        el.style.height = size + 'px';
+        const color = randHex();
+        const rgb = hexToRgb(color);
+        el.style.background = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
+        const mode = modeEl.value === 'random' ? modes[randInt(0, modes.length)] : modeEl.value;
+        el.style.mixBlendMode = mode;
+        el.textContent = mode[0].toUpperCase();
+        stage.appendChild(el);
+        blobs.push({
+          el,
+          rgb,
+          x: rand(0, stage.clientWidth - size),
+          y: rand(0, stage.clientHeight - size),
+          vx: rand(-0.8, 0.8),
+          vy: rand(-0.8, 0.8),
+          rot: rand(0, Math.PI*2),
+          rs: rand(-0.02, 0.02)
+        });
+      }
+    }
+
+    function step(timestamp) {
+      const dt = (timestamp - last);
+      last = timestamp;
+      // FPS metrics
+      const fps = 1000 / dt;
+      fpsHist.push(fps);
+      if (fpsHist.length > 60) fpsHist.shift();
+      const avg = fpsHist.reduce((a,b)=>a+b,0) / fpsHist.length;
+      const minfps = Math.min(...fpsHist);
+
+      // update badges with color coding
+      fpsBadge.textContent = 'FPS: ' + avg.toFixed(1);
+      minfpsBadge.textContent = 'lowest: ' + minfps.toFixed(1);
+      msBadge.textContent = 'Frame time: ' + dt.toFixed(2) + ' ms';
+      [fpsBadge, minfpsBadge].forEach(b=>{
+        b.classList.remove('good','warn','bad');
+        if (avg >= 55) b.classList.add('good');
+        else if (avg >= 40) b.classList.add('warn');
+        else b.classList.add('bad');
+      });
+
+      const size = +sizeEl.value;
+      // move blobs using transform to avoid layout
+      for (const o of blobs) {
+        o.x += o.vx * (dt/16);
+        o.y += o.vy * (dt/16);
+        if (o.x < -size*0.5 || o.x > stage.clientWidth - size*0.5) o.vx *= -1;
+        if (o.y < -size*0.5 || o.y > stage.clientHeight - size*0.5) o.vy *= -1;
+        o.rot += o.rs;
+        o.el.style.transform = `translate(${o.x}px, ${o.y}px) rotate(${o.rot}rad)`;
+      }
+
+      if (running) rafId = requestAnimationFrame(step);
+    }
+
+    function start() {
+      running = true;
+      last = performance.now();
+      rafId = requestAnimationFrame(step);
+      toggleBtn.textContent = 'pause';
+    }
+    function stop() {
+      running = false;
+      cancelAnimationFrame(rafId);
+      toggleBtn.textContent = 'start';
+    }
+
+    // Bind UI
+    countEl.addEventListener('input', ()=>{
+      countVal.textContent = countEl.value;
+      createBlobs(+countEl.value);
+    });
+    sizeEl.addEventListener('input', ()=>{
+      sizeVal.textContent = sizeEl.value;
+      // update size of existing
+      blobs.forEach(o => {
+        o.el.style.width = sizeEl.value + 'px';
+        o.el.style.height = sizeEl.value + 'px';
+      });
+    });
+    alphaEl.addEventListener('input', ()=>{
+      alphaVal.textContent = (+alphaEl.value).toFixed(2);
+      blobs.forEach(o => {
+        setBlobColor(o, (+alphaEl.value).toFixed(2));
+      });
+    });
+    modeEl.addEventListener('change', ()=>{
+      blobs.forEach(o => {
+        const mode = modeEl.value === 'random' ? modes[Math.floor(Math.random()*modes.length)] : modeEl.value;
+        o.el.style.mixBlendMode = mode;
+        o.el.textContent = mode[0].toUpperCase();
+      });
+    });
+
+    toggleBtn.addEventListener('click', ()=>{
+      running ? stop() : start();
+    });
+    stepBtn.addEventListener('click', ()=>{
+      if (!running) step(performance.now());
+    });
+
+    // Handle resize: keep blobs within visible area
+    window.addEventListener('resize', ()=>{
+      const size = +sizeEl.value;
+      blobs.forEach(o=>{
+        o.x = Math.min(Math.max(o.x, -size*0.5), Math.max(0, stage.clientWidth - size*0.5));
+        o.y = Math.min(Math.max(o.y, -size*0.5), Math.max(0, stage.clientHeight - size*0.5));
+        o.el.style.transform = `translate(${o.x}px, ${o.y}px) rotate(${o.rot}rad)`;
+      });
+    });
+
+    // Feature support indicator
+    const blendSupported = CSS.supports('mix-blend-mode', 'multiply');
+    support.textContent = blendSupported ? 'support mix-blend-mode' : 'Nosupport(May not be valid)';
+    support.classList.add(blendSupported ? 'good' : 'bad');
+
+    // Init
+    countVal.textContent = countEl.value;
+    sizeVal.textContent = sizeEl.value;
+    alphaVal.textContent = (+alphaEl.value).toFixed(2);
+    createBlobs(+countEl.value);
+  </script>
+</body>
+</html>

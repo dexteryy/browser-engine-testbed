@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>R&D side use cases 11｜DRM/Protected video with Overlay present</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="inner">
+      <h1>R&D side use cases 11｜DRM/Protected video with Overlay presentpath</h1>
+      <p class="subtitle">Compare protected stream and normal stream on the same screen, check EME, overlay, full screen/Stability and compositing paths for picture-in-picture switching.</p>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar-section">
+    <div class="inner">
+      <div class="toolbar">
+        <fieldset>
+          <legend>stream selection</legend>
+          <label>protected
+            <select id="drmSelect">
+              <option value="widevineMp4" selected>Example Widevine (576p mp4)</option>
+              <option value="hlsFallback">local/No DRM Placeholder (downgraded)</option>
+            </select>
+          </label>
+          <label>usually
+            <select id="clearSelect">
+              <option value="bbb">Big Buck Bunny 720p</option>
+              <option value="tos">Tears of Steel 1080p</option>
+            </select>
+          </label>
+          <button id="loadBtn" class="primary">load/switch</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>Playback controls</legend>
+          <button id="playAll">Play all</button>
+          <button id="pauseAll">pause all</button>
+          <button id="toggleMute">mute/recover</button>
+          <label>Play rate <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1" /></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>full screen / picture within picture</legend>
+          <button id="fsProtected">protectedfull screen</button>
+          <button id="fsClear">usuallyfull screen</button>
+          <button id="pipProtected">protected PiP</button>
+          <button id="pipClear">usually PiP</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>state</legend>
+          <div class="status-row">
+            <span class="badge" id="emeStatus">EME:Under detection</span>
+            <span class="badge" id="overlayStatus">Overlay:--</span>
+            <span class="badge" id="playbackStatus">Play:--</span>
+            <span class="badge" id="pipStatus">PiP:--</span>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </section>
+
+  <!-- Test area -->
+  <main class="test-area">
+    <div class="inner">
+      <div class="panes">
+        <section class="pane">
+          <header class="pane-head">
+            <h2>protectedvideo(A)</h2>
+            <span class="hint">EME Initialization, may be limited by environment</span>
+          </header>
+          <div class="video-wrap">
+            <video id="videoProtected" controls playsinline></video>
+            <div class="overlay"><strong>protected</strong><span class="muted-text">DRM</span></div>
+            <button class="pip-btn" id="pipBtnProtected">PiP</button>
+          </div>
+        </section>
+
+        <section class="pane">
+          <header class="pane-head">
+            <h2>Noprotectedvideo(B)</h2>
+            <span class="hint">same resolution/Code rate comparison</span>
+          </header>
+          <div class="video-wrap">
+            <video id="videoClear" controls playsinline></video>
+            <div class="overlay"><strong>usually</strong><span class="muted-text">Clear</span></div>
+            <button class="pip-btn" id="pipBtnClear">PiP</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Explanation -->
+  <section class="explain">
+    <div class="inner">
+      <h3>Explanation</h3>
+      <h4>Test target</h4>
+      <p>verifyprotectedvideoon available platforms EME Play with overlay presentpath,contrastusuallyvideoIn synthesis, Memory andfull screen/PiP Differences in behavior.</p>
+
+      <h4>test plan</h4>
+      <ul>
+        <li>Display on the same screenprotectedvideo A andusuallyvideo B,Same resolution;Provide playback, mute, rate control.</li>
+        <li>button triggerfull screenandpicture within picture,repeatedlyswitch,Observe black screen, flashingandhysteresis.</li>
+        <li>EME Automatically downgrades tolocal/No DRM Placeholder stream,stateBadge indicates current mode.</li>
+        <li>stateColumn display EME/overlay/PiP/Playback progress information; recommended combination DevTools → Media Observation decodingandencryptionstate.</li>
+      </ul>
+
+      <h4>How to use</h4>
+      <ol>
+        <li>Click"load/switch"Finishprotectedfluent EME initialization;If failed,will be downgraded toNo DRM Placeholder,stateThe badge will prompt.</li>
+        <li>playtwo waysvideo,usefull screenand PiP Button Alternateswitch,Observe whether there is a black screen, splash screen, Window scaling exception.</li>
+        <li>Open DevTools → Media,Confirm decoder and encrypted link;Performance record, compare overlay The synthesis and copying costs are below.</li>
+        <li>Move or zoom the browser window, confirm overlay follow stability;contrastusuallyfluentperformance differences.</li>
+      </ol>
+
+      <h4>Check/test/How to evaluate results</h4>
+      <ul>
+        <li>protectedvideoRenders correctly,No screenshot afterimage;Enter/quitfull screenor PiP Smooth, no black screen.</li>
+        <li>Resource usage is reasonable,overlay Synthesize in mode/The copy overhead should be less thanusuallyflow;playstateandProgress display is normal.</li>
+      </ul>
+    </div>
+  </section>
+
+  <script src="./app.js"></script>
+</body>
+</html>

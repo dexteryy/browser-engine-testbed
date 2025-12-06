@@ -1,0 +1,237 @@
+/* Unified layout for font rendering test pages (Chromium latest) */
+:root {
+  --inner-width: 1180px;
+  --gap: 16px;
+  --border: #e5e7eb;
+  --muted: #6b7280;
+  --text: #111827;
+  --badge: #f3f4f6;
+  --accent: #2563eb;
+  --bg-soft: #f8fafc;
+  --shadow-color: rgba(0, 0, 0, 0.25);
+  --drop-color: rgba(0, 0, 0, 0.3);
+  --shadow-blur: 8px;
+  --shadow-offset: 4px;
+  --var-wght: 600;
+  --var-slnt: 0;
+  --letter-spacing: 0px;
+  --font-primary: "InterVar", "InterReload", "Inter", system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-serif: "SourceSerif4", "SourceSerifReload", "Source Serif", "Times New Roman", serif;
+}
+
+/* Custom fonts (WOFF2 / variable) */
+@font-face {
+  font-family: "InterVar";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("https://rsms.me/inter/font-files/Inter-roman.var.woff2?v=4") format("woff2-variations");
+}
+@font-face {
+  font-family: "SourceSerif4";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("https://rsms.me/inter/font-files/Inter-SemiBold.woff2") format("woff2");
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: #fff;
+  color: var(--text);
+  font: 14px/1.5 var(--font-primary);
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  border-bottom: 1px solid var(--border);
+}
+.topbar .inner {
+  max-width: var(--inner-width);
+  margin: 0 auto;
+  padding: 16px 20px;
+}
+.topbar h1 { margin: 0 0 6px 0; font-size: 20px; }
+.subtitle { margin: 0; color: var(--muted); }
+
+.toolbar-section .inner {
+  max-width: var(--inner-width);
+  margin: 0 auto;
+  padding: 12px 20px;
+}
+.toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--gap);
+}
+fieldset {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 84px;
+}
+legend { padding: 0 6px; color: var(--muted); }
+label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 12px 4px 0;
+  white-space: nowrap;
+}
+select, button, input[type="number"] {
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 8px;
+  background: #fff;
+}
+input[type="range"] { width: 140px; }
+button { cursor: pointer; }
+button.primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+button:disabled { opacity: 0.55; cursor: not-allowed; }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--badge);
+  color: #111;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+.status-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.hint { color: var(--muted); }
+
+.test-area .inner {
+  max-width: var(--inner-width);
+  margin: 0 auto;
+  padding: 8px 20px 20px 20px;
+}
+.panes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--gap);
+}
+.pane {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+.pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.pane h2 { margin: 0; font-size: 16px; }
+.content {
+  padding: 12px;
+  display: grid;
+  gap: 12px;
+  background:
+    conic-gradient(#f1f5f9 25%, #e5e7eb 0 50%, #f1f5f9 0 75%, #e5e7eb 0) 0 0/26px 26px,
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+.sample {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+.sample .label { color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
+.sample .label .badge { margin: 0; }
+.sample .text {
+  margin: 4px 0;
+  line-height: 1.4;
+  letter-spacing: var(--letter-spacing);
+  font-feature-settings: "liga" 1, "clig" 1, "ss01" 0;
+  font-variation-settings: "wght" var(--var-wght), "slnt" var(--var-slnt);
+  font-family: var(--font-primary);
+}
+.sample .serif { font-family: var(--font-serif); }
+.large { font-size: 64px; }
+.medium { font-size: 28px; }
+.small { font-size: 16px; }
+.mini { font-size: 12px; }
+.smallcaps { font-variant-caps: small-caps; }
+.italic { font-style: italic; }
+
+.shadow {
+  text-shadow:
+    calc(var(--shadow-offset) * -1) calc(var(--shadow-offset)) var(--shadow-blur) var(--shadow-color);
+}
+.drop {
+  filter: drop-shadow(var(--shadow-offset) var(--shadow-offset) var(--shadow-blur) var(--drop-color));
+}
+.checker {
+  background:
+    repeating-linear-gradient(90deg, #f8fafc 0, #f8fafc 10px, #e5e7eb 10px, #e5e7eb 20px),
+    repeating-linear-gradient(0deg, #f8fafc 0, #f8fafc 10px, #e5e7eb 10px, #e5e7eb 20px);
+}
+
+.subpixel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.subpixel .tile {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  background: #fff;
+}
+.subpixel .tile .text {
+  font-size: 18px;
+  letter-spacing: 0;
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.08), rgba(14, 165, 233, 0.08));
+}
+
+.explain .inner {
+  max-width: var(--inner-width);
+  margin: 0 auto;
+  padding: 12px 20px 40px 20px;
+}
+.explain h3 { margin: 12px 0; }
+.explain h4 { margin: 18px 0 8px; }
+.explain ul, .explain ol { margin: 8px 0 8px 20px; }
+
+.muted-text { color: var(--muted); }
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.ticker {
+  position: relative;
+  height: 18px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+  margin: 0 20px 10px 20px;
+  background: linear-gradient(90deg, #fafafa, #fff);
+}
+.ticker .bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60px;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.18), rgba(37, 99, 235, 0.45));
+  border-right: 2px solid #1d4ed8;
+  will-change: transform;
+}

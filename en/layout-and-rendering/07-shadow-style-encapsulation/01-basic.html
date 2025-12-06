@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>test case7:basic isolation</title>
+  <link rel="stylesheet" href="base.css">
+  <link id="globalStyles" rel="stylesheet" href="global.css">
+  <script>
+  // Define <my-element> (comments in English)
+  class MyElement extends HTMLElement {
+    constructor(){
+      super();
+      const shadow = this.attachShadow({ mode: 'open' });
+      const styleEl = document.createElement('style');
+      styleEl.textContent = `
+        /* Internal styles ONLY affect nodes inside this Shadow Root */
+        :host{ display:block; padding:12px; border:1px solid #ddd; border-radius:6px; background:#fff; }
+        .inside{ color:#e53935; } /* red */
+      `;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'wrapper';
+      const p = document.createElement('p');
+      p.className = 'inside';
+      p.textContent = 'Shadow Text (should be red)';
+      wrapper.appendChild(p);
+      shadow.append(styleEl, wrapper);
+      this._styleEl = styleEl; // keep a reference for toggling
+    }
+    get internalStylesEnabled(){ return !this._styleEl.disabled; }
+    set internalStylesEnabled(v){ this._styleEl.disabled = !v; }
+  }
+  customElements.define('my-element', MyElement);
+
+  // Page UI wiring
+  window.addEventListener('DOMContentLoaded', () => {
+    const link = document.getElementById('globalStyles');
+    const chk = document.getElementById('toggleGlobal');
+    const out = document.getElementById('toggleOutline');
+    const chkInternal = document.getElementById('toggleInternal');
+    const el = document.querySelector('my-element');
+
+    chk.addEventListener('change', () => { link.disabled = !chk.checked; });
+    out.addEventListener('change', () => { document.body.classList.toggle('global-outline', out.checked); });
+    chkInternal.addEventListener('change', () => { el.internalStylesEnabled = chkInternal.checked; });
+  });
+  </script>
+</head>
+<body>
+  <div class="topbar">
+    <div class="container">
+      <h1 class="title">test case7:Shadow DOM style encapsulation isolation - basic isolation</h1>
+      <p class="subtitle">verify Shadow Internal styles are not affected by page globals CSS impact, and will not impact the outside world.</p>
+      <div class="top-links">
+        <a href="index.html">Table of contents</a>
+        <a aria-current="page" href="01-basic.html">01 basic isolation</a>
+        <a href="02-slotted.html">02 slot distribution</a>
+        <a href="03-host.html">03 :host</a>
+        <a href="04-performance.html">04 multiple instances</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="toolbar">
+      <label class="group"><input id="toggleGlobal" type="checkbox" checked> Enable global distraction styles (global.css)</label>
+      <label class="group"><input id="toggleInternal" type="checkbox" checked> enable Shadow internal style</label>
+      <label class="group"><input id="toggleOutline" type="checkbox"> Display the global outline of the page (auxiliary observation)</label>
+      <span class="badge">Chromium Latest version</span>
+    </div>
+
+    <div class="test-area">
+      <h2>test area</h2>
+      <p class="inside">External plain text (class name <span class="kbd">inside</span>,should be blue)</p>
+      <my-element></my-element>
+      <p>The paragraph in the upper component should be displayed in red, indicating Shadow internal styleEffective and not overridden by external blue style.</p>
+    </div>
+
+    <div class="explain">
+      <h3>Test target</h3>
+      <p>confirm Shadow DOM style encapsulation: external CSS Unable to select Shadow internal node;internal stylewill not be leaked to Light DOM.</p>
+
+      <h3>Scheme and use</h3>
+      <ul>
+        <li>Page passed <span class="kbd">global.css</span> definition <span class="kbd">.inside</span> and <span class="kbd">my-element p</span> blue style, mock up"global interference".</li>
+        <li><span class="kbd">&lt;my-element&gt;</span> in constructor <span class="kbd">attachShadow({ mode: 'open' })</span> and in Shadow internal injection <span class="kbd">&lt;style&gt;</span> Set to red.</li>
+        <li>Use the toolbar switch above to dynamicallyenable/Disable external styles orinternal style,Observe the isolation effect.</li>
+      </ul>
+
+      <h3>expected result</h3>
+      <ul>
+        <li>"external plain text"Should be blue (affected by global style).</li>
+        <li>Paragraphs inside components should always be red (only affected by Shadow internal stylecontrol).</li>
+        <li>closure"enableglobal interferencestyle"After that, the outer text should fall back to the default color; the inside of the component is unaffected.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

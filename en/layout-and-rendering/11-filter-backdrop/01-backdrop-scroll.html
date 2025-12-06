@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>test case11-1:background filter (backdrop-filter)scrolling performance</title>
+  <link rel="stylesheet" href="./shared.css">
+  <script src="./perf-hud.js" defer></script>
+  <script defer>
+    // All logic runs after HTML is parsed (defer). Avoid querying DOM before it's ready.
+    (function(){
+      // Simple qs helper
+      function $(sel, ctx){ return (ctx||document).querySelector(sel); }
+
+      var hud = null;
+      var state = {
+        enabled: true,
+        blur: 5,
+        alpha: 0.6,
+        willChange: false,
+        forceLayer: false,
+        autoScroll: false,
+        autoSpeed: 2
+      };
+
+      var rafId = 0;
+      function loop(){
+        if(!state.autoScroll) return;
+        window.scrollBy(0, state.autoSpeed);
+        if ((window.innerHeight + window.scrollY) >= document.body.scrollHeight || window.scrollY <= 0) {
+          state.autoSpeed = -state.autoSpeed;
+        }
+        rafId = requestAnimationFrame(loop);
+      }
+      function toggleAutoScroll(on){
+        cancelAnimationFrame(rafId);
+        state.autoScroll = on;
+        if(on) rafId = requestAnimationFrame(loop);
+      }
+
+      function apply(){
+        document.documentElement.style.setProperty('--backdrop-blur', state.blur + 'px');
+        document.documentElement.style.setProperty('--backdrop-alpha', String(state.alpha));
+        var header = $('.masthead');
+        if (header){
+          header.classList.toggle('masthead--glass', state.enabled);
+          header.style.willChange = state.willChange ? 'backdrop-filter' : '';
+          header.style.transform = state.forceLayer ? 'translateZ(0)' : '';
+        }
+        $('#blurVal').textContent = state.blur + 'px';
+        $('#alphaVal').textContent = Math.round(state.alpha*100) + '%';
+      }
+
+      document.addEventListener('DOMContentLoaded', function(){
+        // Init HUD
+        hud = new window.PerfHUD();
+
+        // Bind UI
+        $('#enable').addEventListener('change', function(e){ state.enabled = e.target.checked; apply(); });
+        $('#blur').addEventListener('input', function(e){ state.blur = +e.target.value; apply(); });
+        $('#alpha').addEventListener('input', function(e){ state.alpha = +e.target.value; apply(); });
+        $('#wc').addEventListener('change', function(e){ state.willChange = e.target.checked; apply(); });
+        $('#layer').addEventListener('change', function(e){ state.forceLayer = e.target.checked; apply(); });
+
+        $('#auto').addEventListener('change', function(e){ toggleAutoScroll(e.target.checked); });
+        $('#speed').addEventListener('input', function(e){ state.autoSpeed = +e.target.value; });
+
+        $('#hud').addEventListener('change', function(e){ e.target.checked ? hud.start() : hud.stop(); });
+        $('#reset').addEventListener('click', function(){
+          Object.assign(state, {enabled:true, blur:5, alpha:0.6, willChange:false, forceLayer:false, autoScroll:false, autoSpeed:2});
+          $('#enable').checked = true;
+          $('#blur').value = 5;
+          $('#alpha').value = 0.6;
+          $('#wc').checked = false;
+          $('#layer').checked = false;
+          $('#auto').checked = false;
+          $('#speed').value = 2;
+          $('#hud').checked = false;
+          hud.stop();
+          apply();
+          window.scrollTo({top:0});
+        });
+
+        // Feature hint: whether backdrop-filter is supported
+        var support = CSS.supports('backdrop-filter', 'blur(5px)') || CSS.supports('-webkit-backdrop-filter', 'blur(5px)');
+        $('#supportInfo').textContent = support ? 'support' : 'Nosupport(Blurry may not be displayed)';
+
+        apply();
+      });
+    })();
+  </script>
+</head>
+<body>
+  <!-- Top bar: Title + One sentence explanation (this page also serves as a fixed translucent column under test) -->
+  <header class="masthead masthead--glass">
+    <div class="container title">
+      <h1>test case11-1:background filter (backdrop-filter)scrolling performance</h1>
+      <span class="sub">Fixed translucent bar app <code>backdrop-filter: blur()</code>,Scroll to see background blur and redraw</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Toolbar -->
+    <section class="toolbar" aria-label="Toolbar">
+      <div class="row">
+        <div class="group"><label><input id="enable" type="checkbox" checked> enable backdrop-filter</label></div>
+        <div class="group"><label>blur radius <input id="blur" type="range" min="0" max="20" step="1" value="5"></label><span class="num" id="blurVal">5px</span></div>
+        <div class="group"><label>transparency <input id="alpha" type="range" min="0.2" max="0.95" step="0.01" value="0.6"></label><span class="num" id="alphaVal">60%</span></div>
+        <div class="group"><label><input id="wc" type="checkbox"> will-change: backdrop-filter</label></div>
+        <div class="group"><label><input id="layer" type="checkbox"> Force compositing layer(transform: translateZ(0))</label></div>
+        <span class="flag">supportCondition:<b id="supportInfo">Under detection</b></span>
+      </div>
+      <div class="row">
+        <div class="group"><label><input id="auto" type="checkbox"> autoscroll</label></div>
+        <div class="group"><label>speed <input id="speed" type="range" min="1" max="12" step="1" value="2"></label><span class="num">px/frame</span></div>
+        <div class="group"><label><input id="hud" type="checkbox"> Turn on performanceHUD</label></div>
+        <button id="reset">reset</button>
+      </div>
+    </section>
+
+    <!-- test area -->
+    <section class="test-area">
+      <div class="section">
+        <h2>test area:Long content scrolling</h2>
+        <p class="meta">Scroll the page and observe whether the content behind the top bar is blurred and smooth in real time; pay attention to the smoothness and whether it appears"Not blurredofoneframe".</p>
+      </div>
+      <div class="scroller long-list" id="longList">
+        <p>For easier viewing, this page provides a high-contrast background image and extensive text. Please scroll up and down and pay attention to whether the text and pictures behind the top bar are blurred immediately and whether the transition is smooth.</p>
+        <p>It is recommended to combine DevTools of <b>Paint Flashing</b> and <b>Layer Borders</b>:If the top bar area continues to flash green,Explain that every time there is a scrollframeRedraw.</p>
+        <img src="./assets/pattern.svg" alt="Color grid background" style="width:100%;border-radius:12px;border:1px solid #e5e7eb;box-shadow:0 8px 30px rgba(0,0,0,.1);margin:16px 0;" onload="this.setAttribute('data-loaded','1')" onerror="this.replaceWith(document.createTextNode('Image loading failed: please confirm assets/pattern.svg exists'))">
+        <p>paragraph 1:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 2:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 3:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 4:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 5:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 6:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 7:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 8:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 9:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 10:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 11:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 12:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 13:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 14:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 15:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 16:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 17:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 18:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 19:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 20:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 21:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 22:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 23:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 24:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 25:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 26:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 27:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 28:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 29:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 30:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 31:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 32:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 33:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 34:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 35:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 36:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 37:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 38:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 39:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 40:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 41:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 42:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 43:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 44:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 45:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 46:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 47:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 48:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 49:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 50:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 51:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 52:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 53:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 54:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+<p>paragraph 55:for scrollingofplaceholder text.blur radiusWhen it is larger,The edges will be obviousofhalo.Please note that the scrollingofDetails change.</p>
+      </div>
+    </section>
+
+    <!-- Explanation -->
+    <section class="explain" aria-label="Explanation">
+      <div class="section">
+        <h3>Test target</h3>
+        <ul>
+          <li>Verify that the background filter is visually correct(after top barofContent should be blurred in real time,similar"frosted glass").</li>
+          <li>existEvaluate whether it occurs frequently when scrollingRedrawandframeRate drops.</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h3>How to use</h3>
+        <ul>
+          <li>Still check: Confirm that the top bar area is obviously blurred, and the edges are not overly sharp or abnormally masked.</li>
+          <li>Scroll check: scroll up and down to see if the blur updates in real time with the background and no"Not blurredofonemoment".</li>
+          <li>Adjustable parameters:existToolbaradjustblur radiusandtransparency,optional <code>will-change</code> and"Force compositing layer".</li>
+          <li>Quantitative advice: open DevTools → More Tools → Rendering → Check <b>Paint Flashing</b> and <b>Layer Borders</b> observeRedrawandcomposition layer.</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h3>Outcome evaluation</h3>
+        <ul>
+          <li>idealCondition:top barandBackgrounds become independentcomposition layer,Scroll mainly consists of GPU Synthesis completed,framerate close to 60 FPS.</li>
+          <li>likeframeRate dropsorflashing:tryCheck <code>will-change</code> or"Force compositing layer",Observe whether there is improvement;reduceblur radius.</li>
+        </ul>
+      </div>
+    </section>
+
+    <nav class="footer-nav">
+      <a href="./02-foreground-filter.html">Go to 11-2:foreground filter (filter)</a>
+      <a href="./03-combined.html">Go to 11-3:Comprehensive scene</a>
+    </nav>
+  </main>
+</body>
+</html>

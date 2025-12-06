@@ -1,0 +1,1907 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>test case8:Complex selector and interactive state layout - Performance pressure</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="container headline">
+      <h1>test case8:Complex selector and interactive state layout</h1>
+      <p>Subscenes: lots of elements + Selector matching pressure caused by interaction, observe Recalculate Style time consuming.</p>
+      <div class="top-links">
+        <a href="index.html">main scene</a>
+        <a href="nested-forms.html">Nested forms</a>
+        <a aria-current="page" href="performance-load.html">Performance pressure</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar">
+    <div class="container controls" role="group" aria-label="Toolbar">
+      <div class="control">
+        <input id="perf-shadow" type="checkbox">
+        <label for="perf-shadow">Card strong shadow</label>
+      </div>
+      <div class="control">
+        <input id="perf-cols-3" name="perf-cols" type="radio" checked>
+        <label for="perf-cols-3">three columns</label>
+      </div>
+      <div class="control">
+        <input id="perf-cols-4" name="perf-cols" type="radio">
+        <label for="perf-cols-4">four columns</label>
+      </div>
+      <div class="control">
+        <input id="perf-stress" type="checkbox">
+        <label for="perf-stress">Pressure selector (overlay rules)</label>
+      </div>
+      <div class="help">All options passed <code>body:has(#id:checked)</code> pure CSS trigger.</div>
+    </div>
+  </section>
+
+  <!-- Test Area -->
+  <main class="section">
+    <div class="container">
+      <h2>test area - Lots of collapsible items</h2>
+      <p class="help">It is recommended to cooperate DevTools → Performance Record, watch clicks"Expand details"Style recalculation when (Recalculate Style)overhead.</p>
+      <div class="grid">
+        
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 1</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p001">Expand details</label>
+              <input id="p001" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 1).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 2</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p002">Expand details</label>
+              <input id="p002" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 2).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 3</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p003">Expand details</label>
+              <input id="p003" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 3).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 4</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p004">Expand details</label>
+              <input id="p004" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 4).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 5</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p005">Expand details</label>
+              <input id="p005" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 5).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 6</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p006">Expand details</label>
+              <input id="p006" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 6).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 7</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p007">Expand details</label>
+              <input id="p007" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 7).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 8</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p008">Expand details</label>
+              <input id="p008" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 8).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 9</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p009">Expand details</label>
+              <input id="p009" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 9).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 10</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p010">Expand details</label>
+              <input id="p010" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 10).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 11</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p011">Expand details</label>
+              <input id="p011" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 11).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 12</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p012">Expand details</label>
+              <input id="p012" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 12).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 13</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p013">Expand details</label>
+              <input id="p013" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 13).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 14</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p014">Expand details</label>
+              <input id="p014" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 14).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 15</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p015">Expand details</label>
+              <input id="p015" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 15).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 16</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p016">Expand details</label>
+              <input id="p016" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 16).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 17</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p017">Expand details</label>
+              <input id="p017" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 17).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 18</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p018">Expand details</label>
+              <input id="p018" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 18).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 19</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p019">Expand details</label>
+              <input id="p019" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 19).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 20</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p020">Expand details</label>
+              <input id="p020" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 20).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 21</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p021">Expand details</label>
+              <input id="p021" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 21).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 22</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p022">Expand details</label>
+              <input id="p022" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 22).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 23</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p023">Expand details</label>
+              <input id="p023" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 23).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 24</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p024">Expand details</label>
+              <input id="p024" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 24).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 25</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p025">Expand details</label>
+              <input id="p025" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 25).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 26</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p026">Expand details</label>
+              <input id="p026" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 26).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 27</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p027">Expand details</label>
+              <input id="p027" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 27).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 28</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p028">Expand details</label>
+              <input id="p028" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 28).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 29</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p029">Expand details</label>
+              <input id="p029" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 29).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 30</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p030">Expand details</label>
+              <input id="p030" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 30).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 31</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p031">Expand details</label>
+              <input id="p031" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 31).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 32</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p032">Expand details</label>
+              <input id="p032" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 32).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 33</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p033">Expand details</label>
+              <input id="p033" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 33).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 34</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p034">Expand details</label>
+              <input id="p034" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 34).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 35</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p035">Expand details</label>
+              <input id="p035" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 35).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 36</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p036">Expand details</label>
+              <input id="p036" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 36).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 37</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p037">Expand details</label>
+              <input id="p037" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 37).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 38</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p038">Expand details</label>
+              <input id="p038" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 38).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 39</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p039">Expand details</label>
+              <input id="p039" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 39).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 40</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p040">Expand details</label>
+              <input id="p040" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 40).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 41</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p041">Expand details</label>
+              <input id="p041" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 41).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 42</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p042">Expand details</label>
+              <input id="p042" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 42).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 43</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p043">Expand details</label>
+              <input id="p043" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 43).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 44</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p044">Expand details</label>
+              <input id="p044" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 44).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 45</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p045">Expand details</label>
+              <input id="p045" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 45).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 46</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p046">Expand details</label>
+              <input id="p046" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 46).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 47</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p047">Expand details</label>
+              <input id="p047" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 47).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 48</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p048">Expand details</label>
+              <input id="p048" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 48).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 49</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p049">Expand details</label>
+              <input id="p049" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 49).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 50</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p050">Expand details</label>
+              <input id="p050" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 50).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 51</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p051">Expand details</label>
+              <input id="p051" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 51).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 52</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p052">Expand details</label>
+              <input id="p052" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 52).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 53</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p053">Expand details</label>
+              <input id="p053" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 53).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 54</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p054">Expand details</label>
+              <input id="p054" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 54).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 55</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p055">Expand details</label>
+              <input id="p055" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 55).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 56</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p056">Expand details</label>
+              <input id="p056" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 56).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 57</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p057">Expand details</label>
+              <input id="p057" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 57).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 58</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p058">Expand details</label>
+              <input id="p058" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 58).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 59</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p059">Expand details</label>
+              <input id="p059" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 59).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 60</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p060">Expand details</label>
+              <input id="p060" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 60).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 61</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p061">Expand details</label>
+              <input id="p061" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 61).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 62</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p062">Expand details</label>
+              <input id="p062" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 62).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 63</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p063">Expand details</label>
+              <input id="p063" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 63).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 64</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p064">Expand details</label>
+              <input id="p064" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 64).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 65</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p065">Expand details</label>
+              <input id="p065" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 65).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 66</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p066">Expand details</label>
+              <input id="p066" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 66).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 67</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p067">Expand details</label>
+              <input id="p067" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 67).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 68</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p068">Expand details</label>
+              <input id="p068" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 68).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 69</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p069">Expand details</label>
+              <input id="p069" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 69).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 70</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p070">Expand details</label>
+              <input id="p070" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 70).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 71</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p071">Expand details</label>
+              <input id="p071" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 71).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 72</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p072">Expand details</label>
+              <input id="p072" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 72).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 73</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p073">Expand details</label>
+              <input id="p073" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 73).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 74</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p074">Expand details</label>
+              <input id="p074" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 74).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 75</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p075">Expand details</label>
+              <input id="p075" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 75).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 76</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p076">Expand details</label>
+              <input id="p076" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 76).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 77</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p077">Expand details</label>
+              <input id="p077" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 77).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 78</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p078">Expand details</label>
+              <input id="p078" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 78).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 79</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p079">Expand details</label>
+              <input id="p079" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 79).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 80</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p080">Expand details</label>
+              <input id="p080" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 80).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 81</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p081">Expand details</label>
+              <input id="p081" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 81).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 82</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p082">Expand details</label>
+              <input id="p082" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 82).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 83</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p083">Expand details</label>
+              <input id="p083" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 83).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 84</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p084">Expand details</label>
+              <input id="p084" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 84).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 85</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p085">Expand details</label>
+              <input id="p085" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 85).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 86</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p086">Expand details</label>
+              <input id="p086" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 86).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 87</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p087">Expand details</label>
+              <input id="p087" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 87).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 88</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p088">Expand details</label>
+              <input id="p088" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 88).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 89</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p089">Expand details</label>
+              <input id="p089" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 89).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 90</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p090">Expand details</label>
+              <input id="p090" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 90).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 91</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p091">Expand details</label>
+              <input id="p091" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 91).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 92</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p092">Expand details</label>
+              <input id="p092" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 92).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 93</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p093">Expand details</label>
+              <input id="p093" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 93).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 94</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p094">Expand details</label>
+              <input id="p094" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 94).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 95</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p095">Expand details</label>
+              <input id="p095" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 95).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 96</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p096">Expand details</label>
+              <input id="p096" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 96).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 97</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p097">Expand details</label>
+              <input id="p097" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 97).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 98</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p098">Expand details</label>
+              <input id="p098" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 98).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 99</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p099">Expand details</label>
+              <input id="p099" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 99).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 100</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p100">Expand details</label>
+              <input id="p100" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 100).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 101</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p101">Expand details</label>
+              <input id="p101" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 101).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 102</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p102">Expand details</label>
+              <input id="p102" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 102).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 103</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p103">Expand details</label>
+              <input id="p103" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 103).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 104</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p104">Expand details</label>
+              <input id="p104" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 104).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 105</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p105">Expand details</label>
+              <input id="p105" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 105).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 106</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p106">Expand details</label>
+              <input id="p106" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 106).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 107</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p107">Expand details</label>
+              <input id="p107" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 107).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+
+        <article class="card item" tabindex="-1">
+          <div class="head">
+            <div class="title">item 108</div>
+            <div class="actions">
+              <label class="toggle-btn" for="p108">Expand details</label>
+              <input id="p108" class="toggle" type="checkbox" />
+            </div>
+          </div>
+          <div class="details">
+            <p class="meta">used forPerformance pressureItems to test(serial number 108).Rapidly alternate expansion/CollapseRecalculate in observation style.</p>
+            <div class="note">Tip: After enabling the "Pressure Selector" above, multiple overlapping <code>:has()</code>/<code>:not()</code>/<code>:nth-child()</code> Rules will be matched simultaneously.</div>
+            <div class="form-mini">
+              <input type="text" placeholder="Keyboard focus will also trigger :has() border highlight">
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </main>
+
+  <!-- Explanation -->
+  <section class="section">
+    <div class="container explain">
+      <h2>Explanation</h2>
+      <p><strong>Test objectives:</strong>when not in use JavaScript In the case of <code>:has()</code> Build interactions with complex selectors and magnify the cost of style matching for observation.</p>
+      <p><strong>How to use:</strong></p>
+      <ol class="steps">
+        <li>Check "Pressure Selector" to quickly click between different cards"Expand details".</li>
+        <li>Switch "three columns/four columns」Affects layout density,Observe rearrangements + Redraw and style recalculation ratio.</li>
+        <li>Use it in the input box of any card <kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd>,verify <code>.item:has(.form-mini input:focus)</code> The outer frame is highlighted.</li>
+      </ol>
+      <p class="help">return:<a href="index.html">main scene</a> - <a href="nested-forms.html">Nested forms</a></p>
+    </div>
+  </section>
+</body>
+</html>

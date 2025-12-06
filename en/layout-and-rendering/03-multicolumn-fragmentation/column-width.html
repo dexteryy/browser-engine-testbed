@@ -1,0 +1,135 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fixed column width (column-width)test</title>
+<link rel="stylesheet" href="style.css" />
+<script defer src="utils.js"></script>
+</head>
+<body>
+  <header id="topbar">
+    <h1>Fixed column width (column-width)test</h1>
+    <p>Pay attention to: layout performance of automatically calculating the number of columns based on column width, as well as rearrangement and performance when the container width changes.</p>
+  </header>
+
+  <section id="toolbar" class="container">
+    <div class="toolbar">
+      <div class="control" style="grid-column: span 3;">
+        <label>Container width:<output id="cwOut"></output></label>
+        <input id="cw" type="range" min="600" max="1400" value="1100" />
+      </div>
+      <div class="control" style="grid-column: span 3;">
+        <label>Column width (column-width):<output id="colwOut"></output></label>
+        <input id="colw" type="range" min="140" max="360" value="220" />
+      </div>
+      <div class="control" style="grid-column: span 3;">
+        <label>column spacing (column-gap):<output id="gapOut"></output></label>
+        <input id="gap" type="range" min="0" max="48" value="24" />
+      </div>
+      <div class="control" style="grid-column: span 3;">
+        <label>Maximum number of columns (optional)</label>
+        <input id="maxCount" type="number" min="1" max="12" value="6" />
+      </div>
+      <div class="control" style="grid-column: span 3;">
+        <label>Column separator width:<output id="ruleWOut"></output></label>
+        <input id="ruleW" type="range" min="0" max="6" value="1" />
+      </div>
+      <div class="control" style="grid-column: span 3;">
+        <label>column separator style</label>
+        <select id="ruleStyle">
+          <option value="none">none</option>
+          <option value="solid" selected>solid</option>
+          <option value="dashed">dashed</option>
+          <option value="dotted">dotted</option>
+        </select>
+      </div>
+      <div class="control" style="grid-column: span 3;">
+        <label>Column separator color</label>
+        <input id="ruleColor" type="color" value="#dddddd" />
+      </div>
+      <div class="control" style="grid-column: span 3;">
+        <label>column-fill</label>
+        <select id="fill">
+          <option value="balance" selected>balance(default)</option>
+          <option value="auto">auto</option>
+        </select>
+      </div>
+      <div class="control" style="grid-column: span 12;">
+        <div id="metrics" class="meta"></div>
+      </div>
+    </div>
+  </section>
+
+  <main id="test-area" class="container">
+    <div class="test-card">
+      <div id="mc" class="columns" style="column-width:220px; column-gap:24px; column-fill:balance; column-rule:1px solid #ddd;">
+        <!-- Content injected by JS -->
+      </div>
+    </div>
+  </main>
+
+  <section id="explain" class="container">
+    <h2>testillustrate</h2>
+    <ul>
+      <li>Observe the changes in the actual number of columns by adjusting the container width and column width (see the badge below the toolbar for approximate calculation rules).</li>
+      <li>The maximum number of columns can be set (i.e. simultaneously set <code>column-count</code>),used fortest"column width + Maximum number of columns"combination behavior.</li>
+      <li>Change the column separators and spacing, and check whether the rearrangement is stable and without misalignment.</li>
+    </ul>
+  </section>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const mc = $("#mc");
+      const cw = $("#cw"); const cwOut = $("#cwOut");
+      const colw = $("#colw"); const colwOut = $("#colwOut");
+      const gap = $("#gap"); const gapOut = $("#gapOut");
+      const maxCount = $("#maxCount");
+      const ruleW = $("#ruleW"); const ruleWOut = $("#ruleWOut");
+      const ruleStyle = $("#ruleStyle");
+      const ruleColor = $("#ruleColor");
+      const fill = $("#fill");
+      const metrics = $("#metrics");
+
+      bindRangeOutput(cw, cwOut, v => v + " px");
+      bindRangeOutput(colw, colwOut, v => v + " px");
+      bindRangeOutput(gap, gapOut);
+      bindRangeOutput(ruleW, ruleWOut);
+
+      // Content
+      fillContent(mc, { paragraphs: 40, withSpanningHeader: true });
+
+      const apply = () => {
+        mc.parentElement.style.width = cw.value + "px"; // test-card inner width
+        mc.style.columnWidth = colw.value + "px";
+        mc.style.columnGap = gap.value + "px";
+        mc.style.columnRule = `${ruleW.value}px ${ruleStyle.value} ${ruleColor.value}`;
+        mc.style.columnFill = fill.value;
+        // Optional count cap
+        const cap = parseInt(maxCount.value || "0", 10);
+        if (cap > 0) mc.style.columnCount = cap;
+        else mc.style.removeProperty("column-count");
+
+        renderMetrics(mc, metrics);
+
+        // Show expected count formula in badges
+        const cs = getComputedStyle(mc);
+        const width = mc.clientWidth;
+        const gapPx = parseFloat(cs.columnGap);
+        const colwPx = parseFloat(colw.value);
+        const expected = Math.max(1, Math.floor((width + gapPx) / (colwPx + gapPx)));
+        const capped = cap > 0 ? Math.min(cap, expected) : expected;
+        const extra = document.createElement("span");
+        extra.className = "badge";
+        extra.textContent = `Estimated number of columns(column widthDerivation):${expected}(After the upper limit:${capped})`;
+        metrics.appendChild(extra);
+      };
+
+      apply();
+      [cw, colw, gap, ruleW, ruleStyle, ruleColor, maxCount, fill].forEach(i => i.addEventListener("input", apply));
+      window.addEventListener("resize", apply);
+    });
+  </script>
+</body>
+</html>

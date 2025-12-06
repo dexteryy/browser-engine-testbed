@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN" id="inline">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>test case9:inline SVG</title>
+  <link rel="stylesheet" href="./assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="inner">
+      <h1>test case9:SVG Image embedding and citation methods</h1>
+      <div class="desc">pageinlineof &lt;svg&gt;(Can be paged CSS / JS full control)</div>
+      <nav class="nav">
+        <a href="./index.html">contrast</a>
+        <a class="active" href="./inline.html">inlineSVG</a>
+        <a href="./external.html">external citation</a>
+        <a href="./css-background.html">CSS background</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="toolbar">
+      <div class="tool-group" style="grid-column: span 6;">
+        <h3>style control(Act oninline SVG element)</h3>
+        <div class="tool-inline">
+          <label>Circle fill:</label><input type="color" id="fill" value="#22c55e">
+          <label>Stroke color:</label><input type="color" id="stroke" value="#111111">
+          <label>Stroke width:</label><input type="range" id="strokeW" min="0" max="8" value="1"><span id="strokeWVal" class="note">1</span>
+        </div>
+      </div>
+      <div class="tool-group" style="grid-column: span 6;">
+        <h3>Size and viewport</h3>
+        <div class="tool-inline">
+          <label>display width(px):</label><input type="range" id="w" min="140" max="440" value="260"><span id="wVal" class="note">260</span>
+          <label><input type="checkbox" id="preserve"> Keep aspect ratio</label>
+          <button id="reset">reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-area panel">
+      <svg id="svg" width="260" height="160" viewBox="0 0 260 160" aria-label="inline SVG Example">
+        <!-- Elements below are part of the page DOM; can be selected by CSS or JS -->
+        <rect class="rect" x="30" y="60" width="200" height="60" rx="6"></rect>
+        <circle class="dot" cx="90" cy="80" r="30" stroke="#111" stroke-width="1"></circle>
+        <text x="135" y="95" font-size="14" fill="#fff" font-family="system-ui, -apple-system, Arial">INLINE</text>
+      </svg>
+      <div>
+        <div class="code">&lt;svg&gt; inlinearrive HTML,You can use the selector to select directly <strong>.dot</strong> and modify the style</div>
+        <p class="note">Expected: Circle color when using upper control/Strokes update instantly; resize without blur.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section explain">
+    <h2>Explanation</h2>
+    <p><strong>Test objectives:</strong>verifyinlinemode SVG as DOM Styling control and clarity when part time.</p>
+    <p><strong>How to use:</strong>Modify color, stroke and width; modify display size. Check"Keep aspect ratio"when passed <code class="code">preserveAspectRatio</code> Control window zoom.</p>
+    <p><strong>Result evaluation:</strong>DevTools Can be expanded directly <code class="code">&lt;circle.dot&gt;</code> etc. nodes;CSS The selector takes effect on it.</p>
+  </section>
+
+  <footer class="footer">© test case 9 - inlineWay</footer>
+
+  <script>
+    // Simple wiring (English comments)
+    const $ = (s, el=document)=>el.querySelector(s);
+    const svg = $("#svg");
+    const dot = $(".dot", svg);
+    const rect = $(".rect", svg);
+    const fill = $("#fill");
+    const stroke = $("#stroke");
+    const strokeW = $("#strokeW");
+    const strokeWVal = $("#strokeWVal");
+    const w = $("#w");
+    const wVal = $("#wVal");
+    const preserve = $("#preserve");
+    const reset = $("#reset");
+
+    function apply(){
+      dot.style.fill = fill.value;
+      dot.style.stroke = stroke.value;
+      dot.style.strokeWidth = strokeW.value;
+      strokeWVal.textContent = strokeW.value;
+      svg.setAttribute("width", w.value);
+      if(preserve.checked){
+        svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      }else{
+        svg.setAttribute("preserveAspectRatio", "none");
+      }
+      wVal.textContent = w.value;
+    }
+    [fill, stroke, strokeW, w, preserve].forEach(el=>el.addEventListener("input", apply));
+    reset.addEventListener("click", ()=>{
+      fill.value = "#22c55e"; stroke.value = "#111111"; strokeW.value = 1; w.value = 260; preserve.checked = false; apply();
+    });
+    apply();
+  </script>
+</body>
+</html>

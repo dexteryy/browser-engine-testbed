@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>test case10:Synthetic layer observation</title>
+  <link rel="stylesheet" href="css/shared.css"/>
+</head>
+<body>
+  <header class="header">
+    <div class="inner">
+      <h1>test case10:Synthetic layer observation</h1>
+      <p>different CSS Layer boundaries and compositing behavior when combined with hints and blending modes</p>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="toolbar">
+      <div>
+        <label>background color</label>
+        <input type="color" id="bgColor" value="#007bff"/>
+      </div>
+      <div>
+        <label>Overlay opacity</label>
+        <input type="range" id="alpha" min="0.1" max="1" step="0.01" value="0.5"/>
+        <div class="hint">current:<span id="alphaVal">0.50</span></div>
+      </div>
+      <div>
+        <label>blend mode</label>
+        <select id="mode">
+          <option selected>multiply</option>
+          <option>screen</option>
+          <option>overlay</option>
+          <option>difference</option>
+        </select>
+      </div>
+      <div>
+        <label>show/hide</label>
+        <div class="inline">
+          <label class="inline"><input type="checkbox" id="showA" checked/> A</label>
+          <label class="inline"><input type="checkbox" id="showB" checked/> B</label>
+          <label class="inline"><input type="checkbox" id="showC" checked/> C</label>
+          <label class="inline"><input type="checkbox" id="showD" checked/> D</label>
+        </div>
+        <div class="hint">Hover over each box to see the specific configuration</div>
+      </div>
+      <div>
+        <label>isolation</label>
+        <div class="inline">
+          <input type="checkbox" id="isolate"/>
+          <span class="hint">Apply to entire demo area <span class="code-like">isolation: isolate</span></span>
+        </div>
+      </div>
+      <div>
+        <label>Browser support</label>
+        <div class="hint"><span class="badge" id="support">Under detection</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="layer-grid" id="grid">
+      <div class="layer-box" id="boxA" title="A: mix-blend-mode + No additional prompts">
+        <div class="label">A</div>
+        <div class="bg" id="bgA"></div>
+        <div class="blend" id="blendA" style="mix-blend-mode: multiply;">A</div>
+      </div>
+      <div class="layer-box" id="boxB" title="B: mix-blend-mode + transform: translateZ(0)">
+        <div class="label">B</div>
+        <div class="bg" id="bgB"></div>
+        <div class="blend" id="blendB" style="mix-blend-mode: multiply; transform: translateZ(0);">B</div>
+      </div>
+      <div class="layer-box" id="boxC" title="C: mix-blend-mode + will-change: opacity">
+        <div class="label">C</div>
+        <div class="bg" id="bgC"></div>
+        <div class="blend" id="blendC" style="mix-blend-mode: multiply; will-change: opacity;">C</div>
+      </div>
+      <div class="layer-box" id="boxD" title="D: mix-blend-mode + filter: blur(1px)">
+        <div class="label">D</div>
+        <div class="bg" id="bgD"></div>
+        <div class="blend" id="blendD" style="mix-blend-mode: multiply; filter: blur(1px);">D</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="explain">
+      <h3>How to observe layers</h3>
+      <ol>
+        <li>Open DevTools → <em>Rendering</em> panel → Check <strong>Layer borders</strong>.</li>
+        <li>in this page A/B/C/D Four examples are superimposeddifferentof CSS hint:<span class="code-like">transform</span>, <span class="code-like">will-change</span>, <span class="code-like">filter</span>.Hover to view configuration instructions.</li>
+        <li>Check"isolation"observable inisolationin context,How to separate mixed elements from background.</li>
+        <li>At the composition layer boundaryshowhour,If a blend element is promoted to an independent compositing layer,Its borders usually appeardifferentcolorofStroke(by Chromium DevTools The logo shall prevail).</li>
+      </ol>
+    </div>
+  </section>
+
+  <script>
+    const grid = document.getElementById('grid');
+    const bgColor = document.getElementById('bgColor');
+    const alpha = document.getElementById('alpha');
+    const alphaVal = document.getElementById('alphaVal');
+    const mode = document.getElementById('mode');
+    const isolate = document.getElementById('isolate');
+    const showA = document.getElementById('showA');
+    const showB = document.getElementById('showB');
+    const showC = document.getElementById('showC');
+    const showD = document.getElementById('showD');
+
+    const boxes = ['A','B','C','D'];
+    function apply() {
+      grid.style.isolation = isolate.checked ? 'isolate' : 'auto';
+      boxes.forEach(id => {
+        const bg = document.getElementById('bg'+id);
+        const blend = document.getElementById('blend'+id);
+        bg.style.background = bgColor.value;
+        blend.style.mixBlendMode = mode.value;
+        let a = +alpha.value;
+        alphaVal.textContent = a.toFixed(2);
+        blend.style.background = `rgba(255,0,0,${a})`;
+      });
+      document.getElementById('boxA').style.display = showA.checked ? 'block' : 'none';
+      document.getElementById('boxB').style.display = showB.checked ? 'block' : 'none';
+      document.getElementById('boxC').style.display = showC.checked ? 'block' : 'none';
+      document.getElementById('boxD').style.display = showD.checked ? 'block' : 'none';
+    }
+    [bgColor, alpha, mode, isolate, showA, showB, showC, showD].forEach(el=>{
+      el.addEventListener('input', apply);
+      el.addEventListener('change', apply);
+    });
+
+    // Feature support indicator
+    const support = document.getElementById('support');
+    const blendSupported = CSS.supports('mix-blend-mode', 'multiply');
+    support.textContent = blendSupported ? 'support mix-blend-mode' : 'Nosupport(May not be valid)';
+    support.classList.add(blendSupported ? 'good' : 'bad');
+
+    apply();
+  </script>
+</body>
+</html>

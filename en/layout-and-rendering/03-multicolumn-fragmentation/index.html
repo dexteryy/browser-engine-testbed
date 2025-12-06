@@ -1,0 +1,39 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>test case3:Multi-column layout (Multicolumn)Column with content - Overview</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="topbar">
+    <h1>test case3:Multi-column layout (Multicolumn)Column with content</h1>
+    <p>for evaluation Chrome right CSS Multi-column layout (columns)rendering correctness and performance.</p>
+  </header>
+
+  <section class="container">
+    <div class="test-card">
+      <p>This directory contains multiple independent pages,pin per pagerightA segmented test target.Please open as needed:</p>
+      <ul>
+        <li><a href="fixed-count.html">Fixed number of columns:column-count</a></li>
+        <li><a href="column-width.html">Fixed column width:column-width(Automatic number of columns)</a></li>
+        <li><a href="fragmentation-stress.html">Complex columns and avoidance:Fragmentation Pressure and performance</a></li>
+        <li><a href="column-span.html">Crossbar elements:column-span: all</a></li>
+        <li><a href="writing-modes.html">Writing direction and column order:writing-mode / direction</a></li>
+      </ul>
+      <p class="meta">UI Uniform style: white background, top column, and uniform width in other areas. The text on the page is all in Chinese, and the code comments are in English.</p>
+    </div>
+  </section>
+
+  <section id="explain" class="container">
+    <h2>illustrate</h2>
+    <ul>
+      <li>Toolbar controls are provided at the top of each page to dynamically adjust parameters such as the number of columns, column spacing, and column separators.</li>
+      <li>The test area displays real multi-column content, including paragraphs, subtitles, pictures, etc.</li>
+      <li>It is recommended to DevTools of Performance Panel records first render and scroll performance; can be enabled if needed Paint Flashing Auxiliary observation redrawing.</li>
+    </ul>
+  </section>
+</body>
+</html>

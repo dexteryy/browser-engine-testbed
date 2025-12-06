@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>test case 6(Extension): Named nested containers match nearest</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="component-card.css">
+  <link rel="stylesheet" href="nested.css">
+  <style id="cqDynamic"></style>
+</head>
+<body data-page="nested">
+  <header class="topbar">
+    <div class="wrap">
+      <h1>test case 6(Extension): Named nested containers match nearest</h1>
+      <p class="subtitle">Demonstrates that when multiple named containers exist at the same time, the component presses"Recently named containers"Trigger the corresponding @container rule.</p>
+      <nav class="top-links">
+        <a href="index.html">Basic example</a>
+        <a aria-current="page" href="nested.html">Nested containers</a>
+        <a href="stress.html">Performance observations</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="toolbar">
+    <div class="wrap">
+      <form class="controls" onsubmit="return false;">
+        <div class="group">
+          <label for="thresholdN">outer container threshold (px)</label>
+          <input id="thresholdN" type="range" min="300" max="720" step="10" value="480" />
+          <output id="thresholdNOut" for="thresholdN">480</output>
+        </div>
+        <div class="group">
+          <label for="innerW">Inner container width (px)</label>
+          <input id="innerW" type="range" min="220" max="600" step="10" value="360" />
+          <output id="innerWOut" for="innerW">360</output>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <main class="wrap">
+    <section class="test-area single">
+      <!-- Outer container with a different name -->
+      <div id="outerContainer" class="cq-container outer" style="width: 640px;">
+        <h2>Outer container (container-name: outer)</h2>
+
+        <!-- Inner container with another name; the card should primarily query this nearest container -->
+        <div id="innerContainer" class="cq-container inner" style="width: 360px;">
+          <h3>inner container (container-name: inner)</h3>
+
+          <article class="cq-card">
+            <figure class="media">
+              <svg viewBox="0 0 400 300" role="img" aria-label="Sample image">
+                <rect width="400" height="300" fill="#ecfeff"/>
+                <path d="M40 240 L130 140 L210 220 L330 80" fill="none" stroke="#06b6d4" stroke-width="12" stroke-linecap="round"/>
+              </svg>
+              <figcaption>Sample image</figcaption>
+            </figure>
+            <div class="body">
+              <h3>Prioritize the nearest named container</h3>
+              <p>The card is wrapped by an inner naming container. Even if the outer layer also defines the container query,CSS The closest (inner) named container will be matched first.</p>
+              <ul class="meta">
+                <li>Outer threshold control: meta information display</li>
+                <li>Inner threshold control: title font size, button visibility</li>
+              </ul>
+              <button class="action" style="display:none">Operation button (displayed after the inner layer width reaches the standard)</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="explain">
+      <h2>Explanation</h2>
+      <ol>
+        <li><strong>Test objectives:</strong>Verify that when multiple layers of named containers coexist,<code>@container &lt;name&gt;</code> Match based on proximity principle.</li>
+        <li><strong>Test plan:</strong>The outer container is named <code>outer</code>,The inner container is named <code>inner</code>;Use the sliders to adjust the outer threshold and inner width at the same time to see which rule is triggered first.</li>
+        <li><strong>Result evaluation:</strong>When the width of the inner layer reaches the condition, the button appears and the title font size increases; when the outer layer reaches the condition, the card layout switches to landscape and displays meta information.</li>
+      </ol>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

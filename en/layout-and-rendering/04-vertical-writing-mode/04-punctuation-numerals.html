@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>04-04 Punctuation and numbers: position, ligatures and parentheses</title>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="common.js"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="inner">
+      <h1>test case4-04:Punctuation and numbers</h1>
+      <div class="sub">Vertical Chinese punctuation position, half width/Full-width comparison, digit ligation and bracket rotation</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="toolbar">
+      <div class="group">
+        <h3>Writing and character direction</h3>
+        <div class="row">
+          <label for="ctrl-wm">writing-mode:</label>
+          <select id="ctrl-wm">
+            <option value="vertical-rl" selected>vertical-rl</option>
+            <option value="vertical-lr">vertical-lr</option>
+            <option value="horizontal-tb">horizontal-tb(reference)</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>text-orientation:</label>
+          <label><input type="radio" name="ctrl-to" value="mixed" checked /> mixed</label>
+          <label><input type="radio" name="ctrl-to" value="upright" /> upright</label>
+          <label><input type="radio" name="ctrl-to" value="sideways" /> sideways</label>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Numbers and aids</h3>
+        <div class="row">
+          <label><input type="checkbox" id="ctrl-tcu-d2" /> Number ligatures:digits 2</label>
+          <label><input type="checkbox" id="ctrl-tcu-all" /> Number ligatures:all</label>
+        </div>
+        <div class="row">
+          <label><input type="checkbox" id="ctrl-baseline" /> Show baseline raster</label>
+          <label><input type="checkbox" id="ctrl-outline" /> show debugging outline</label>
+        </div>
+        <div class="row">
+          <label for="ctrl-fs">font size (px):</label>
+          <input type="range" id="ctrl-fs" min="14" max="28" step="1" value="18" />
+          <label for="ctrl-lh">row height (px):</label>
+          <input type="range" id="ctrl-lh" min="18" max="40" step="1" value="28" />
+        </div>
+      </div>
+
+      <div class="group" style="grid-column: span 4;">
+        <h3>state</h3>
+        <div class="meters" id="meters"></div>
+      </div>
+    </section>
+
+    <section class="test-area">
+      <div class="overlay-baseline"></div>
+      <div class="test-split">
+        <div class="panel">
+          <h4>Half-width punctuation mixed arrangement</h4>
+          <div id="vb" class="vertical-box vertical-rl tor-mixed sample">
+            <p>Half-width punctuation in Chinese vertical format:, . ; : ? ! ( ) [ ] &lt; &gt;,Appropriate rotation and positioning should be performed with the character direction.</p>
+            <p>Brackets and numbers:(<span class="num">2025</span>),Version <span class="num">2</span>.<span class="num">0</span>;scope <span class="num">12</span>–<span class="num">34</span>.</p>
+            <p>English embedded:<span class="latin">Chrome CSS Grid</span> -- For text demonstration only.</p>
+            <p>Consecutive numbers:<span class="num">1</span><span class="num">2</span><span class="num">3</span><span class="num">4</span><span class="num">5</span>;Try enabling ligature observation patterns.</p>
+            <ul>
+              <li>project A:"quotation marks"With "book title" and "notes".</li>
+              <li>project B:percentage <span class="num">12</span>%, ratio <span class="num">3</span>:<span class="num">2</span>.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="panel">
+          <h4>Full-width punctuation comparison</h4>
+          <div class="vertical-box vertical-rl tor-mixed sample">
+            <p>Full-width punctuation in Chinese vertical format:, . ; : ? ! ( ) [ ] 《 》.</p>
+            <p>Brackets and numbers:(<span class="num">２０２５</span>),Version <span class="num">２</span>．<span class="num">０</span>;scope <span class="num">１２</span>–<span class="num">３４</span>.</p>
+            <p>English embedded:<span class="latin">Chrome CSS Grid</span> -- For text demonstration only.</p>
+            <p>Consecutive numbers:<span class="num">１２３４５</span>;Compare with ligatures.</p>
+            <ul>
+              <li>project A:"quotation marks"With "book title" and "notes".</li>
+              <li>project B:percentage <span class="num">１２</span>%, ratio <span class="num">３</span>:<span class="num">２</span>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="explain">
+      <h3>Test target</h3>
+      <p>Observe the lower half of the vertical row/Positioning and rotation of full-width punctuation points;brackets, quotation marksThe form of symbols such as and dash;The interactive effect of continuous numbers and ligature settings.</p>
+      <h4>How to use</h4>
+      <ul>
+        <li>Switch writing modes and character directions to confirm whether punctuation and brackets behave correctly under different settings.</li>
+        <li>enable <code>text-combine-upright</code>,Compare the appearance and alignment of numbers before and after ligation.</li>
+        <li>Adjust font and line height; turn on"baseline raster"Check line spacing and punctuation placement.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', function(){
+      Test04.wireCommonControls({
+        target: document.getElementById('vb'),
+        meters: document.getElementById('meters'),
+        // Apply number combine toggles to both columns (half-width/full-width light)
+        tcuNodes: Array.from(document.querySelectorAll('.vertical-box'))
+      });
+    });
+  </script>
+</body>
+</html>

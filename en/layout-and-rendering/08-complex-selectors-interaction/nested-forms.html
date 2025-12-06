@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>test case8:Complex selector and interactive state layout - Nested forms and focus</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="container headline">
+      <h1>test case8:Complex selector and interactive state layout</h1>
+      <p>Sub-scenario: use <code>:focus-within</code>, <code>label:has(+ input:focus)</code>, <code>form:has(:invalid)</code> Wait for selector validation focus and validation propagation.</p>
+      <div class="top-links">
+        <a href="index.html">main scene</a>
+        <a aria-current="page" href="nested-forms.html">Nested forms</a>
+        <a href="performance-load.html">Performance pressure</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar">
+    <div class="container controls" role="group" aria-label="Toolbar">
+      <div class="control">
+        <input id="opt-shadow" type="checkbox">
+        <label for="opt-shadow">container shadow <span class="badge">visual aid</span></label>
+      </div>
+      <div class="control">
+        <input id="opt-deep" type="checkbox" checked>
+        <label for="opt-deep">Enable deep selector combinations</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- Test Area -->
+  <main class="section">
+    <div class="container">
+      <h2>test area - Nested forms</h2>
+      <p class="help">Use in the form below <kbd>Tab</kbd>,Observe parent <code>.row</code> of <code>:focus-within</code> Highlight; invalid input will trigger <code>.form:has(:invalid)</code> Change borders.</p>
+
+      <form class="form" action="#" novalidate>
+        <div class="row">
+          <label for="nf-name">Name (required)</label>
+          <input id="nf-name" type="text" required placeholder="For example: Zhang San">
+        </div>
+        <div class="row">
+          <label for="nf-mail">Email (required)</label>
+          <input id="nf-mail" type="email" required placeholder="demo@example.com">
+        </div>
+        <div class="row">
+          <label for="nf-pass">Password (at least 6 Bit)</label>
+          <input id="nf-pass" type="password" minlength="6" placeholder="••••••">
+        </div>
+        <div class="row">
+          <label for="nf-tel">Telephone(123-456-7890 Format)</label>
+          <input id="nf-tel" type="tel" pattern="\\d{3}-\\d{3}-\\d{4}" placeholder="123-456-7890">
+        </div>
+        <div class="row">
+          <label for="nf-city">City</label>
+          <input id="nf-city" type="text" placeholder="Try focus here">
+        </div>
+      </form>
+
+      <h2 style="margin-top:24px;">Additional list - Structural pseudo-class verification</h2>
+      <ul class="sample-list">
+        <li>
+          <span class="title">project 1(no badge)</span>
+          <span class="meta">usually</span>
+        </li>
+        <li>
+          <span class="title">project 2 <span class="badge">Have a badge</span></span>
+          <span class="meta"><strong>mark</strong></span>
+        </li>
+        <li>
+          <span class="title">project 3(no badge)</span>
+          <span class="meta">usually</span>
+        </li>
+        <li>
+          <span class="title">project 4(no badge)</span>
+          <span class="meta"><strong>mark</strong></span>
+        </li>
+      </ul>
+      <p class="help">enableToolbarof「After deep selector combination,verify <code>:not(:has(.badge))</code> and other combination styles.</p>
+    </div>
+  </main>
+
+  <!-- Explanation -->
+  <section class="section">
+    <div class="container explain">
+      <h2>Explanation</h2>
+      <p><strong>Test objectives:</strong>Verify that focus is propagated from the control to the container (<code>:focus-within</code>), label pair adjacent inputofLooking forward(<code>label:has(+ input:focus)</code>),and form invalid statusofancestor feedback(<code>form:has(:invalid)</code>).</p>
+      <p><strong>Evaluation method:</strong></p>
+      <ol class="steps">
+        <li>use keyboard <kbd>Tab</kbd> Move between the input boxes and observe where they are <code>.row</code> Highlight.</li>
+        <li>Leave required fields blank or enter an invalid format to confirm the outer layer <code>.form</code> The border turns red.</li>
+        <li>Move the mouse to hover over the odd-numbered item titles in the list and observe the suffix and style changes (when deep rules are turned on).</li>
+      </ol>
+      <p class="help">return:<a href="index.html">main scene</a> - <a href="performance-load.html">Performance pressure</a></p>
+    </div>
+  </section>
+</body>
+</html>

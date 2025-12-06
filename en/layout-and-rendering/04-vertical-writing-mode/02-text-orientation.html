@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>04-02 Character direction:mixed / upright / sideways contrast</title>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="common.js"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="inner">
+      <h1>test case4-02:Character directioncontrast</h1>
+      <div class="sub">existThree independent vertical arrangementscontrast mixed / upright / sideways</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="toolbar">
+      <div class="group">
+        <h3>Size and layout</h3>
+        <div class="row">
+          <label for="ctrl-fs">font size (px):</label>
+          <input type="range" id="ctrl-fs" min="14" max="28" step="1" value="18" />
+          <label for="ctrl-lh">row height (px):</label>
+          <input type="range" id="ctrl-lh" min="18" max="40" step="1" value="28" />
+          <label for="ctrl-letter">word spacing (px):</label>
+          <input type="range" id="ctrl-letter" min="-1" max="2" step="0.1" value="0" />
+        </div>
+        <div class="row">
+          <label><input type="checkbox" id="ctrl-baseline" /> Show baseline raster</label>
+          <label><input type="checkbox" id="ctrl-outline" /> show debugging outline</label>
+        </div>
+      </div>
+      <div class="group">
+        <h3>Digital ligature (text-combine-upright)</h3>
+        <div class="row">
+          <label><input type="checkbox" id="ctrl-tcu-d2" /> digits 2</label>
+          <label><input type="checkbox" id="ctrl-tcu-all" /> all</label>
+        </div>
+        <div class="row">
+          <label><input type="checkbox" id="ctrl-force-upright" /> Will .latin forced upright (span.latin)</label>
+          <label><input type="checkbox" id="ctrl-force-sideways" /> Will .latin Force sideways (span.latin)</label>
+        </div>
+      </div>
+      <div class="group" style="grid-column: span 4;">
+        <h3>state</h3>
+        <div class="meters" id="meters"></div>
+      </div>
+    </section>
+
+    <section class="test-area" id="test-area">
+      <div class="overlay-baseline"></div>
+
+      <div class="test-split">
+        <div class="panel">
+          <h4>mixed(default)</h4>
+          <div id="vb" class="vertical-box vertical-rl tor-mixed sample">
+            <p>default <b>mixed</b>:Latin letters are rotated, East Asian characters are upright. English words <span class="latin">Chrome</span>, <span class="latin">CSS</span>, <span class="latin">Grid</span> with numbers <span class="num">2025</span>.</p>
+            <p>Example: half-width brackets in vertical alignment ( ) Full-width brackets ( )performance;URL fragment <span class="latin">example.com</span> For text demonstration only.</p>
+            <p>Japanese:Vertical writingきで <span class="latin">Web</span> と <span class="latin">UI</span> をMixed.<ruby>Kyoto<rt>きょうと</rt></ruby>.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <h4>upright</h4>
+          <div class="vertical-box vertical-rl tor-upright sample">
+            <p>exist <b>upright</b> Below, Latin characters are also displayed upright:<span class="latin">Chrome</span> <span class="latin">CSS3</span> <span class="latin">Grid</span> <span class="num">12</span><span class="num">34</span>.</p>
+            <p>Observe uppercase and lowercase letters, upright readability of long words, and inline alignment.</p>
+            <p>Japanese:たてがき + <span class="latin">upright</span>.Korean:혼합 <span class="latin">upright</span>.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <h4>sideways</h4>
+          <div class="vertical-box vertical-rl tor-sideways sample">
+            <p>exist <b>sideways</b> Below, all characters appear sideways:<span class="latin">Chrome CSS Grid</span> <span class="num">2025</span>.</p>
+            <p>contrastpunctuation rotation, English word coherence and line breaking behavior.</p>
+            <p>Japanese:サイドウェイズ.Korean:사이드웨이즈.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="explain">
+      <h3>Test target</h3>
+      <p>existUnder the same contentcontrastthree kinds <code>text-orientation</code> Differences, observe the character direction, punctuation positioning and line wrapping.</p>
+      <h4>How to use</h4>
+      <ul>
+        <li>Adjust font, Line height and word spacing,Observe different character setsexistthree kindsTypesetting changes in modes.</li>
+        <li>CheckDigital ligature (digits 2 / all)to check the combined performance of vertical numbers.</li>
+        <li>right <code>span.latin</code> Apply forced upright/Sideways to verify priority and rendering of partial coverage styles.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', function(){
+      Test04.wireCommonControls({
+        target: document.getElementById('vb'),
+        meters: document.getElementById('meters'),
+        // Apply number combine toggles to all vertical columns for fair comparison
+        tcuNodes: Array.from(document.querySelectorAll('.vertical-box'))
+      });
+    });
+  </script>
+</body>
+</html>

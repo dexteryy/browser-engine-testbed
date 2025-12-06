@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cross routing View Transitions｜List page</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .route-note {
+        color: var(--muted);
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>View Transitions｜Cross routingswitch(list)</h1>
+      <p>Navigate from the thumbnail list to the details page to verify cross-document snapshot composition and layers.</p>
+    </header>
+    <main class="page">
+      <section class="toolbar">
+        <div class="group">
+          <span class="chip">model:Cross routing</span>
+          <span class="chip" id="vt-support">View Transitions: Under detection...</span>
+        </div>
+        <div class="group route-note">
+          Click on thumbnail to trigger document.startViewTransition + location Jump.
+        </div>
+        <button class="btn" id="shuffle">random order</button>
+      </section>
+
+      <section class="panel">
+        <h2 class="section-title">List page(/cross-route-list.html)</h2>
+        <p class="note">
+          Thumbnails and details pages use the same view-transition-name(photo-N);exist DevTools
+          → Layers Check for cross-page snapshot reuse.
+        </p>
+        <div class="grid" id="grid"></div>
+      </section>
+
+      <section class="panel explain">
+        <h3 class="section-title">Instructions for use</h3>
+        <div>
+          1)Click on the thumbnail to enter the details page.Performance Record jump link, follow Snapshot
+          capture and Composite.
+        </div>
+        <div>2)returnList pageThe frame rate is also recorded when,Compareandsingle pagemodeldifference.</div>
+        <div>3)Can be used multiple timesrandom orderlist,Watch composition layer changes as a large number of elements are recaptured.</div>
+      </section>
+    </main>
+
+    <script>
+      const vtSupport = document.getElementById("vt-support");
+      const grid = document.getElementById("grid");
+      const shuffleBtn = document.getElementById("shuffle");
+      const supportsViewTransition =
+        typeof document.startViewTransition === "function";
+      vtSupport.textContent = supportsViewTransition
+        ? "View Transitions: Available"
+        : "View Transitions: Not supported, use static jump";
+
+      const items = Array.from({ length: 18 }, (_, i) => ({
+        id: i + 1,
+        title: `image ${i + 1}`,
+        tone: (i * 37) % 360,
+      }));
+
+      function render() {
+        grid.innerHTML = "";
+        items.forEach(item => {
+          const card = document.createElement("button");
+          card.className = "thumb";
+          card.dataset.id = item.id;
+          const img = document.createElement("div");
+          img.className = "img";
+          img.style.viewTransitionName = `photo-${item.id}`;
+          img.style.background = `linear-gradient(135deg, hsl(${
+            item.tone
+          }, 80%, 58%), hsl(${(item.tone + 24) % 360}, 78%, 62%))`;
+          img.textContent = item.id;
+          const meta = document.createElement("div");
+          meta.className = "meta";
+          meta.innerHTML = `<span>${item.title}</span><span>${
+            160 + (item.id % 6) * 30
+          }px</span>`;
+          card.appendChild(img);
+          card.appendChild(meta);
+          card.addEventListener("click", () => goDetail(item.id));
+          grid.appendChild(card);
+        });
+      }
+
+      function goDetail(id) {
+        const navigate = () => {
+          const url = new URL(location.href);
+          const segments = url.pathname.split("/");
+          segments[segments.length - 1] = "cross-route-detail.html";
+          url.pathname = segments.join("/");
+          url.searchParams.set("id", id);
+          window.location.href = url.toString();
+        };
+        if (!supportsViewTransition) {
+          navigate();
+          return;
+        }
+        document.startViewTransition(navigate);
+      }
+
+      shuffleBtn.addEventListener("click", () => {
+        items.sort(() => Math.random() - 0.5);
+        render();
+      });
+
+      render();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>R&D side use cases 10｜Complex scripts and Emoji rendering</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="inner">
+      <h1>R&D side use cases 10｜Complex scripts and Emoji(Arab/Southeast Asia/Emoji)</h1>
+      <p class="subtitle">cover RTL/Bidi, Continuous writing, combined appendix and ZWJ Emoji,large font size+Slightly transparent animation for viewing grid, compositing and redraw stability.</p>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar-section">
+    <div class="inner">
+      <div class="toolbar">
+        <fieldset>
+          <legend>animation/synthesis</legend>
+          <label>Transparency range <input type="range" id="fadeMin" min="0.3" max="0.98" step="0.02" value="0.5" /><span class="value" id="fadeMinValue">0.50</span></label>
+          <label>animationcycle(s) <input type="range" id="duration" min="2" max="8" step="0.5" value="3" /><span class="value" id="durationValue">3.0s</span></label>
+          <label><input type="checkbox" id="animArabic" checked /> ArabListanimation</label>
+          <label><input type="checkbox" id="animSEA" checked /> Southeast AsiaListanimation</label>
+          <label><input type="checkbox" id="animEmoji" checked /> Emoji Listanimation</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>content/font</legend>
+          <label><input type="checkbox" id="bidiMarks" checked /> reserve Bidi control/Punctuation mixed arrangement</label>
+          <label><input type="checkbox" id="giantEmoji" /> load 256px giant Emoji</label>
+          <label><input type="checkbox" id="ligatures" checked /> enablefontLigature</label>
+          <label><input type="checkbox" id="altFont" /> Emoji ListUse the systemcolorfonthint</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>scroll/observe</legend>
+          <label>
+            automaticscroll
+            <select id="scrollMode">
+              <option value="none">closure</option>
+              <option value="auto" selected>slight</option>
+            </select>
+          </label>
+          <label><input type="checkbox" id="checkerBg" checked /> Background checkerboard</label>
+          <button id="resetBtn" class="primary">Reset settings</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>state</legend>
+          <div class="status-row">
+            <span class="badge" id="fpsBadge">scroll FPS:--</span>
+            <span class="badge" id="animStatus">animation:turn on</span>
+            <span class="badge" id="bidiStatus">Bidi:controlcharacters included</span>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </section>
+
+  <!-- Test area -->
+  <main class="test-area">
+    <div class="inner">
+      <div class="panes">
+        <section class="pane" id="colArabic">
+          <header class="pane-head">
+            <h2>ArabandTwo-way mixing</h2>
+            <span class="hint">Contains numbers/punctuation, test shaping and bidi sort</span>
+          </header>
+          <div class="content checker" id="arabicContent"></div>
+        </section>
+
+        <section class="pane" id="colSEA">
+          <header class="pane-head">
+            <h2>Southeast Asiacombination index</h2>
+            <span class="hint">Contains Thai/Vietnamese/Sanskrit subscript</span>
+          </header>
+          <div class="content checker" id="seaContent"></div>
+        </section>
+
+        <section class="pane" id="colEmoji">
+          <header class="pane-head">
+            <h2>Emoji ZWJ sequenceListandLarge character list</h2>
+            <span class="hint">color/gender/familycombination,Containslarge font sizeobservegrid</span>
+          </header>
+          <div class="content checker" id="emojiContent"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Explanation -->
+  <section class="explain">
+    <div class="inner">
+      <h3>Explanation</h3>
+      <h4>Test target</h4>
+      <p>Examine complex scripts shaping, Two-waysort, combination indexandcolor Emoji ofsynthesisPerformance,Verify light transparencyanimationWhether to entersynthesislayer, Avoid large areas Paint.</p>
+
+      <h4>test plan</h4>
+      <ul>
+        <li>threeListcontent:Arabshuffle numbers/punctuated RTL paragraph; Thai/Vietnamesewaitcombination indexparagraph;Emoji Large character listcover ZWJ sequenceListandcolor/genderVariants.</li>
+        <li>EveryListComes with defaultslighttransparentanimation(AmplitudeandcycleAdjustable),used forobserve Paint flashing Whether large area redrawing is still shown;Can be aloneclosure.</li>
+        <li>supplygiant Emoji(256px)switch,used formagnify rasterandsynthesislayerBehavior;Checkerboard background aidobservetransparentedge.</li>
+        <li>automaticscrollOption to zoom in and redraw the scene,Can be combined Performance/Layers panelobserve FPS andsynthesislayer.</li>
+      </ul>
+
+      <h4>How to use</h4>
+      <ol>
+        <li>AdjustmentTransparency range, animationcycle,Open DevTools → Rendering Check Paint flashing,observethreeListofredraw rangeandsynthesislayerchange.</li>
+        <li>switch"giant Emoji"and"automaticscroll",View high resolution emoji andText shufflinghourofFrame rateandsynthesislayer.</li>
+        <li>Toggle "Bidi control/Punctuation mix" to confirm bidirectional text order and number positioning; toggle the ligature switch to observe font features.</li>
+        <li>Performance records 10s,focus onscrollstage main thread Paint Proportionand FPS,Verify lightanimationNo frame drops or tearing.</li>
+      </ol>
+
+      <h4>Check/test/How to evaluate results</h4>
+      <ul>
+        <li>No characters lost/dislocation,ArabContinuous writing is normal,Southeast AsiaThe appendix is ​​in the correct position;Emoji ZWJ sequenceListsynthesiscorrect(color/gender/family/handshake).</li>
+        <li>Mildtransparentanimationshould entersynthesislayer,Paint flashing showofLimited redraw area;scrollhour FPS Stable, no obvious frame drops.</li>
+        <li>On the checkerboard background, large Emoji should not tear or show color seams at the edges; after turning ligatures on/off, text layout changes should not flicker.</li>
+      </ul>
+    </div>
+  </section>
+
+  <script src="./app.js"></script>
+</body>
+</html>

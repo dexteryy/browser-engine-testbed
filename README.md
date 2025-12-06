@@ -1,18 +1,20 @@
 # Browser Engine Testbed
 
-中文导航入口位于 `cn/index.html`，提供两套测试用例的统一导航与搜索。项目定位是为新浏览器引擎验证现代 CSS 布局与渲染特性、跨引擎兼容性与多媒体场景。
+English navigation entry: `en/index.html`. Chinese navigation entry: `cn/index.html`. The project supplies a unified navigation and search across two suites of test cases. It is intended to validate a new browser engine against modern CSS layout/rendering features, cross-engine compatibility, and multimedia scenarios.
 
-## 目录结构
+## Structure
 
-- `cn/layout-and-rendering/`：现代 CSS 布局与渲染测试用例。
-- `cn/compatibility/`：跨引擎兼容性与媒体测试用例。
+- `en/layout-and-rendering/`: Modern CSS layout and rendering test cases.
+- `en/compatibility/`: Cross-engine compatibility and media test cases.
+- `cn/layout-and-rendering/`: Modern CSS layout and rendering test cases (Chinese).
+- `cn/compatibility/`: Cross-engine compatibility and media test cases (Chinese).
 
-## 访问与使用
+## Access & Usage
 
-1. 打开 `cn/index.html`（本地或经服务器），可通过 `?suite=layout` 或 `?suite=compatibility` 直接定位套件。
-2. 套件与分类在导航页可搜索与展开/收起，点击卡片直达对应测试页面。
+1. Open `en/index.html` (locally or via a server). Use `?suite=layout` or `?suite=compatibility` to jump directly to a suite.
+2. Suites and categories can be searched and collapsed/expanded on the navigation page. Click a card to open the corresponding test page.
 
-## 开发说明
+## Development Notes
 
-- 不依赖任何框架，纯 HTML/CSS/JS。
-- 测试用例设计参见各目录里的 `prd.md`
+- No frameworks are used—pure HTML/CSS/JS.
+- Test case designs are documented in each directory's `prd.md`.

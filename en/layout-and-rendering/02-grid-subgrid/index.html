@@ -1,0 +1,212 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>test case2A:Column direction Subgrid Align</title>
+  <link rel="stylesheet" href="assets/style.css"/>
+  <style>
+    /* ========== Page 2A specific styles ========== */
+    .grid-root.columns-demo {
+      /* Named grid lines + fr + minmax; media queries adjust --cols. */
+      --cols: [left-start] minmax(180px, 1fr)
+              [left-end main-start] minmax(360px, 2fr)
+              [main-end right-start] minmax(200px, 1fr)
+              [right-end];
+      grid-template-columns: var(--cols);
+      /* Gap controlled by toolbar via JS */
+    }
+    @media (max-width: 900px) {
+      .grid-root.columns-demo {
+        --cols: [left-start] minmax(140px, 1fr)
+                [left-end main-start] minmax(260px, 1.4fr)
+                [main-end right-start] minmax(140px, 1fr)
+                [right-end];
+        grid-template-columns: var(--cols);
+      }
+    }
+    @media (max-width: 640px) {
+      .grid-root.columns-demo {
+        --cols: [left-start] minmax(0, 1fr)
+                [left-end main-start] minmax(0, 1fr)
+                [main-end right-start] minmax(0, 1fr)
+                [right-end];
+        grid-template-columns: var(--cols);
+        /* Stack items while keeping named lines alive for subgrid checks */
+        grid-auto-flow: row;
+      }
+      .grid-root.columns-demo .header,
+      .grid-root.columns-demo .left,
+      .grid-root.columns-demo .main,
+      .grid-root.columns-demo .right,
+      .grid-root.columns-demo .feature {
+        grid-column: left-start / right-end;
+      }
+    }
+
+    .header { grid-column: left-start / right-end; background: #f8fafc; }
+    .left   { grid-column: left-start / left-end; }
+    .main   { grid-column: main-start / main-end; }
+    .right  { grid-column: right-start / right-end; }
+
+    /* Subgrid container spanning main + right columns */
+    .feature {
+      grid-column: main-start / right-end;
+      display: grid;
+      grid-template-columns: subgrid; /* inherit from parent area (main..right) */
+      /* Do not override gap: subgrid copies parent gutters automatically */
+      outline: 1px dashed #bfdbfe; /* outline keeps the visual frame without shifting the content box */
+      border: 0;
+      padding: 0;
+      background: #f9fbff;
+    }
+    .feature .card {
+      /* Using borders to show edges clearly */
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 10px;
+    }
+    /* Cards aligned by NAMED lines */
+    .card.a { grid-column: main-start / main-end; }
+    .card.b { grid-column: main-end / right-end; }
+    /* Mixed numeric placement */
+    .card.c { grid-column: 1 / -1; }
+    .card.d { grid-column: 1 / span 1; }
+
+    .legend { font-size: 12px; color: #475569; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="inner">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;">
+        <div>
+          <h1>test case2A:Column direction Subgrid Align</h1>
+          <p>Verify that the subgrid is in<strong>Column direction</strong>inheritparent gridtrack,and name grid lines by parentAlign.</p>
+        </div>
+        <div class="note" id="support-note">Browser support: Detecting...</div>
+      </div>
+      <div class="pages">
+        Page navigation:
+        <a href="./index.html">2A List</a> -
+        <a href="./rows-subgrid.html">2B OK</a> -
+        <a href="./both-axes.html">2C biaxial</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="toolbar">
+      <div class="tool">
+        <label for="gap">gap(gap):</label>
+        <input id="gap" type="range" min="0" max="40" step="1" value="16" />
+        <span class="value" id="gap-val">16px</span>
+      </div>
+      <div class="tool">
+        <input id="show-parent" type="checkbox" />
+        <label for="show-parent">Show parent gridlines</label>
+      </div>
+      <div class="tool">
+        <input id="show-sub" type="checkbox" />
+        <label for="show-sub">Show subgrid lines</label>
+      </div>
+      <div class="tool">
+        <button class="btn" id="check">transportOKAligncheck</button>
+        <span class="status" id="check-status">Aligncheck:not yettransportOK</span>
+      </div>
+      <div class="tool">
+        <button class="btn" id="measure">Measure how long a rearrangement takes</button>
+        <span class="value" id="time">–</span>
+      </div>
+    </section>
+
+    <section class="test-area">
+      <div class="grid-root columns-demo" id="root">
+        <div class="grid-item header">
+          <strong>header</strong>(across 3 List)
+          <span class="badge">parent grid</span>
+        </div>
+
+        <div class="grid-item left"><strong>left column</strong><br/>for observation fixationListbroad and fr Listdistribution between.</div>
+        <div class="grid-item main"><strong>Main content area</strong><br/>used forrightgrid-basedAlignEffect.</div>
+        <div class="grid-item right"><strong>right column</strong><br/>used forAlignreference.</div>
+
+        <div class="panel feature" id="feature">
+          <div class="card a"><strong>card A</strong>:usenameOK <code>main-start / main-end</code> Align.</div>
+          <div class="card b"><strong>card B</strong>:usenameOK <code>main-end / right-end</code> Align.</div>
+          <div class="card c"><strong>card C</strong>:Use numbers <code>1 / -1</code> acrossYuezi grid allList.</div>
+          <div class="card d"><strong>card D</strong>:use <code>1 / span 1</code> Occupy the head of the subgridList.</div>
+        </div>
+      </div>
+      <p class="legend">Tip: Scale the window width to trigger media queries (≥900px for threeList;640–900px for twoList;≤640px for oneList).</p>
+    </section>
+
+    <section class="explain">
+      <h2>Explanation</h2>
+      <div class="kv">
+        <div>Test target</div>
+        <div>verify Chrome right CSS Subgrid exist<strong>Column direction</strong>ofinheritandAlign:The edges of elements inside the subgrid should beparent gridofListlines coincide.</div>
+
+        <div>test plan</div>
+        <div>The parent grid defines 3 columns and named grid lines (mixing fixed widths and <code>fr</code>). The child container <code>.feature</code> spans from <code>main-start</code> to <code>right-end</code> and sets <code>grid-template-columns: subgrid</code> to inherit column tracks; internal cards align by named lines, numeric indices, and spanning.</div>
+
+        <div>usemethod</div>
+        <div>
+          1) Check"Show parent gridlines/subgrid lines"Observe whether the lines overlap;
+          2) Adjustment gap;3) Zooming the window triggers media queries;
+          4) Click"transportOKAligncheck"automatic ratiorightsubgrid linesandparent gridWire;
+          5) "Measure how long a rearrangement takes"meetingexistChange gap Then estimate the time required for one-time rearrangement (for rough reference only).
+        </div>
+
+        <div>Assessment results</div>
+        <div>Under normal circumstances:subgrid linesandparent gridWirecomplete polymerization;internalcardofleft/The right side should fallexistsubgrid linesLocation;existUnder different viewports,The subgrid is alwaysparent gridchanges persistAlign.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/app.js"></script>
+  <script>
+    // Page bootstrap
+    const { $, GridOverlay, supportsSubgrid, bindGap, measureReflow, checkSubgridColumnsAlign } = window.GridHarness;
+    const root = $('#root');
+    const feature = $('#feature');
+
+    // Feature detection
+    const ok = supportsSubgrid();
+    $('#support-note').textContent = ok ? 'Browser support:Subgrid ✓' : 'Browser support:Subgrid ✗(The functionality of this page is limited)';
+    $('#support-note').style.color = ok ? '#0a7f49' : '#c12a2a';
+
+    // Gap control
+    bindGap($('#gap'), root, $('#gap-val'));
+
+    // Overlays
+    const ovParent = new GridOverlay(root, 'columns', { useSubgrid: false });
+    const ovChild  = new GridOverlay(feature, 'columns', { useSubgrid: true });
+    ovParent.setEnabled(false);
+    ovChild.setEnabled(false);
+
+    $('#show-parent').addEventListener('change', e => ovParent.setEnabled(e.target.checked));
+    $('#show-sub').addEventListener('change', e => ovChild.setEnabled(e.target.checked));
+
+    // Alignment check
+    $('#check').addEventListener('click', () => {
+      checkSubgridColumnsAlign(root, feature, $('#check-status'));
+    });
+
+    // Simple reflow timing: change gap slightly and restore
+    const measureBtn = $('#measure');
+    measureBtn.addEventListener('click', async () => {
+      const prev = parseFloat(getComputedStyle(root).gap) || 16;
+      const delta = (prev % 2 === 0) ? 1 : -1;
+      const ms = await measureReflow(() => {
+        root.style.gap = (prev + delta) + 'px';
+      }, root);
+      $('#time').textContent = ms.toFixed(2) + ' ms';
+      // revert
+      root.style.gap = prev + 'px';
+    });
+  </script>
+</body>
+</html>

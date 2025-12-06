@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>R&D side use cases 12｜WebXR Immersive presentation and switching stability</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="inner">
+      <h1>R&D side use cases 12｜WebXR(Immersive) presentation and switching stability</h1>
+      <p class="subtitle">Two scenes, lightweight geometry and video dome, are accessible/quit XR,mirror to 2D Canvas and observe frame rate and compositing layer changes.</p>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar-section">
+    <div class="inner">
+      <div class="toolbar">
+        <fieldset>
+          <legend>XR control</legend>
+          <button id="enterXR" class="primary">Enter XR</button>
+          <button id="exitXR">quit XR</button>
+          <label>reference space
+            <select id="spaceSelect">
+              <option value="local-floor" selected>local-floor</option>
+              <option value="local">local</option>
+              <option value="bounded-floor">bounded-floor</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>scene/quality</legend>
+          <label><input type="radio" name="scene" value="geometry" checked /> lightweight geometry</label>
+          <label><input type="radio" name="scene" value="video" /> video dome</label>
+          <label>Rendering resolution
+            <select id="resolution">
+              <option value="1">1×</option>
+              <option value="0.8">0.8×</option>
+              <option value="0.6">0.6×</option>
+            </select>
+          </label>
+          <label><input type="checkbox" id="useSRGB" checked /> sRGB framebuffer</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>mirror/state</legend>
+          <label><input type="checkbox" id="mirrorToggle" checked /> Keep 2D mirrordraw</label>
+          <label><input type="checkbox" id="spinToggle" checked /> rotation animation</label>
+          <span class="badge" id="supportBadge">XR Support: under detection</span>
+          <span class="badge" id="sessionBadge">Session: not started</span>
+          <span class="badge" id="sceneBadge">scene:geometry</span>
+          <span class="badge" id="fpsBadge">FPS:--</span>
+        </fieldset>
+      </div>
+    </div>
+  </section>
+
+  <!-- Test area -->
+  <main class="test-area">
+    <div class="inner">
+      <div class="panes">
+        <section class="pane">
+          <header class="pane-head">
+            <h2>XR mirrorcanvas(2D UI Keepshow)</h2>
+            <span class="hint">XR Still in the middledrawmirror,Easy to see composition layers</span>
+          </header>
+          <div class="canvas-wrap">
+            <canvas id="glCanvas"></canvas>
+            <div class="overlay"><strong>mirror</strong><span class="muted-text">XR/2D</span></div>
+            <div class="fps" id="fpsDisplay">-- fps</div>
+          </div>
+        </section>
+
+        <section class="pane">
+          <header class="pane-head">
+            <h2>Events and Debugging</h2>
+            <span class="hint">XR in and out/sceneswitch record</span>
+          </header>
+          <div class="canvas-wrap" style="padding: 12px; overflow: auto;">
+            <div id="log" class="mono muted-text"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Explanation -->
+  <section class="explain">
+    <div class="inner">
+      <h3>Explanation</h3>
+      <h4>Test target</h4>
+      <p>examineEnter/quit XR Frame stability and composition path of session, immersive rendering, verification 2D mirrorand XR Layer management when layers coexist.</p>
+
+      <h4>test plan</h4>
+      <ul>
+        <li>supplylightweight geometryscene(rotating cube+ground grid)andvideo domescene(video map inner wall), can be quickly switched.</li>
+        <li>Enter XR backKeep 2D mirrordraw,observe Layers/Performance Does additional redraw occur or gamma abnormal.</li>
+        <li>Adjustablereference space, Resolution scaling, sRGB framebuffer;in nothing XR Downgrade to only when supported 2D mirrorrendering,stateBadge tips.</li>
+      </ul>
+
+      <h4>How to use</h4>
+      <ol>
+        <li>confirm"XR support"Badge is available, click"Enter XR";If the prompt does notsupport,Recordable downgrades.</li>
+        <li>exist XR Switch between"lightweight geometry/video dome",Observe frame rate stability; adjust resolution scaling to test the impact of dynamic resolution.</li>
+        <li>Open DevTools → Layers/Performance,observemirrorlayerand 2D UI Synthetic relationship; check whether there is a black screen or splash screen.</li>
+        <li>frequentlyin and out XR,session endedbackmirrorshould return to normaldraw,No stuttering or image retention.</li>
+      </ol>
+
+      <h4>Check/test/How to evaluate results</h4>
+      <ul>
+        <li>Within the capabilities of the equipmentKeep 72/90Hz;in and out XR No long frames or stutters.</li>
+        <li>mirrorClear output, none gamma mistake;sceneswitchnoneblack screen;rotate/Video texture updates smoothly.</li>
+      </ul>
+    </div>
+  </section>
+
+  <script src="./app.js"></script>
+</body>
+</html>

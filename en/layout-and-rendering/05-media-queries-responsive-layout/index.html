@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>test case5:Media queries responsive layout</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Topbar: full-width -->
+  <header class="topbar">
+    <div class="container">
+      <h1>test case5:Media queries responsive layout</h1>
+      <p class="subtitle">verify Chrome right CSS Media Inquiries (Media Queries)support, as well as the stability and performance of responsive layouts under different viewport widths.</p>
+    </div>
+  </header>
+
+  <!-- Page wrapper (used with :has() in CSS for debug overlay) -->
+  <main id="page">
+    <!-- Toolbar -->
+    <section class="toolbar container" aria-label="Toolbar">
+      <div class="controls">
+        <div class="group">
+          <strong>state</strong>
+          <div class="status">
+            <span>Viewport width:<span id="vw">-</span> px</span>
+            <span>JSBreakpoint:<span id="bp">-</span></span>
+            <span>CLSGrand total:<span id="cls">0.000</span></span>
+          </div>
+        </div>
+        <div class="group">
+          <strong>debug</strong>
+          <label class="checkbox">
+            <input id="toggle-outline" type="checkbox">
+            <span>Show layout borders (visual aid only)</span>
+          </label>
+          <button id="reset-cls" type="button" class="btn">resetCLS</button>
+        </div>
+        <div class="group">
+          <strong>CSSBreakpoint indication (pureCSS)</strong>
+          <span class="css-bp-indicator">
+            <span data-bp="mobile">currentBreakpoint:move(&lt; 800px)</span>
+            <span data-bp="tablet">currentBreakpoint:flat(800–1199px)</span>
+            <span data-bp="desktop">currentBreakpoint:desktop(≥ 1200px)</span>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Test Area -->
+    <section class="test-area container" aria-label="test area">
+      <!-- Site Navigation -->
+      <nav class="site-nav" aria-label="Main navigation">
+        <input class="nav-toggle" id="nav-toggle" type="checkbox" aria-hidden="true">
+        <label class="toggle-label" for="nav-toggle" aria-controls="primary-menu" aria-expanded="false">☰ menu</label>
+        <ul id="primary-menu" class="menu" role="list">
+          <li><a href="#card-1">front page</a></li>
+          <li><a href="#card-2">Column 1</a></li>
+          <li><a href="#card-3">Column 2</a></li>
+          <li><a href="#card-4">Report</a></li>
+          <li class="hide-on-mobile"><a href="#card-5">about</a></li>
+        </ul>
+      </nav>
+
+      <!-- Layout: content + sidebar -->
+      <div class="layout">
+        <article class="content">
+          <h2>Main content area</h2>
+          <p>This area is used to observe how the layout of the content area and the card grid automatically adjust according to the width of the container under different breakpoints. Please drag the browser width or use DevTools Device emulator.</p>
+
+          <div class="card-grid">
+            <!-- Cards with aspect-ratio to avoid CLS -->
+            <article class="card" id="card-1">
+              <figure class="media" aria-label="placeholder image"></figure>
+              <h3>card one</h3>
+              <p>Narrow screen uses a single column display and enlarges the font; medium width becomes two columns; desktop width becomes three columns.</p>
+            </article>
+            <article class="card" id="card-2">
+              <figure class="media"></figure>
+              <h3>Card two</h3>
+              <p>pass <code>@media</code> Change <code>display</code> and <code>flex-direction</code>,Observe the stability of layout switching.</p>
+            </article>
+            <article class="card" id="card-3">
+              <figure class="media"></figure>
+              <h3>card three</h3>
+              <p>The graphics and text modules are all set with fixed <code>aspect-ratio</code>,Avoid layout offset caused by image loading.</p>
+            </article>
+            <article class="card" id="card-4">
+              <figure class="media"></figure>
+              <h3>card four</h3>
+              <p>Frequently drag the window width to observe Chrome existPerformance when applying media queriesandWhether flickering occurs.</p>
+            </article>
+            <article class="card" id="card-5">
+              <figure class="media"></figure>
+              <h3>card five</h3>
+              <p>When the width is less than 800px,The sidebar will be hidden; greater than or equal to 800px hoursidebardisplay andandcontent side by side.</p>
+            </article>
+            <article class="card" id="card-6">
+              <figure class="media"></figure>
+              <h3>card six</h3>
+              <p>At the desktop breakpoint (≥1200px)Increase grid spacingandmargin,verifyIs the breakpoint style taking effect correctly?.</p>
+            </article>
+          </div>
+        </article>
+
+        <aside class="sidebar" aria-label="sidebar">
+          <h2>sidebar</h2>
+          <div class="widget">
+            <h3>auxiliary information</h3>
+            <p>This module is in ≥800px Visible at all times, emphasizing layout display and hidden testing.</p>
+          </div>
+          <div class="widget widget-secondary">
+            <h3>Secondary sector</h3>
+            <p>This module is inmoveend(&lt;800px)hide,used forverify <code>display: none</code> breakpoint switch.</p>
+          </div>
+          <div class="widget widget-desktop-only">
+            <h3>Desktop display only</h3>
+            <p>This module is only available in ≥1200px show,used forverifyMultiple breakpoint styles override priority.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Explanation -->
+    <section class="explain container" aria-label="Explanation">
+      <h2>Explanation</h2>
+      <h3>Test target</h3>
+      <ul>
+        <li>verify CSS Media inquiriesSwitch between different breakpointsLayout correctnessandstability.</li>
+        <li>Observe whether layout confusion, flickering, or content overlap occurs when switching breakpoints.</li>
+        <li>Continuous scaling of the evaluation windowhourBrowser performanceandVisionstability(CLS).</li>
+      </ul>
+
+      <h3>test plan</h3>
+      <ul>
+        <li>Use pure CSS Media Inquiries (<code>min-width</code>/<code>max-width</code>)Define threeBreakpoint:
+          <strong>&lt;800px</strong>(move),<strong>800–1199px</strong>(flat),<strong>≥1200px</strong>(desktop).</li>
+        <li>Switch between different breakpoints <code>display</code> type,<code>flex-direction</code>, font size, spacingandElements appear and disappear.</li>
+        <li>All reactive behaviors do not depend on JavaScript;on the page JS onlyused forstateshowandPerformance Observation.</li>
+      </ul>
+
+      <h3>How to use</h3>
+      <ol>
+        <li>exist Chrome Open this page in,Drag the window width orexist DevTools Switch devices.</li>
+        <li>On small viewports, verify the navigation switches to a vertical list and can be expanded with the menu button.</li>
+        <li>Confirm content area card gridexist 1/2/3 Smooth switching between columns;sidebarexist &lt;800px hide,≥800px show.</li>
+        <li>You can check "Show layout border" to assist the observation box model (it does not affect the layout calculation).</li>
+        <li>View top "state」viewport width in, currentbreakpointand CLS Grand total,Click "resetCLS」Can be cleared.</li>
+      </ol>
+
+      <h3>Outcome evaluation</h3>
+      <ul>
+        <li>There are no element overflows, misalignments or invisible key content under the three breakpoints.</li>
+        <li>There is no obvious flicker at the moment of breakpoint switching.CLS Keep the value low (normal interaction should be close to 0).</li>
+        <li>The browser does not freeze or crash when dragging the window, and style changes take effect immediately.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

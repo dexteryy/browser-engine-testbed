@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>04-01 Base:vertical-rl compared with level</title>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="common.js"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="inner">
+      <h1>test case4-01:Base</h1>
+      <div class="sub">vertical-rl / vertical-lr Side-by-side comparison with normal horizontal text</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="toolbar">
+      <div class="group">
+        <h3>writing mode</h3>
+        <div class="row">
+          <label for="ctrl-wm">writing-mode:</label>
+          <select id="ctrl-wm">
+            <option value="vertical-rl" selected>vertical-rl(Top to bottom, columns right to left)</option>
+            <option value="vertical-lr">vertical-lr(Top to bottom, columns left to right)</option>
+            <option value="horizontal-tb">horizontal-tb(horizontal reference)</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>text-orientation:</label>
+          <label><input type="radio" name="ctrl-to" value="mixed" checked /> mixed(default)</label>
+          <label><input type="radio" name="ctrl-to" value="upright" /> upright</label>
+          <label><input type="radio" name="ctrl-to" value="sideways" /> sideways</label>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Size and layout</h3>
+        <div class="row">
+          <label for="ctrl-inline">inline-size(em):</label>
+          <input type="range" id="ctrl-inline" min="12" max="28" step="1" value="18" />
+          <label for="ctrl-block">block-size(em):</label>
+          <input type="range" id="ctrl-block" min="18" max="40" step="1" value="28" />
+        </div>
+        <div class="row">
+          <label for="ctrl-fs">font size (px):</label>
+          <input type="range" id="ctrl-fs" min="14" max="28" step="1" value="18" />
+          <label for="ctrl-lh">row height (px):</label>
+          <input type="range" id="ctrl-lh" min="18" max="40" step="1" value="28" />
+          <label for="ctrl-letter">word spacing (px):</label>
+          <input type="range" id="ctrl-letter" min="-1" max="2" step="0.1" value="0" />
+        </div>
+        <div class="row">
+          <label><input type="checkbox" id="ctrl-baseline" /> Show baseline raster</label>
+          <label><input type="checkbox" id="ctrl-outline" /> show debugging outline</label>
+        </div>
+      </div>
+
+      <div class="group" style="grid-column: span 4;">
+        <h3>state</h3>
+        <div class="meters" id="meters"></div>
+      </div>
+    </section>
+
+    <section class="test-area" id="test-area">
+      <div class="overlay-baseline"></div>
+      <div class="test-split">
+        <div class="panel">
+          <h4>vertical writing area</h4>
+          <div id="vb" class="vertical-box vertical-rl tor-mixed sample">
+            <p>exist <b>vertical-rl</b> In this mode, text is arranged from top to bottom and paragraphs are advanced from right to left. The following is an example of mixed Chinese and English:</p>
+            <p>Example:Chrome right <span class="latin">CSS Writing Modes Level 3</span> Support continues to improve, version <span class="num">25</span>.0(<span class="num">2025</span> Year) Fixed several vertical issues.</p>
+            <p>punctuationExample:Chinesepunctuation--,., ;:?!""()[]《》;half-width: , . ; : ? ! ( ) [ ] &lt; &gt;.</p>
+            <p>Japanese sample: vertical layout verification. Katakana, hiragana, kanji. <ruby>Tokyo<rt>とうきょう</rt></ruby> shown in vertical writing.</p>
+            <p>Korean:세로쓰기 테스트입니다. 혼합 텍스트와 숫자 <span class="num">12</span><span class="num">34</span>.</p>
+            <ul>
+              <li>serial number <span class="num">01</span>:Observation of shuffled line breaks.</li>
+              <li>serial number <span class="num">02</span>:Punctuation position and rotation.</li>
+              <li>serial number <span class="num">03</span>:Digital ligature (<code>text-combine-upright</code>).</li>
+            </ul>
+          </div>
+        </div>
+        <div class="panel">
+          <h4>Horizontal reference area</h4>
+          <div class="hz-box sample">
+            <p>This area uses normal <b>horizontal-tb</b> horizontal writing,The content is the same as on the left,for visionrightAccording to.</p>
+            <p>Example:Chrome right <span class="latin">CSS Writing Modes Level 3</span> Support continues to improve, version 25.0(2025 Year) Fixed several vertical issues.</p>
+            <p>punctuationExample:Chinesepunctuation--,., ;:?!""()[]《》;half-width: , . ; : ? ! ( ) [ ] &lt; &gt;.</p>
+            <p>Japanese sample: vertical layout verification. Katakana, hiragana, kanji. <ruby>Tokyo<rt>とうきょう</rt></ruby> shown in vertical writing.</p>
+            <p>Korean:세로쓰기 테스트입니다. 혼합 텍스트와number 1234.</p>
+            <ul>
+              <li>serial number 01:Observation of shuffled line breaks.</li>
+              <li>serial number 02:Punctuation position and rotation.</li>
+              <li>serial number 03:Digital ligature (text-combine-upright).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="explain">
+      <h3>Test target</h3>
+      <p>Confirm verticalwriting modeThe flow of text below, Whether the character direction and block-level layout are as expected,and proceed with the horizontal referencerightAccording to.</p>
+      <h4>How to use</h4>
+      <ul>
+        <li>switch <code>writing-mode</code> for <code>vertical-rl</code> or <code>vertical-lr</code>,Observe whether the paragraph advances in the correct direction.</li>
+        <li>switch <code>text-orientation</code>:<b>mixed</b>(Default, Latin rotation),<b>upright</b>(all upright),<b>sideways</b>(All sideways).</li>
+        <li>Adjust font size, line height, and logical dimensions (inline/block),and turn on"baseline raster""debugging profile"Assisted observation.</li>
+        <li>scrollorZoom window,Verify if there is any misalignment, overlappingorCrop.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', function(){
+      Test04.wireCommonControls({
+        target: document.getElementById('vb'),
+        meters: document.getElementById('meters')
+      });
+    });
+  </script>
+</body>
+</html>

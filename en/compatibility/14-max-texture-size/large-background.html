@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Very large background image close MAX_TEXTURE_SIZE</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .bg-area {
+      position: relative;
+      height: 640px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    .bg-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(0deg, rgba(0,0,0,0.12), rgba(0,0,0,0.12)),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0, rgba(255,255,255,0.08) 1px, transparent 1px, transparent 40px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.08) 0, rgba(255,255,255,0.08) 1px, transparent 1px, transparent 40px);
+    }
+    .bg-label {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      padding: 8px 12px;
+      background: rgba(15, 23, 42, 0.8);
+      color: #e2e8f0;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Extra large background image | near MAX_TEXTURE_SIZE</h1>
+    <p>Single background image(nearorExceedupper limit)Test loading/Raster and composite layers. Drag the size to try to exceed the limit and observe the failure mode.</p>
+  </header>
+  <main class="page">
+    <section class="toolbar">
+      <div class="group">
+        <span class="chip">MAX_TEXTURE_SIZE <span id="max-size">Under detection</span></span>
+        <span class="chip">DPR <span id="dpr"></span></span>
+      </div>
+      <div class="group">
+        <label>Image size(px)</label>
+        <input type="range" id="size" min="2048" max="8192" step="256" value="4096">
+        <span id="size-label">4096</span>
+      </div>
+      <div class="group">
+        <label>Zoom</label>
+        <input type="range" id="scale" min="0.25" max="2" step="0.05" value="1">
+        <span id="scale-label">1.00</span>
+      </div>
+      <div class="group">
+        <label>background-size</label>
+        <select id="bg-size">
+          <option value="contain">contain</option>
+          <option value="cover" selected>cover</option>
+          <option value="auto">auto</option>
+        </select>
+      </div>
+      <div class="group">
+        <label><input type="checkbox" id="repeat"> Repeat tile</label>
+      </div>
+      <button class="btn primary" id="regen">Regenerate</button>
+    </section>
+
+    <section class="panel">
+      <h2 class="section-title">test area</h2>
+      <div class="meta-row">
+        <span class="badge" id="status">Waiting for generation...</span>
+        <span class="badge mono" id="info">-</span>
+      </div>
+      <div class="bg-area" id="bg-area">
+        <div class="bg-overlay"></div>
+        <div class="bg-label" id="label">-</div>
+      </div>
+    </section>
+
+    <section class="panel explain">
+      <h3 class="section-title">Instructions for use</h3>
+      <div>1)Drag size tonear/Exceed MAX_TEXTURE_SIZE,Generate it once and observe the loading time frame and whether there is a blank space./Downgrade.</div>
+      <div>2)exist DevTools → Layers Observe the size of the background layer;Performance Record the long frame when the big picture first appears.</div>
+      <div>3)Scroll, adjust background-size/Zoom,Verify that compositing layer translates rather than redraws,Is there a tear?orColor cast.</div>
+    </section>
+  </main>
+
+  <script>
+    const maxSizeEl = document.getElementById("max-size");
+    const dprEl = document.getElementById("dpr");
+    const sizeInput = document.getElementById("size");
+    const sizeLabel = document.getElementById("size-label");
+    const scaleInput = document.getElementById("scale");
+    const scaleLabel = document.getElementById("scale-label");
+    const bgSizeSel = document.getElementById("bg-size");
+    const repeatToggle = document.getElementById("repeat");
+    const statusEl = document.getElementById("status");
+    const infoEl = document.getElementById("info");
+    const bgArea = document.getElementById("bg-area");
+    const label = document.getElementById("label");
+    let dirty = false;
+
+    dprEl.textContent = (window.devicePixelRatio || 1).toFixed(2);
+
+    function getMaxTextureSize() {
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext("webgl");
+      if (!gl) return "unknown";
+      return gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    }
+
+    function createLargeImage(size) {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      const grd = ctx.createLinearGradient(0, 0, size, size);
+      grd.addColorStop(0, "#0ea5e9");
+      grd.addColorStop(1, "#a855f7");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, size, size);
+      ctx.strokeStyle = "rgba(255,255,255,0.5)";
+      const step = Math.max(32, size / 16);
+      for (let i = 0; i < size; i += step) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, size);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(size, i);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "rgba(15,23,42,0.8)";
+      ctx.font = `${Math.max(48, size / 32)}px 'Segoe UI'`;
+      ctx.fillText(`${size}×${size}`, size * 0.1, size * 0.2);
+      return canvas.toDataURL("image/png");
+    }
+
+    function applyBackground(dataUrl, size) {
+      bgArea.style.backgroundImage = `url(${dataUrl})`;
+      bgArea.style.backgroundSize = bgSizeSel.value;
+      bgArea.style.backgroundRepeat = repeatToggle.checked ? "repeat" : "no-repeat";
+      bgArea.style.transform = `scale(${Number(scaleInput.value)})`;
+      label.textContent = `${size}px (${bgSizeSel.value})`;
+      infoEl.textContent = `background size: ${size}×${size} ｜ repeat: ${repeatToggle.checked}`;
+    }
+
+    function markDirty() {
+      dirty = true;
+      statusEl.textContent = "Parameters changed, click regenerate";
+    }
+
+    function regenerate() {
+      const size = Number(sizeInput.value);
+      sizeLabel.textContent = size;
+      const start = performance.now();
+      statusEl.textContent = "Generating...";
+      dirty = false;
+      requestAnimationFrame(() => {
+        const url = createLargeImage(size);
+        applyBackground(url, size);
+        const cost = performance.now() - start;
+        statusEl.textContent = `Generation completed (${cost.toFixed(1)} ms)`;
+      });
+    }
+
+    sizeInput.addEventListener("input", () => {
+      sizeLabel.textContent = sizeInput.value;
+      markDirty();
+    });
+    scaleInput.addEventListener("input", () => {
+      scaleLabel.textContent = Number(scaleInput.value).toFixed(2);
+      bgArea.style.transform = `scale(${Number(scaleInput.value)})`;
+    });
+    bgSizeSel.addEventListener("change", () => {
+      markDirty();
+    });
+    repeatToggle.addEventListener("change", () => {
+      markDirty();
+    });
+    document.getElementById("regen").addEventListener("click", regenerate);
+
+    maxSizeEl.textContent = getMaxTextureSize();
+    regenerate();
+  </script>
+</body>
+</html>

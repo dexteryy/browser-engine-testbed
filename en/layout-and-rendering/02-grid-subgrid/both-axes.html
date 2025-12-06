@@ -1,0 +1,173 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>test case2C:biaxial Subgrid(List+OK)</title>
+  <link rel="stylesheet" href="assets/style.css"/>
+  <style>
+    /* ========== Page 2C specific styles ========== */
+    .grid-root.both-demo {
+      /* 3 columns + 3 rows with names */
+      --cols: [left-start] minmax(180px, 1fr)
+              [left-end main-start] minmax(280px, 1.6fr)
+              [main-end right-start] minmax(160px, 1fr)
+              [right-end];
+      --rows: [top-start] 64px
+              [top-end mid-start] 1fr
+              [mid-end bottom-start] 1fr
+              [bottom-end];
+      grid-template-columns: var(--cols);
+      grid-template-rows: var(--rows);
+      height: 520px;
+    }
+    @media (max-width: 880px) {
+      .grid-root.both-demo {
+        --cols: [left-start] minmax(0, 0.8fr)
+                [left-end main-start] minmax(0, 1.6fr)
+                [main-end right-start] minmax(0, 1fr)
+                [right-end];
+        grid-template-columns: var(--cols);
+      }
+      .aside { display: none; }
+    }
+    @media (max-width: 620px) {
+      .grid-root.both-demo {
+        --cols: [left-start main-start] minmax(0, 1fr)
+                [left-end main-end right-start] minmax(0, 1fr)
+                [right-end];
+        --rows: [top-start] auto [top-end mid-start] 1fr [mid-end bottom-start] 1fr [bottom-end];
+        grid-template-columns: var(--cols);
+      }
+      .aside { display: none; }
+      .main, .mini { grid-column: main-start / right-end; }
+    }
+
+    .header { grid-column: left-start / right-end; grid-row: top-start / top-end; background:#f8fafc; }
+    .aside  { grid-column: left-start / left-end;  grid-row: mid-start / bottom-end; }
+    .main   { grid-column: main-start / right-end; grid-row: mid-start / bottom-end; }
+
+    /* Subgrid area that spans both axes */
+    .mini {
+      grid-column: main-start / right-end;
+      grid-row: mid-start / bottom-end;
+      display: grid;
+      grid-template-columns: subgrid;
+      grid-template-rows: subgrid;
+      /* Let gutters come from parent subgrid */
+      outline: 1px dashed #fbbf24; /* outline avoids shrinking the inherited subgrid tracks */
+      border: 0;
+      background: #fffdf5;
+      padding: 0;
+    }
+    .mini .box {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 8px;
+    }
+    /* Place children by names (both axes) */
+    .mini .b1 { grid-column: main-start / main-end; grid-row: mid-start / bottom-end; }
+    .mini .b2 { grid-column: main-end / right-end; grid-row: mid-start / mid-end; }
+    .mini .b3 { grid-column: main-end / right-end; grid-row: mid-end / bottom-end; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="inner">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;">
+        <div>
+          <h1>test case2C:biaxial Subgrid(List + OK)</h1>
+          <p>Verify that the subgrid is in<strong>ListandOK</strong>At the same time, it inherits the parent grid track, and internal elements can be accurately aligned across parent and child levels.</p>
+        </div>
+        <div class="note" id="support-note">Browser support: Detecting...</div>
+      </div>
+      <div class="pages">
+        Page navigation:
+        <a href="./index.html">2A List</a> -
+        <a href="./rows-subgrid.html">2B OK</a> -
+        <a href="./both-axes.html">2C biaxial</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="toolbar">
+      <div class="tool">
+        <label for="gap">gap(gap):</label>
+        <input id="gap" type="range" min="0" max="40" step="1" value="16" />
+        <span class="value" id="gap-val">16px</span>
+      </div>
+      <div class="tool">
+        <input id="show-parent" type="checkbox" />
+        <label for="show-parent">Show parent gridlines</label>
+      </div>
+      <div class="tool">
+        <input id="show-sub" type="checkbox" />
+        <label for="show-sub">Show subgrid lines</label>
+      </div>
+      <div class="tool">
+        <button class="btn" id="measure">Measure how long a rearrangement takes</button>
+        <span class="value" id="time">–</span>
+      </div>
+    </section>
+
+    <section class="test-area">
+      <div class="grid-root both-demo" id="root">
+        <div class="grid-item header"><strong>header</strong>(spans full width, fixed height)</div>
+        <div class="grid-item aside"><strong>left fixed area</strong>(Appears only in wide viewports)</div>
+        <div class="panel mini" id="mini">
+          <div class="box b1"><strong>box 1</strong>:Listuse <code>main-start / main-end</code>,OKuse <code>mid-start / bottom-end</code>.</div>
+          <div class="box b2"><strong>box 2</strong>:Listuse <code>main-end / right-end</code>,OKuse <code>mid-start / mid-end</code>.</div>
+          <div class="box b3"><strong>box 3</strong>:Listuse <code>main-end / right-end</code>,OKuse <code>mid-end / bottom-end</code>.</div>
+        </div>
+      </div>
+      <p class="note">hint:Left in narrower viewportListWill fold,The subgrid should stillandParent remaining track alignment.</p>
+    </section>
+
+    <section class="explain">
+      <h2>Explanation</h2>
+      <div class="kv">
+        <div>Test target</div>
+        <div>Verify that the subgrid is in<strong>biaxial</strong>When inheriting,Internal elements can be aligned with their parentListWire,You can also align the parentOKWire;Responsive breakpoints remain consistent after changes.</div>
+
+        <div>test plan</div>
+        <div>The parent grid is 3 List 3 OK(With named gridWire);child container <code>.mini</code> Across the two rightListandThe bottom twoOK,and turn on <code>subgrid</code>(List, OKuse at the same timeuse);Subitems are named byOKAlign on both axes.</div>
+
+        <div>How to use</div>
+        <div>1) Check"Show parent gridlines/subgrid lines";2) Adjustment gap;3) Zoom window test breakpoint;4) Observe whether the four sides of the child coincide with the corresponding grid lines of the parent.</div>
+
+        <div>Assessment results</div>
+        <div>Under normal circumstances:parent gridWireandsubgrid linesCompletely coincident on both axes;Still consistent after scaling the window;Layout without misalignment and abnormal scrolling.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/app.js"></script>
+  <script>
+    const { $, GridOverlay, supportsSubgrid, bindGap, measureReflow } = window.GridHarness;
+    const root = $('#root'), mini = $('#mini');
+    const ok = supportsSubgrid();
+    $('#support-note').textContent = ok ? 'Browser support:Subgrid ✓' : 'Browser support:Subgrid ✗(The functionality of this page is limited)';
+    $('#support-note').style.color = ok ? '#0a7f49' : '#c12a2a';
+    bindGap($('#gap'), root, $('#gap-val'));
+
+    const ovParent = new GridOverlay(root, 'both');
+    const ovChild  = new GridOverlay(mini, 'both', { useSubgrid: true });
+    ovParent.setEnabled(false);
+    ovChild.setEnabled(false);
+
+    $('#show-parent').addEventListener('change', e => ovParent.setEnabled(e.target.checked));
+    $('#show-sub').addEventListener('change', e => ovChild.setEnabled(e.target.checked));
+
+    // Simple reflow timing: toggle a small size change
+    $('#measure').addEventListener('click', async () => {
+      const prev = parseFloat(getComputedStyle(root).gap) || 16;
+      const ms = await measureReflow(() => root.style.gap = (prev + 1) + 'px', root);
+      document.getElementById('time').textContent = ms.toFixed(2) + ' ms';
+      root.style.gap = prev + 'px';
+    });
+  </script>
+</body>
+</html>

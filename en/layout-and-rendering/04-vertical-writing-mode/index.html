@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>test case4:Vertical writing mode and text orientation - Table of contents</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="inner">
+      <h1>test case4:Vertical writing mode and text orientation</h1>
+      <div class="sub">verify vertical-rl / vertical-lr Mixed arrangement of Chinese and English, character rotation and layout positioning</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="toolbar">
+      <div class="group" style="grid-column: span 12;">
+        <h3>illustrate</h3>
+        <p class="note">booktest caseContains multiple independent pages,Each page focuses on one test scenario.All pages adopt a unified white background style and operation bar,Easy to observe, contrastand regression testing.</p>
+      </div>
+    </section>
+
+    <section class="test-area">
+      <div class="panel">
+        <h4>Page index</h4>
+        <ul>
+          <li><a href="./01-basic-vertical.html">01 Base:vertical-rl compared with level</a></li>
+          <li><a href="./02-text-orientation.html">02 Character direction:mixed / upright / sideways contrast</a></li>
+          <li><a href="./03-flex-grid-integration.html">03 Layout Integration: Vertical Containers vs. Flex / Grid Align</a></li>
+          <li><a href="./04-punctuation-numerals.html">04 Punctuation and numbers: Vertical position, ligatures and brackets</a></li>
+        </ul>
+        <p class="note">It is recommended to use the latest Chromium To test.</p>
+      </div>
+    </section>
+
+    <section class="explain">
+      <h3>How to use</h3>
+      <ul>
+        <li>After entering each page, switch through the toolbar <code>writing-mode</code>, <code>text-orientation</code> and other parameters, and observe the text direction, character rotation and line wrapping performance.</li>
+        <li>turn on"baseline raster"and"debugging profile"Auxiliary observation of line spacingandbox model bounds.</li>
+        <li>In the layout integration page, try changing Flex/Grid ofAlignparameter,View different writing modesofSize Calculation andAlignrelation.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

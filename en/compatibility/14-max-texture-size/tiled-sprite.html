@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Splicing and splicing of super large sprite images</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .grid-wrap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .slice {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background-position: center;
+      background-repeat: no-repeat;
+      display: grid;
+      place-items: center;
+      color: #e2e8f0;
+      font-weight: 700;
+      background-size: var(--bg-size, cover);
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Splicing and splicing of super large sprite images</h1>
+    <p>will exceed MAX_TEXTURE_SIZE The large image is spliced ​​according to the multi-slice background, restore the complete image, and observe the seamless splicing and synthesis overhead.</p>
+  </header>
+  <main class="page">
+    <section class="toolbar">
+      <div class="group">
+        <span class="chip">MAX_TEXTURE_SIZE <span id="max-size">-</span></span>
+        <span class="chip">DPR <span id="dpr"></span></span>
+      </div>
+      <div class="group">
+        <label>Overall image size(px)</label>
+        <input type="range" id="sheet-size" min="4096" max="12288" step="512" value="8192">
+        <span id="sheet-label">8192</span>
+      </div>
+      <div class="group">
+        <label>Number of slices</label>
+        <select id="tiles">
+          <option value="2">2×2</option>
+          <option value="3" selected>3×3</option>
+          <option value="4">4×4</option>
+        </select>
+      </div>
+      <div class="group">
+        <label>background-size</label>
+        <select id="bg-size">
+          <option value="cover">cover</option>
+          <option value="contain" selected>contain</option>
+          <option value="auto">auto</option>
+        </select>
+      </div>
+      <div class="group">
+        <label><input type="checkbox" id="show-border" checked> Show slice borders</label>
+      </div>
+      <button class="btn primary" id="regen">Regenerate sprite image</button>
+    </section>
+
+    <section class="panel">
+      <h2 class="section-title">Spliced ​​splicing area</h2>
+      <div class="meta-row">
+        <span class="badge" id="status">Waiting for generation...</span>
+        <span class="badge mono" id="info">-</span>
+      </div>
+      <div class="scroller" id="scroller">
+        <div class="grid-wrap" id="grid"></div>
+      </div>
+    </section>
+
+    <section class="panel explain">
+      <h3 class="section-title">Instructions for use</h3>
+      <div>1)WillOverall image sizeadjusted to exceed MAX_TEXTURE_SIZE,Observe seamlessness through slicing and splicing; scroll and zoom to see compositing and redrawing.</div>
+      <div>2)DevTools → Layers Check the number and size of the spliced ​​composite layers;Performance Record long frames that generate sprite images.</div>
+      <div>3)switch background-size/Number of slices,Contrast synthetic burden with visual moiré.</div>
+    </section>
+  </main>
+
+  <script>
+    const maxSizeEl = document.getElementById("max-size");
+    const dprEl = document.getElementById("dpr");
+    const sheetInput = document.getElementById("sheet-size");
+    const sheetLabel = document.getElementById("sheet-label");
+    const tilesSel = document.getElementById("tiles");
+    const bgSizeSel = document.getElementById("bg-size");
+    const showBorder = document.getElementById("show-border");
+    const statusEl = document.getElementById("status");
+    const infoEl = document.getElementById("info");
+    const grid = document.getElementById("grid");
+    let dirty = false;
+
+    dprEl.textContent = (window.devicePixelRatio || 1).toFixed(2);
+    maxSizeEl.textContent = getMaxTextureSize();
+
+    function getMaxTextureSize() {
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext("webgl");
+      if (!gl) return "unknown";
+      return gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    }
+
+    function createSheet(size) {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      const grd = ctx.createLinearGradient(0, 0, size, size);
+      grd.addColorStop(0, "#0ea5e9");
+      grd.addColorStop(1, "#22d3ee");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, size, size);
+      ctx.strokeStyle = "rgba(255,255,255,0.4)";
+      const step = Math.max(64, size / 12);
+      for (let i = 0; i < size; i += step) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, size);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(size, i);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "rgba(15,23,42,0.8)";
+      ctx.font = `${Math.max(64, size / 24)}px 'Segoe UI'`;
+      ctx.fillText(`${size}px`, size * 0.08, size * 0.18);
+      return canvas;
+    }
+
+    function markDirty() {
+      dirty = true;
+      statusEl.textContent = "Parameters changed, click regenerate sprite";
+    }
+
+    function regenerate() {
+      const size = Number(sheetInput.value);
+      sheetLabel.textContent = size;
+      const tiles = Number(tilesSel.value);
+      statusEl.textContent = "Generating...";
+      const start = performance.now();
+      dirty = false;
+      requestAnimationFrame(() => {
+        const sheet = createSheet(size);
+        const url = sheet.toDataURL("image/png");
+        grid.style.setProperty("--bg-size", bgSizeSel.value);
+        grid.innerHTML = "";
+        const sliceSize = size / tiles;
+        for (let y = 0; y < tiles; y++) {
+          for (let x = 0; x < tiles; x++) {
+            const div = document.createElement("div");
+            div.className = "slice";
+            div.style.setProperty("--bg-size", bgSizeSel.value);
+            div.style.aspectRatio = "1 / 1";
+            div.style.backgroundImage = `url(${url})`;
+            const posX = -(x * sliceSize);
+            const posY = -(y * sliceSize);
+            div.style.backgroundPosition = `${posX}px ${posY}px`;
+            div.style.backgroundSize = `${size}px ${size}px`;
+            if (!showBorder.checked) div.style.border = "none";
+            div.textContent = `${x + 1},${y + 1}`;
+            grid.appendChild(div);
+          }
+        }
+        const cost = performance.now() - start;
+        statusEl.textContent = `Generation completed (${cost.toFixed(1)} ms)`;
+        infoEl.textContent = `whole picture ${size}×${size} ｜ slice ${tiles}×${tiles} ｜ bg-size ${bgSizeSel.value}`;
+      });
+    }
+
+    sheetInput.addEventListener("input", () => {
+      sheetLabel.textContent = sheetInput.value;
+      markDirty();
+    });
+    tilesSel.addEventListener("change", markDirty);
+    bgSizeSel.addEventListener("change", markDirty);
+    showBorder.addEventListener("change", markDirty);
+    document.getElementById("regen").addEventListener("click", regenerate);
+
+    regenerate();
+  </script>
+</body>
+</html>

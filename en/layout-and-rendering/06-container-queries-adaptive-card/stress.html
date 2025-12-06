@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>test case 6(Performance): Container query switching for a large number of components</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="component-card.css">
+  <link rel="stylesheet" href="stress.css">
+</head>
+<body data-page="stress">
+  <header class="topbar">
+    <div class="wrap">
+      <h1>test case 6(Performance): Container query switching for a large number of components</h1>
+      <p class="subtitle">Quickly change the container width and observe whether the style recalculation is localized and smooth.</p>
+      <nav class="top-links">
+        <a href="index.html">Basic example</a>
+        <a href="nested.html">Nested containers</a>
+        <a aria-current="page" href="stress.html">Performance observations</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="toolbar">
+    <div class="wrap">
+      <form class="controls" onsubmit="return false;">
+        <div class="group">
+          <label for="spread">width distribution</label>
+          <input id="spread" type="range" min="0.3" max="1.4" step="0.01" value="1.0" />
+          <output id="spreadOut" for="spread">1.00</output>
+        </div>
+        <div class="group">
+          <label for="speed">Automatic vibration speed</label>
+          <input id="speed" type="range" min="0.2" max="3.0" step="0.1" value="1.2" />
+          <output id="speedOut" for="speed">1.2</output>
+        </div>
+        <div class="group">
+          <label><input id="auto" type="checkbox"> Turn on automatic shock</label>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <main class="wrap">
+    <section class="test-area stress">
+      <div id="grid" class="grid"></div>
+    </section>
+
+    <section class="explain">
+      <h2>Explanation</h2>
+      <ol>
+        <li><strong>Test objectives:</strong>When a large number of components (hundreds) exist at the same time, quickly change the container width and observe the performance when the container query is triggered.</li>
+        <li><strong>Test plan:</strong>slide"width distribution"Change the width of all containers, or check"Automatic shock"Let the width change back and forth within the interval over time; use Performance Record observation style recalculation.</li>
+        <li><strong>Result evaluation:</strong>You should see that style calculations are mostly localized within the affected container, that the frame rate is stable, and that scrolling/There is no obvious lag in the interaction.</li>
+      </ol>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

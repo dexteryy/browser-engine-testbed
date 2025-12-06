@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>R&D side use cases 01｜Renderer Pass Nested and off-screen buffer links (CSS Filter Version | Centered Overlay)</title>
+  <style>
+    /* ---------- Global layout & reset (comments in English) ---------- */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.5;
+      color: #111;
+      background: #fff;
+    }
+
+    :root{
+      --page-width: 1120px;
+      --radius: 12px;
+      --border: 1px solid rgba(0,0,0,.08);
+      /* Default test parameters */
+      --blur-a: 6px;    /* A: CSS filter blur radius */
+      --blur-o: 8px;    /* O: backdrop blur radius */
+      --isolation: isolate; /* B isolation default */
+      --badge-bg: #111;
+      --accent: #0ea5e9;
+      --o-height: 160px;                /* overlay height */
+      --o-width: min(960px, 72vw);      /* overlay width */
+    }
+
+    .page{ position: relative; }
+
+    /* Sticky header always visible; overlay is now inside stage, never overlaps the header. */
+    .header{
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #fff;
+      border-bottom: var(--border);
+    }
+    .topbar .inner{
+      max-width: var(--page-width);
+      margin: 0 auto;
+      padding: 16px 24px;
+    }
+    .title{ font-weight: 600; font-size: 20px; margin: 0 0 6px 0; }
+    .subtitle{ margin: 0; color: #444; }
+
+    .toolbar{
+      background: #fff;
+      border-top: var(--border);
+    }
+    .toolbar .inner{
+      max-width: var(--page-width);
+      margin: 0 auto;
+      padding: 12px 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px 16px;
+      align-items: start;
+    }
+    .group{ display: grid; gap: 8px; }
+    .group label{ font-size: 14px; color: #333; }
+    .controls{ display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+    .controls input{ accent-color: var(--accent); }
+    .controls .pill{
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 10px; border-radius: 999px; border: var(--border);
+      background: #fafafa; font-size: 13px;
+    }
+
+    /* ---------- Stage / Test canvas ---------- */
+    .stage{ max-width: var(--page-width); margin: 0 auto; padding: 24px; }
+    .backdrop{
+      position: relative;
+      min-height: clamp(820px, 120vh, 1600px); /* ensure scroll room */
+      border-radius: var(--radius);
+      overflow: clip;                 /* clip overlay to this area */
+      border: var(--border);
+      background:
+        conic-gradient(from 45deg, #e5e7eb 0 25%, #ffffff 0 50%, #e5e7eb 0 75%, #ffffff 0) 0 0/24px 24px,
+        repeating-linear-gradient(135deg, rgba(0,0,0,0.06) 0 2px, transparent 2px 8px),
+        radial-gradient(1200px 600px at 80% 20%, rgba(2,132,199,.18), transparent 60%),
+        radial-gradient(800px 500px at 10% 70%, rgba(236,72,153,.16), transparent 70%),
+        #fff;
+      padding: 24px;
+      margin-top: 12px;
+    }
+
+    /* Overlay O: now INSIDE stage & centered; no overlap with header/toolbar/footer.
+       Uses sticky positioning to "pin" around the vertical middle while its container is on screen. */
+    .overlay-o{
+      position: sticky;
+      top: clamp(160px, calc(50vh - var(--o-height)/2), 65vh);
+      z-index: 5;               /* above A/B/C, still far below header which is outside this container */
+      width: var(--o-width);
+      height: var(--o-height);
+      margin: 0 auto;           /* center horizontally in normal flow */
+      border-radius: 16px;
+      border: 1px solid rgba(0,0,0,.06);
+      background: rgba(255,255,255,0.35);
+      -webkit-backdrop-filter: blur(var(--blur-o)) saturate(120%);
+      backdrop-filter: blur(var(--blur-o)) saturate(120%);
+      box-shadow: 0 8px 24px rgba(0,0,0,.08);
+      pointer-events: none;     /* never captures input */
+    }
+    .overlay-o::after{
+      content: "Covering layer O(centered,backdrop-filter)";
+      position: absolute; left: 12px; top: 10px;
+      font-size: 12px; letter-spacing: .5px;
+      padding: 4px 8px; border-radius: 999px;
+      color: #fff; background: #111;
+    }
+
+    /* Nested boxes: A (big) -> B (medium) -> C (small) */
+    .layer-a{
+      position: absolute;
+      left: 4%;
+      top: 10%;
+      width: 72%;
+      height: 60%;
+      border-radius: 28px;
+      border: 1px solid rgba(0,0,0,.08);
+      background: linear-gradient(135deg, rgba(16,185,129,.08), rgba(99,102,241,.08));
+      filter: blur(var(--blur-a));
+    }
+    .layer-a::before{
+      content: "A(filter: blur)";
+      position: absolute; left: 12px; top: 10px;
+      font-size: 12px; padding: 4px 8px; border-radius: 999px;
+      color: #fff; background: var(--badge-bg);
+    }
+
+    .layer-b{
+      position: absolute;
+      left: 12%; top: 16%;
+      width: 56%; height: 56%;
+      border-radius: 24px;
+      border: 1px solid rgba(0,0,0,.1);
+      background: rgba(251, 191, 36, .42);
+      mix-blend-mode: multiply;
+      isolation: var(--isolation);
+      box-shadow: 0 10px 26px rgba(0,0,0,.1);
+      overflow: hidden;
+    }
+    .layer-b::before{
+      content: "B(mix-blend-mode: multiply)";
+      position: absolute; left: 12px; top: 10px;
+      font-size: 12px; padding: 4px 8px; border-radius: 999px;
+      color: #fff; background: var(--badge-bg);
+      z-index: 2;
+    }
+
+    .layer-c{
+      position: absolute;
+      left: 22%; top: 24%;
+      width: 260px; height: 260px;
+      border-radius: 18px;
+      border: 1px solid rgba(0,0,0,.12);
+      background:
+        repeating-conic-gradient(from 0deg, #0f172a 0 10deg, #94a3b8 10deg 20deg);
+      -webkit-mask-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 62%);
+      mask-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 62%);
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-size: contain;
+      mask-size: contain;
+    }
+    .layer-c::before{
+      content: "C(mask-image: radial-gradient)";
+      position: absolute; left: 12px; top: 10px;
+      font-size: 12px; padding: 4px 8px; border-radius: 999px;
+      color: #fff; background: var(--badge-bg);
+    }
+
+    /* -------- Controls implemented with pure CSS :has() -------- */
+    .page:has(#radius-06:checked){ --blur-a: 6px; --blur-o: 8px; }
+    .page:has(#radius-12:checked){ --blur-a: 12px; --blur-o: 16px; }
+    .page:has(#radius-24:checked){ --blur-a: 24px; --blur-o: 32px; }
+
+    /* Toggle overlay O */
+    .overlay-o{ display: none; }
+    .page:has(#toggle-o:checked) .overlay-o{ display: block; }
+
+    /* isolation toggle */
+    .page:has(#iso-on:checked){ --isolation: isolate; }
+    .page:has(#iso-off:checked){ --isolation: auto; }
+
+    /* ---------- Explanation area ---------- */
+    .explain{
+      max-width: var(--page-width);
+      margin: 0 auto;
+      padding: 24px;
+      border-top: var(--border);
+    }
+    .explain h3{ margin: 0 0 10px 0; font-size: 16px; }
+    .explain p, .explain li{ color: #333; }
+    .explain ul{ margin: 8px 0 0 20px; }
+    .explain code{ background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
+
+    .note{ font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- Sticky header -->
+    <div class="header">
+      <header class="topbar">
+        <div class="inner">
+          <h1 class="title">R&D side use cases 01｜Renderer Pass Nested and off-screen buffer links (CSS Filter Version | Centered Overlay)</h1>
+          <p class="subtitle">Three levels of nesting A/B/C + centerCovering layer O,Verify multi-level filter/mix/Off-screen buffer creation, reuse and composition sequence in mask scenes.</p>
+        </div>
+      </header>
+
+      <section class="toolbar">
+        <div class="inner">
+          <div class="group">
+            <label>blur radius (A/O)</label>
+            <div class="controls">
+              <label class="pill"><input id="radius-06" name="radius" type="radio" checked> 6px / 8px</label>
+              <label class="pill"><input id="radius-12" name="radius" type="radio"> 12px / 16px</label>
+              <label class="pill"><input id="radius-24" name="radius" type="radio"> 24px / 32px</label>
+            </div>
+          </div>
+          <div class="group">
+            <label>Covering layer O(backdrop-filter)</label>
+            <div class="controls">
+              <label class="pill"><input id="toggle-o" type="checkbox" checked> show</label>
+            </div>
+          </div>
+          <div class="group">
+            <label>B layer composition boundary</label>
+            <div class="controls">
+              <label class="pill"><input id="iso-on" name="iso" type="radio" checked> isolation: isolate</label>
+              <label class="pill"><input id="iso-off" name="iso" type="radio"> isolation: auto</label>
+            </div>
+          </div>
+          <div class="group">
+            <label>hint</label>
+            <div class="controls note">
+              use DevTools → Rendering Open <code>Show composited layer borders</code> and <code>Paint flashing</code>,Scroll the page to observe the compositionandRedraw.
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Stage -->
+    <main class="stage">
+      <div class="backdrop">
+        <div class="layer-a">
+          <div class="layer-b">
+            <div class="layer-c"></div>
+          </div>
+        </div>
+
+        <!-- Centered sticky overlay O (within stage only) -->
+        <div class="overlay-o" aria-hidden="true"></div>
+      </div>
+    </main>
+
+    <!-- Explanation -->
+    <section class="explain">
+      <h3>Explanation</h3>
+      <ul>
+        <li>Covering layer O was placed into the test area (stage/backdrop),use <code>position: sticky</code> andcentershow;Noandtop bar/Toolbar/The bottom description area overlaps.</li>
+        <li>O stilluse <code>backdrop-filter</code> Blurred background, superimposed on A/B/C above to observeandlower layer synthetic link.</li>
+        <li>Keep it purely static: all interactions (radius,isolation, show/hide O)All by <code>:has()</code> and CSS Variable driven.</li>
+      </ul>
+    </section>
+  </div>
+</body>
+</html>

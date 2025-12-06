@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>test case7:slot Distribute with ::slotted</title>
+  <link rel="stylesheet" href="base.css">
+  <link id="globalStyles" rel="stylesheet" href="global.css">
+  <script>
+  // Define <slot-element> (comments in English)
+  class SlotElement extends HTMLElement {
+    constructor(){
+      super();
+      const shadow = this.attachShadow({ mode: 'open' });
+      const styleEl = document.createElement('style');
+      this._styleEl = styleEl;
+      this._baseStyles = `:host{ display:block; padding:12px; border:1px solid #ddd; border-radius:6px; background:#fff; }
+        .inside{ color:#e53935; }`;
+      this._slottedRule = `::slotted(.slot-item){ color:#2e7d32 !important; font-weight:600; }`;
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = `
+        <p class="inside">Shadow inner text (should be red)</p>
+        <div class="slotbox"><slot name="content"></slot></div>
+      `;
+      shadow.append(styleEl, wrapper);
+      // Default: keep ::slotted rule off so initial view matches the toolbar (unchecked)
+      this.slottedStylesEnabled = this.hasAttribute('slotted-on');
+    }
+    set slottedStylesEnabled(v){
+      // Toggle the ::slotted rule by rewriting stylesheet for determinism
+      this._hasSlottedRule = !!v;
+      this._styleEl.textContent = this._baseStyles + (v ? this._slottedRule : '');
+    }
+    get slottedStylesEnabled(){ return this._hasSlottedRule; }
+  }
+  customElements.define('slot-element', SlotElement);
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const link = document.getElementById('globalStyles');
+    const chk = document.getElementById('toggleGlobal');
+    const out = document.getElementById('toggleOutline');
+    const chkSlotted = document.getElementById('toggleSlotted');
+    const el = document.getElementById('slotDemo');
+
+    chk.addEventListener('change', () => { link.disabled = !chk.checked; });
+    out.addEventListener('change', () => { document.body.classList.toggle('global-outline', out.checked); });
+    chkSlotted.addEventListener('change', () => { el.slottedStylesEnabled = chkSlotted.checked; });
+    el.slottedStylesEnabled = chkSlotted.checked; // ensure initial rule matches control
+  });
+  </script>
+</head>
+<body>
+  <div class="topbar">
+    <div class="container">
+      <h1 class="title">test case7:Shadow DOM style encapsulation isolation - slot Distribute with ::slotted</h1>
+      <p class="subtitle">Verify that slot projection nodes inherit external styles; available ::slotted Style it within the component itself.</p>
+      <div class="top-links">
+        <a href="index.html">Table of contents</a>
+        <a href="01-basic.html">01 basic isolation</a>
+        <a aria-current="page" href="02-slotted.html">02 slot distribution</a>
+        <a href="03-host.html">03 :host</a>
+        <a href="04-performance.html">04 multiple instances</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="toolbar">
+      <label class="group"><input id="toggleGlobal" type="checkbox" checked> Enable global distraction styles (global.css)</label>
+      <label class="group"><input id="toggleSlotted" type="checkbox"> enable ::slotted(.slot-item) internal style</label>
+      <label class="group"><input id="toggleOutline" type="checkbox"> Display the global outline of the page (auxiliary observation)</label>
+      <span class="badge">Chromium Latest version</span>
+    </div>
+
+    <div class="test-area">
+      <h2>test area</h2>
+      <div class="grid">
+        <div class="card">
+          <strong>Component example (with slots)</strong>
+          <slot-element id="slotDemo">
+            <p slot="content" class="slot-item">projected paragraph(Default blue comes from outside;enable ::slotted should be green). internal <span class="inner">span</span> will not be ::slotted Deep selection.</p>
+          </slot-element>
+        </div>
+        <div class="card">
+          <strong>Light DOM control</strong>
+          <p class="slot-item light-slot-target">externalcontrolparagraph(Class names are the same,Affected by global styles,blue).</p>
+        </div>
+      </div>
+      <p class="helper">illustrate:<span class="kbd">::slotted</span> Can only match slots"Top-level projection node",Its inner descendants cannot be selected.</p>
+    </div>
+
+    <div class="explain">
+      <h3>Test target</h3>
+      <ul>
+        <li>verify slot Dropped content inherits external styles by default.</li>
+        <li>enableinternal to component <span class="kbd">::slotted(.slot-item)</span> Afterwards, observe that the projected node turns green and bold.</li>
+      </ul>
+      <h3>expected result</h3>
+      <ul>
+        <li>closure ::slotted When styled: Projected paragraphs are blue (subject to <span class="kbd">global.css</span> Influence).</li>
+        <li>turn on ::slotted When styling: Projected paragraphs are green bold (from inside the component).</li>
+        <li>within paragraph <span class="kbd">span</span> never receive ::slotted Influence.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>R&D side use cases 03｜Ink API Comparison of hardware ink synthesis and web page rendering</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="inner">
+      <h1>R&D side use cases 03｜Ink API Comparison of hardware ink synthesis and web page rendering</h1>
+      <p class="subtitle">contrast OS/Hardware inking at the compositor level (low latency, compositing first) and the web page's own pixel rendering (Canvas)Observe the difference in frame stability and redraw area size when inputting sketches.</p>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar-section">
+    <div class="inner">
+      <div class="toolbar">
+        <fieldset>
+          <legend>brush</legend>
+          <label>Thickness <input id="brushSize" type="range" min="1" max="48" value="10" /></label>
+          <label>transparency <input id="brushAlpha" type="range" min="0" max="1" step="0.01" value="1" /></label>
+          <label>color <input id="brushColor" type="color" value="#0055ff" /></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>input event</legend>
+          <label><input id="useRaw" type="checkbox" checked /> use pointerrawupdate(higher frequency)</label>
+          <label><input id="useCoalesced" type="checkbox" checked /> merge event (getCoalescedEvents)</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>rendering/synthesis</legend>
+          <label><input id="inkCommitOnUp" type="checkbox" checked /> left (Ink)Only solidifies to the canvas when the pen is released</label>
+          <label><input id="leftComposited" type="checkbox" /> Enable on the leftsynthesislayer(will-change/translateZ)</label>
+          <label><input id="rightComposited" type="checkbox" /> right sideenablesynthesislayer(will-change/translateZ)</label>
+          <label>Element blending mode
+            <select id="mixBlend">
+              <option value="normal">normal(none)</option>
+              <option value="multiply">multiply</option>
+              <option value="screen">screen</option>
+              <option value="overlay">overlay</option>
+              <option value="darken">darken</option>
+              <option value="lighten">lighten</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>show</legend>
+          <label>background
+            <select id="bgSelect">
+              <option value="checker">Checkerboard</option>
+              <option value="gradient">Gradient</option>
+            </select>
+          </label>
+          <label>Canvas pixel ratio
+            <select id="pixelRatio">
+              <option value="1">1×</option>
+              <option value="dpr" selected>Device pixel ratio</option>
+            </select>
+          </label>
+          <button id="clearBtn">Clear</button>
+          <button id="exportBtn">Export PNG(right side)</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>state</legend>
+          <div class="status-row">
+            <span id="inkSupport" class="badge">Ink API Under detection...</span>
+            <span id="eventStatus" class="badge">event:pointerrawupdate</span>
+            <span id="fps" class="badge">FPS:--</span>
+            <span id="lastArea" class="badge">Redraw estimate on the right:--</span>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </section>
+
+  <!-- Test area -->
+  <main class="test-area">
+    <div class="inner">
+      <div class="ticker-wrap">
+        <div id="ticker" class="ticker" aria-hidden="true"></div>
+      </div>
+
+      <div class="panes">
+        <section class="pane" id="leftPane">
+          <header class="pane-head">
+            <h2>Left: Hardware ink (Ink API)</h2>
+            <span id="leftHint" class="hint">waiting for input...</span>
+          </header>
+          <div class="canvas-wrap bg-checker" id="leftWrap">
+            <canvas id="leftCanvas"></canvas>
+          </div>
+        </section>
+
+        <section class="pane" id="rightPane">
+          <header class="pane-head">
+            <h2>right:Canvas 2D rendering</h2>
+            <span id="rightHint" class="hint">waiting for input...</span>
+          </header>
+          <div class="canvas-wrap bg-checker" id="rightWrap">
+            <canvas id="rightCanvas"></canvas>
+          </div>
+        </section>
+      </div>
+
+      <!-- Capture the input's transparency layer to ensure both sides are in sync -->
+      <div id="inputLayer" class="input-layer" role="application" aria-label="Draw input layer"></div>
+    </div>
+  </main>
+
+  <!-- Explanation -->
+  <section class="explain">
+    <div class="inner">
+      <h3>Explanation</h3>
+      <h4>Test target</h4>
+      <p>contrast OS/synthesisdevicelayerHardware ink on the surfaceandDifferences in pixel rendering of the web page itself,Observe chirality when sketching(Delay), Frame stabilityandRedraw area size.</p>
+
+      <h4>test plan</h4>
+      <ul>
+        <li>left canvasuse Ink API(If supported)Perform hardware inkingsynthesis;right sidecanvasuse Canvas 2D Draw in real time.</li>
+        <li>Synchronize the same stroke data on both sides (thickness, color, and opacity match). The left side uses the OS-composited low-latency ink overlay and commits to the canvas by default.</li>
+        <li>supplybackground(Checkerboard/Gradient), blend mode, synthesislayerhint(will-change/translateZ)Wait for the switch to observesynthesisandMixing effects.</li>
+        <li>The top beat indicator traverses at a constant speed,Visually observing frame dropsandStuck and stopped;statecolumnshow FPS The redraw area estimate for each draw with the right side.</li>
+      </ul>
+
+      <h4>usemethod</h4>
+      <ol>
+        <li>in toolscolumnAdjustmentbrush, event source, blend modeandPixel ratio and other parameters.</li>
+        <li>Write or sketch curves in quick succession in the test area and observe whether the visual difference and beat indicator on both sides are smooth.</li>
+        <li>useDeveloper Tools:Rendering → Paint flashing(See redraw flicker),Performance(Record main thread occupation and frame loss during fast writing phase),Layers(Check Ink Whether tosynthesislayerMerge).</li>
+      </ol>
+
+      <h4>Check/test/How to evaluate results</h4>
+      <ul>
+        <li>Ideally, the left Ink The path delay is lower, the lines follow the hand, and there is almost no triggering of large areas during writing Paint;right side Canvas The path shows increased redrawing but no tearing, and the final visual result is consistent.</li>
+        <li>switchable"The left side only cures when the pen is loosened"to zoom in Paint Difference; can also be turned off to observe Ink and Canvas Relative performance at the same curing frequency.</li>
+      </ul>
+
+      <h4>Remark</h4>
+      <ul>
+        <li>Ink API pass <code>navigator.ink.requestPresenter({ presentationArea })</code> get <code>DelegatedInkTrailPresenter</code>,Called every time the pointer is updated <code>updateInkTrailStartPoint(event, { color, diameter })</code> let OS classsynthesisThe processor pre-draws the ink on the next frame.If the browser does not support,will automatically dropclassfor ordinary Pointer Events draw.</li>
+        <li>choose"use pointerrawupdate"When , the input layer will monitor high-frequency <code>pointerrawupdate</code> event;If closed,butuse <code>pointermove</code>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <script src="./app.js"></script>
+</body>
+</html>

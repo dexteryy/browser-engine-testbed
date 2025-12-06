@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Same page View Transitions grid to details</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .hidden { display: none; }
+    .toolbar label { font-weight: 600; color: var(--muted); }
+    .meter {
+      min-width: 140px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--card);
+      border: 1px dashed var(--border);
+    }
+    .meter strong { color: var(--text); }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>View Transitions｜Same pageStatus switching</h1>
+    <p>Dense thumbnail grid → Big picture details, observation snapshot Capture, compositing layers and frame rate.</p>
+  </header>
+  <main class="page">
+    <section class="toolbar">
+      <div class="group">
+        <span class="chip">Mode: single page</span>
+        <span class="chip" id="vt-support">View Transitions: Under detection...</span>
+      </div>
+      <div class="group meter">
+        <div class="status-row">
+          <span class="status-dot" id="state-dot"></span>
+          <span id="state-label">Current status: Grid</span>
+        </div>
+      </div>
+      <div class="group">
+        <label for="density">Number of thumbnails</label>
+        <input type="range" id="density" min="8" max="28" step="4" value="16">
+        <span id="density-value">16</span>
+      </div>
+      <div class="group">
+        <label for="anim-duration">Animation duration(ms)</label>
+        <input type="number" id="anim-duration" value="350" min="120" max="1200" step="20">
+      </div>
+      <button class="btn" id="regenerate">Refresh thumbnail</button>
+      <button class="btn primary" id="back-to-grid" disabled>back to grid</button>
+    </section>
+
+    <section class="panel" id="grid-section">
+      <h2 class="section-title">Thumbnail Grid (S1)</h2>
+      <p class="note">Click on any thumbnail to trigger document.startViewTransition;All thumbnails are assigned unique view-transition-name.</p>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <section class="panel hidden" id="detail-section">
+      <div class="detail">
+        <div class="hero" id="detail-hero">
+          <div class="label" id="hero-label">#</div>
+        </div>
+        <div class="info">
+          <h2 class="section-title">Big picture details (S2)</h2>
+          <div class="badges" id="tag-row"></div>
+          <p id="detail-desc">loading...</p>
+          <p class="note">Use the same view-transition-name Implement thumbnails→main image morph,observe Snapshot capture / Raster / Composite.</p>
+          <div class="status-row">
+            <button class="btn primary" id="return-grid">back to grid</button>
+            <button class="btn" id="next-random">Next thumbnail</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel explain">
+      <h3 class="section-title">Instructions for use</h3>
+      <div>
+        1)set upNumber of thumbnailsandAnimation duration,Clickgridinthumbnail,Record DevTools → Performance in Snapshot capture / Raster / Composite overhead.
+      </div>
+      <div>
+        2)exist DevTools → Layers Check the number and size of snapshot layers generated during the transition, and pay special attention to whether the large image snapshot is permanent.
+      </div>
+      <div>
+        3)enable Rendering → FPS meter,repeatedlyexistgridandDetailsswitch between,observeFrame rate stability,The goal is 60fps.
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const dataPool = Array.from({ length: 40 }, (_, i) => ({
+      id: i + 1,
+      title: `scene ${i + 1}`,
+      meta: `${160 + (i % 5) * 20} px`,
+      tone: (i * 47) % 360
+    }));
+
+    const state = { mode: 'grid', selected: null, density: 16 };
+    const gridEl = document.getElementById('grid');
+    const densityInput = document.getElementById('density');
+    const densityValue = document.getElementById('density-value');
+    const durationInput = document.getElementById('anim-duration');
+    const vtSupport = document.getElementById('vt-support');
+    const stateLabel = document.getElementById('state-label');
+    const stateDot = document.getElementById('state-dot');
+    const backBtn = document.getElementById('back-to-grid');
+    const gridSection = document.getElementById('grid-section');
+    const detailSection = document.getElementById('detail-section');
+    const hero = document.getElementById('detail-hero');
+    const heroLabel = document.getElementById('hero-label');
+    const tagRow = document.getElementById('tag-row');
+    const detailDesc = document.getElementById('detail-desc');
+    const nextRandom = document.getElementById('next-random');
+    const returnGrid = document.getElementById('return-grid');
+    const regen = document.getElementById('regenerate');
+
+    const supportsViewTransition = typeof document.startViewTransition === 'function';
+    vtSupport.textContent = supportsViewTransition ? 'View Transitions: Available' : 'View Transitions: Not supported, use static fallback';
+
+    function setState(mode, selectedId) {
+      state.mode = mode;
+      state.selected = selectedId ?? null;
+      const isDetail = mode === 'detail';
+      gridSection.classList.toggle('hidden', isDetail);
+      detailSection.classList.toggle('hidden', !isDetail);
+      backBtn.disabled = !isDetail;
+      stateLabel.textContent = `Current status:${isDetail ? 'big picture' : 'grid'}`;
+      stateDot.style.background = isDetail ? '#f59e0b' : '#10b981';
+    }
+
+    function renderGrid() {
+      gridEl.innerHTML = '';
+      const slice = dataPool.slice(0, state.density);
+      slice.forEach(item => {
+        const card = document.createElement('button');
+        card.className = 'thumb';
+        card.dataset.id = item.id;
+        card.setAttribute('aria-label', `Select thumbnail ${item.id}`);
+
+        const img = document.createElement('div');
+        img.className = 'img';
+        img.style.viewTransitionName = `photo-${item.id}`;
+        img.style.background = `linear-gradient(135deg, hsl(${item.tone}, 85%, 60%), hsl(${(item.tone + 32) % 360}, 82%, 52%))`;
+        img.textContent = item.id;
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.innerHTML = `<span>${item.title}</span><span>${item.meta}</span>`;
+
+        card.appendChild(img);
+        card.appendChild(meta);
+        card.addEventListener('click', () => transitionToDetail(item));
+        gridEl.appendChild(card);
+      });
+    }
+
+    function updateDuration() {
+      const v = Math.max(120, Math.min(1200, Number(durationInput.value) || 350));
+      document.documentElement.style.setProperty('--vt-duration', `${v}ms`);
+      durationInput.value = v;
+    }
+
+    function applyHero(item) {
+      hero.style.viewTransitionName = `photo-${item.id}`;
+      hero.style.background = `linear-gradient(135deg, hsl(${item.tone}, 82%, 52%), hsl(${(item.tone + 22) % 360}, 78%, 60%))`;
+      heroLabel.textContent = `big picture ${item.id}`;
+      tagRow.innerHTML = '';
+      ['Snapshot morph', 'Opacity+Scale', 'Single page switching'].forEach(tag => {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.textContent = tag;
+        tagRow.appendChild(chip);
+      });
+      detailDesc.textContent = `thumbnail ${item.id} → big pictureDetails:use view-transition-name=photo-${item.id},observesnapshot captureand GPU synthesisoverhead.`;
+    }
+
+    function startTransition(fn) {
+      updateDuration();
+      if (!supportsViewTransition) {
+        fn();
+        return;
+      }
+      document.startViewTransition(fn);
+    }
+
+    function transitionToDetail(item) {
+      startTransition(() => {
+        applyHero(item);
+        setState('detail', item.id);
+      });
+    }
+
+    function transitionToGrid() {
+      if (state.selected == null) return;
+      const thumb = document.querySelector(`.thumb[data-id="${state.selected}"] .img`);
+      if (thumb) {
+        thumb.style.viewTransitionName = `photo-${state.selected}`;
+      }
+      startTransition(() => setState('grid', null));
+    }
+
+    densityInput.addEventListener('input', () => {
+      state.density = Number(densityInput.value);
+      densityValue.textContent = state.density;
+      renderGrid();
+    });
+
+    regen.addEventListener('click', () => {
+      dataPool.sort(() => Math.random() - 0.5);
+      renderGrid();
+    });
+
+    backBtn.addEventListener('click', transitionToGrid);
+    returnGrid.addEventListener('click', transitionToGrid);
+    nextRandom.addEventListener('click', () => {
+      const candidates = dataPool.slice(0, state.density);
+      const item = candidates[Math.floor(Math.random() * candidates.length)];
+      transitionToDetail(item);
+    });
+
+    updateDuration();
+    renderGrid();
+    setState('grid', null);
+  </script>
+</body>
+</html>

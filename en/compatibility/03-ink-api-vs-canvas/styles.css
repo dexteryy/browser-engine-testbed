@@ -1,0 +1,163 @@
+/* Unified page style (Chromium latest target) */
+/* All comments are in English per requirements */
+
+:root {
+  --inner-width: 1200px;
+  --gap: 16px;
+  --pane-height: 420px;
+  --bg-strong: #0a84ff;
+  --bg-soft: #eef5ff;
+  --text: #111;
+  --muted: #666;
+  --badge: #f2f4f7;
+  --border: #e5e7eb;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: #fff;
+  color: var(--text);
+  font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  width: 100%;
+  background: linear-gradient(180deg, #ffffff, #fafafa);
+  border-bottom: 1px solid var(--border);
+}
+.topbar .inner {
+  max-width: var(--inner-width);
+  margin: 0 auto;
+  padding: 16px 20px;
+}
+.topbar h1 { margin: 0 0 6px 0; font-size: 20px; }
+.subtitle { margin: 0; color: var(--muted); }
+
+.toolbar-section .inner {
+  max-width: var(--inner-width);
+  margin: 0 auto;
+  padding: 12px 20px;
+}
+.toolbar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gap);
+}
+fieldset {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  min-height: 72px;
+}
+legend { color: var(--muted); padding: 0 6px; }
+label { display: inline-flex; align-items: center; gap: 6px; margin-right: 10px; margin-bottom: 6px; white-space: nowrap; }
+input[type="range"] { width: 140px; }
+select { height: 28px; }
+button {
+  height: 28px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--border);
+  background: #fff; cursor: pointer;
+}
+button:hover { background: #fafafa; }
+.badge {
+  display: inline-block; background: var(--badge); border: 1px solid var(--border);
+  color: #333; padding: 3px 8px; border-radius: 999px; margin-right: 8px; font-variant-numeric: tabular-nums;
+}
+.status-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+
+.test-area .inner {
+  max-width: var(--inner-width);
+  margin: 0 auto;
+  padding: 8px 20px 20px 20px;
+}
+
+.ticker-wrap {
+  position: relative;
+  height: 18px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  background: linear-gradient(90deg, #fafafa, #fff);
+}
+.ticker {
+  position: absolute; top: 0; left: 0;
+  width: 40px; height: 100%;
+  border-right: 2px solid var(--bg-strong);
+  background: transparent;
+  will-change: transform;
+}
+
+.panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.pane {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: clip;
+  background: #fff;
+}
+.pane-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+}
+.pane h2 { margin: 0; font-size: 16px; }
+.hint { color: var(--muted); }
+
+.canvas-wrap {
+  position: relative;
+  height: var(--pane-height);
+  display: grid;
+}
+.canvas-wrap canvas {
+  /* Canvas fills its wrapper; actual pixel size is managed in JS */
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: optimizeQuality;
+}
+/* Backgrounds to observe blending */
+.bg-checker {
+  background:
+    conic-gradient(#eee 25%, #ddd 0 50%, #eee 0 75%, #ddd 0) 0 0/24px 24px,
+    linear-gradient(180deg, #fff, #fff);
+}
+.bg-gradient {
+  background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 40%, #f7f7f7 60%, #eef5ff 100%);
+}
+
+/* Input overlay captures pointer events for both panes simultaneously */
+.input-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  /* Important: prevent scrolling and gestures while drawing */
+  touch-action: none;
+  background: transparent;
+}
+/* Positioned relative to .test-area .inner */
+.test-area .inner { position: relative; }
+
+/* Optional compositor hint class */
+.composited {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Explanation section */
+.explain .inner {
+  max-width: var(--inner-width);
+  margin: 0 auto;
+  padding: 12px 20px 40px 20px;
+}
+.explain h3 { margin: 12px 0; }
+.explain h4 { margin: 18px 0 8px; }
+.explain ul, .explain ol { margin: 8px 0 8px 20px; }
+
+/* Small helpers */
+.hidden { display: none !important; }

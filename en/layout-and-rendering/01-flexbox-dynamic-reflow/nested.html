@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>test case1:FlexboxFlexible layout and dynamic rearrangement - Multi-level nesting and alignment</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="page">
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="inner">
+      <div>
+        <div class="title">test case1:FlexboxFlexible layout and dynamic rearrangement - Multi-level nesting and alignment</div>
+        <div class="subtitle">Verify multiple layers Flex Rearrangement and boundary conditions of containers under different alignments</div>
+      </div>
+      <div><span class="badge">CSS Pure interaction - none JS</span></div>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <form class="toolbar" aria-label="Toolbar: Outer layer/inner alignment parameters">
+    <fieldset class="control-group">
+      <legend>Outer layer align-items</legend>
+      <input type="radio" name="outer-ai" id="outer-ai-stretch" checked>
+      <label for="outer-ai-stretch">stretch</label>
+      <input type="radio" name="outer-ai" id="outer-ai-center">
+      <label for="outer-ai-center">center</label>
+      <input type="radio" name="outer-ai" id="outer-ai-start">
+      <label for="outer-ai-start">flex-start</label>
+    </fieldset>
+
+    <fieldset class="control-group">
+      <legend>inner layer align-items</legend>
+      <input type="radio" name="inner-ai" id="inner-ai-stretch" checked>
+      <label for="inner-ai-stretch">stretch</label>
+      <input type="radio" name="inner-ai" id="inner-ai-center">
+      <label for="inner-ai-center">center</label>
+      <input type="radio" name="inner-ai" id="inner-ai-start">
+      <label for="inner-ai-start">flex-start</label>
+    </fieldset>
+
+    <fieldset class="control-group">
+      <legend>direction</legend>
+      <input type="radio" name="dir" id="dir-row" checked>
+      <label for="dir-row">row</label>
+      <input type="radio" name="dir" id="dir-col">
+      <label for="dir-col">column</label>
+    </fieldset>
+
+    <fieldset class="control-group">
+      <legend>transition time</legend>
+      <input type="radio" name="dur" id="dur-015">
+      <label for="dur-015">0.15s</label>
+      <input type="radio" name="dur" id="dur-03" checked>
+      <label for="dur-03">0.3s</label>
+      <input type="radio" name="dur" id="dur-06">
+      <label for="dur-06">0.6s</label>
+    </fieldset>
+  </form>
+
+  <!-- Test area -->
+  <section class="test-area section">
+    <h2>test area</h2>
+    <div class="flexroot outer row-fixed-height" aria-label="Outer layercontainer">
+      <article class="item hover-grow">
+        <h3>Outer layerchildA(Expandable)</h3>
+        <p>Used to simulate a situation where there is a lot of content on one side. When hovering the expansion, the middle and right areas should be pushed to rearrange.</p>
+      </article>
+
+      <article class="item">
+        <h3>Outer layerchildB(Containsinner layercontainer)</h3>
+        <p>Bottom is verticalinner layercontainer(Take up remaining height),eachchildon hoverhourExpand share;one of themchilduse <code>align-self</code> coverinner layerAlignment settings.</p>
+        <div class="nested nested-fill inner" style="flex-direction: column;" aria-label="inner layercontainer(portrait)">
+          <div class="n-item" title="Hover expansion">B-1</div>
+          <div class="n-item" style="align-self: center; min-height: 90px;" title="This item uses align-self coverinner layerAlign">B-2(align-self:center)</div>
+          <div class="n-item" title="Hover expansion">B-3</div>
+        </div>
+      </article>
+
+      <article class="item hover-grow">
+        <h3>Outer layerchildC(picture + text)</h3>
+        <img class="thumb" alt="placeholder image" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='100%25' height='100%25' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='36' fill='%236b7280'%3EInner%20Img%3C/text%3E%3C/svg%3E">
+        <p>image <code>max-width:100%</code> With fixed aspect ratio, verify the compression/No spillage when stretched.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- Explanation -->
+  <section class="explain">
+    <h3>Explanation</h3>
+    <p><strong>Test objectives:</strong>Focus on multi-level nested Flex The performance of layout under different alignment strategies; within/Outer layerchildHover expansionhour,Should only affect the layout of the corresponding level.</p>
+    <p><strong>Test plan:</strong> The outer layer uses a horizontal flex layout; the inner layer uses vertical flex and fills the remaining height of its parent so hovering to enlarge one item pushes siblings and triggers multi-level reflow. Use the toolbar to change <code>align-items</code> on both the outer and inner layers. Some inner children use <code>align-self</code> and a larger <code>min-height</code> to override or constrain the layout.</p>
+    <p><strong>How to use:</strong>Switch firstAlignparameter,againOuter layerchild A/C or anyinner layerchildhover on,Observe whether another layer compresses as expected/Align,make surenoneocclusionandoverflow.</p>
+    <p><strong>Check/test/Evaluation results:</strong>turn on "Show layout shift regions",Observe whether the highlights are mainly concentrated at the corresponding level; Performance ComparableOuter layerExpandandinner layerExpandofrearrangement range difference.</p>
+  </section>
+</body>
+</html>

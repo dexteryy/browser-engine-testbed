@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>test case7:Multiple instances and style isolation</title>
+  <link rel="stylesheet" href="base.css">
+  <link id="globalStyles" rel="stylesheet" href="global.css">
+  <style>
+    /* Page-only helper styles (comments in English) */
+    #grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:8px; margin-top:12px; }
+    perf-element{ display:block; }
+    body.probe perf-element{ box-shadow:0 0 0 2px rgba(139,92,246,0.35); background:#f9f5ff; }
+  </style>
+  <script>
+  // Define <perf-element> (comments in English)
+  class PerfElement extends HTMLElement {
+    constructor(){
+      super();
+      const shadow = this.attachShadow({ mode: 'open' });
+      const styleEl = document.createElement('style');
+      styleEl.textContent = `
+        :host{ display:block; padding:8px; border:1px solid #ddd; border-radius:6px; background:#fff; }
+        .inside{ color:#e53935; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      `;
+      const wrapper = document.createElement('div');
+      const p = document.createElement('p');
+      p.className = 'inside';
+      p.textContent = 'Perf Example:Shadow text (red)';
+      wrapper.appendChild(p);
+      shadow.append(styleEl, wrapper);
+    }
+  }
+  customElements.define('perf-element', PerfElement);
+
+  // Page logic to build many components and roughly measure costs
+  async function rebuild(count){
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    const t0 = performance.now();
+    for(let i=0;i<count;i++){
+      const el = document.createElement('perf-element');
+      frag.appendChild(el);
+    }
+    const t1 = performance.now();
+    grid.appendChild(frag);
+    // Allow rendering to happen
+    await new Promise(requestAnimationFrame);
+    const t2 = performance.now();
+    document.getElementById('statCreate').textContent = (t1 - t0).toFixed(2) + ' ms';
+    document.getElementById('statInsert').textContent = (t2 - t1).toFixed(2) + ' ms';
+    document.getElementById('statTotal').textContent = (t2 - t0).toFixed(2) + ' ms';
+    document.getElementById('statCount').textContent = count;
+  }
+
+  async function triggerStyleRecalc(){
+    // Probe: add a class that affects hosts, allow two rAFs, then remove it
+    const t0 = performance.now();
+    document.body.classList.add('probe');
+    await new Promise(requestAnimationFrame);
+    await new Promise(requestAnimationFrame);
+    document.body.classList.remove('probe');
+    const t1 = performance.now();
+    document.getElementById('statRecalc').textContent = (t1 - t0).toFixed(2) + ' ms';
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const link = document.getElementById('globalStyles');
+    const chk = document.getElementById('toggleGlobal');
+    const out = document.getElementById('toggleOutline');
+    const btnBuild = document.getElementById('btnBuild');
+    const btnClear = document.getElementById('btnClear');
+    const btnRecalc = document.getElementById('btnRecalc');
+    const num = document.getElementById('numCount');
+
+    chk.addEventListener('change', () => { link.disabled = !chk.checked; });
+    out.addEventListener('change', () => { document.body.classList.toggle('global-outline', out.checked); });
+
+    btnBuild.addEventListener('click', () => {
+      let n = parseInt(num.value, 10);
+      if(!Number.isFinite(n) || n < 1) n = 1;
+      if(n > 4000) n = 4000; // safety clamp
+      rebuild(n);
+    });
+    btnClear.addEventListener('click', () => {
+      document.getElementById('grid').innerHTML = '';
+      document.getElementById('statCreate').textContent = '-';
+      document.getElementById('statInsert').textContent = '-';
+      document.getElementById('statTotal').textContent = '-';
+      document.getElementById('statCount').textContent = '0';
+      document.getElementById('statRecalc').textContent = '-';
+    });
+    btnRecalc.addEventListener('click', triggerStyleRecalc);
+
+    // Build initial set
+    rebuild(parseInt(num.value,10));
+  });
+  </script>
+</head>
+<body>
+  <div class="topbar">
+    <div class="container">
+      <h1 class="title">test case7:Shadow DOM style encapsulation isolation - Multiple instances and style isolation</h1>
+      <p class="subtitle">Create a large number of component instances and observe whether style calculation and rendering do not interfere with each other (only a rough observation).</p>
+      <div class="top-links">
+        <a href="index.html">Table of contents</a>
+        <a href="01-basic.html">01 basic isolation</a>
+        <a href="02-slotted.html">02 slot distribution</a>
+        <a href="03-host.html">03 :host</a>
+        <a aria-current="page" href="04-performance.html">04 multiple instances</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="toolbar">
+      <label class="group"><input id="toggleGlobal" type="checkbox" checked> Enable global distraction styles (global.css)</label>
+      <label class="group"><input id="toggleOutline" type="checkbox"> Display the global outline of the page (auxiliary observation)</label>
+      <label class="group">Number of instances:<input id="numCount" type="number" min="1" max="4000" value="500" style="width:90px"></label>
+      <button id="btnBuild">generate/reconstruction</button>
+      <button id="btnClear">Clear</button>
+      <button id="btnRecalc">Trigger style recalculation detection</button>
+      <span class="badge">Chromium Latest version</span>
+    </div>
+
+    <div class="test-area">
+      <h2>test area</h2>
+      <div class="note">Tip: The time statistics on this page are only for relative comparison and observation, and do not represent absolute performance indicators.</div>
+      <p class="inside helper">External control text (affected by global styles, verify that global styles still act on Light DOM).</p>
+      <div id="grid"></div>
+      <hr>
+      <div class="grid">
+        <div class="card"><strong>creation time</strong><div id="statCreate">-</div></div>
+        <div class="card"><strong>Insertion and first frame</strong><div id="statInsert">-</div></div>
+        <div class="card"><strong>Total time spent</strong><div id="statTotal">-</div></div>
+        <div class="card"><strong>Number of instances</strong><div id="statCount">0</div></div>
+        <div class="card"><strong>Rough style recalculation</strong><div id="statRecalc">-</div></div>
+      </div>
+    </div>
+
+    <div class="explain">
+      <h3>Test target</h3>
+      <ul>
+        <li>Observe a lot Shadow DOM Whether the style calculations are still independent when components coexist.</li>
+        <li>Confirm that the addition and deletion of global styles will not affect the internal styles of the component.</li>
+      </ul>
+      <h3>expected result</h3>
+      <ul>
+        <li>The text inside the component is always red; outside Light DOM Text (if any) is affected by the global blue style.</li>
+        <li>Toggling the global style switch does not change the red text inside the component.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

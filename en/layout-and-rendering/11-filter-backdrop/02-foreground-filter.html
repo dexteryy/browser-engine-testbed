@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>test case11-2:foreground filter (filter: blur())Accuracy and layer compositing</title>
+  <link rel="stylesheet" href="./shared.css">
+  <script src="./perf-hud.js" defer></script>
+  <script defer>
+    (function(){
+      function $(s,ctx){ return (ctx||document).querySelector(s); }
+      var hud = null;
+      var state = { enabled:true, blur:5, willChange:false, forceLayer:false, autoScroll:false, autoSpeed:2 };
+      var rafId = 0;
+
+      function apply(){
+        document.documentElement.style.setProperty('--img-blur', state.blur + 'px');
+        var img = $('.photo');
+        if (img){
+          img.dataset.enabled = state.enabled ? 'true':'false';
+          img.style.willChange = state.willChange ? 'filter' : '';
+          img.style.transform = state.forceLayer ? 'translateZ(0)' : '';
+        }
+        $('#blurVal').textContent = state.blur + 'px';
+      }
+      function loop(){
+        if(!state.autoScroll) return;
+        window.scrollBy(0, state.autoSpeed);
+        if ((window.innerHeight + window.scrollY) >= document.body.scrollHeight || window.scrollY <= 0) {
+          state.autoSpeed = -state.autoSpeed;
+        }
+        rafId = requestAnimationFrame(loop);
+      }
+      function toggleAuto(on){
+        cancelAnimationFrame(rafId);
+        state.autoScroll = on;
+        if(on) rafId = requestAnimationFrame(loop);
+      }
+
+      document.addEventListener('DOMContentLoaded', function(){
+        hud = new window.PerfHUD();
+
+        // Viewport status via IntersectionObserver
+        var visEl = $('#inview');
+        var io = new IntersectionObserver(function(entries){
+          visEl.textContent = entries[0].isIntersecting ? 'yes' : 'no';
+        }, {threshold: 0.01});
+        var img = $('.photo');
+        if (img) io.observe(img);
+
+        $('#enable').addEventListener('change', function(e){ state.enabled = e.target.checked; apply(); });
+        $('#blur').addEventListener('input', function(e){ state.blur = +e.target.value; apply(); });
+        $('#wc').addEventListener('change', function(e){ state.willChange = e.target.checked; apply(); });
+        $('#layer').addEventListener('change', function(e){ state.forceLayer = e.target.checked; apply(); });
+        $('#auto').addEventListener('change', function(e){ toggleAuto(e.target.checked); });
+        $('#speed').addEventListener('input', function(e){ state.autoSpeed = +e.target.value; });
+        $('#hud').addEventListener('change', function(e){ e.target.checked ? hud.start() : hud.stop(); });
+        $('#reset').addEventListener('click', function(){
+          Object.assign(state, {enabled:true, blur:5, willChange:false, forceLayer:false, autoScroll:false, autoSpeed:2});
+          $('#enable').checked = true; $('#blur').value = 5; $('#wc').checked = false; $('#layer').checked = false;
+          $('#auto').checked = false; $('#speed').value = 2; $('#hud').checked = false; hud.stop();
+          apply(); window.scrollTo({top:0});
+        });
+
+        apply();
+      });
+    })();
+  </script>
+</head>
+<body>
+  <!-- Top bar (describes the purpose, does not apply backdrop-filter,Avoid interfering with individual tests) -->
+  <header class="masthead">
+    <div class="container title">
+      <h1>test case11-2:foreground filter (filter: blur())Accuracy and layer compositing</h1>
+      <span class="sub">Text image application <code>filter: blur()</code>,Verify visual and layer optimization</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="toolbar" aria-label="Toolbar">
+      <div class="row">
+        <div class="group"><label><input id="enable" type="checkbox" checked> enable filter</label></div>
+        <div class="group"><label>blur radius <input id="blur" type="range" min="0" max="20" step="1" value="5"></label><span class="num" id="blurVal">5px</span></div>
+        <div class="group"><label><input id="wc" type="checkbox"> will-change: filter</label></div>
+        <div class="group"><label><input id="layer" type="checkbox"> Force compositing layer(transform: translateZ(0))</label></div>
+      </div>
+      <div class="row">
+        <div class="group"><label><input id="auto" type="checkbox"> autoscroll</label></div>
+        <div class="group"><label>speed <input id="speed" type="range" min="1" max="12" step="1" value="2"></label><span class="num">px/frame</span></div>
+        <div class="group"><label><input id="hud" type="checkbox"> Turn on performanceHUD</label></div>
+        <span class="flag">Image in viewport:<b id="inview">unknown</b></span>
+        <button id="reset">reset</button>
+      </div>
+    </section>
+
+    <section class="test-area">
+      <div class="section">
+        <h2>Test area: text image (foreground filter)</h2>
+        <p class="meta">The image below always applies <code>filter: blur()</code>;regardlessyesnowithin viewport,Filters should remain in effect.</p>
+      </div>
+      <div class="scroller long-list">
+        <p>paragraph 1:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 2:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 3:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 4:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 5:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 6:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 7:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 8:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 9:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 10:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 11:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 12:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 13:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 14:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 15:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 16:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 17:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 18:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 19:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+<p>paragraph 20:Placeholder text used to create scrolling.Observe the transition of the blurred edges of the pictureyesnosmooth,Naturally jagged.</p>
+        <div class="photo-wrap">
+          <img class="photo" src="./assets/pattern.svg" alt="Colored grid background (for observing blur effects)" data-enabled="true" onerror="this.replaceWith(document.createTextNode('Image loading failed: please confirm assets/pattern.svg yesnoexist'))">
+        </div>
+        <p>paragraph 21:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 22:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 23:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 24:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 25:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 26:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 27:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 28:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 29:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 30:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 31:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 32:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 33:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 34:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 35:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 36:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 37:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 38:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 39:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 40:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 41:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 42:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 43:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 44:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 45:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 46:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 47:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 48:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 49:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 50:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 51:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 52:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 53:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+<p>paragraph 54:keep scrolling,Pay attention when the image leaves the viewport,yesnoStill triggering unnecessary redraws.</p>
+      </div>
+    </section>
+
+    <section class="explain" aria-label="Explanation">
+      <div class="section">
+        <h3>Test target</h3>
+        <ul>
+          <li>verify <code>filter: blur()</code> visual correctness and edge sampling quality.</li>
+          <li>Check that the picture is stillyesnoPromoted to composition layer,to reduce redraw costs during scrolling.</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h3>How to use</h3>
+        <ul>
+          <li>static inspection:enlargeblur radius,Make sure text and grid details are evenly blurred,No obvious directional stripes.</li>
+          <li>rolling check:scroll up and down,Observe when the picture leaves the viewport,yesnoThere is still a significant performance overhead.</li>
+          <li>Try to check <code>will-change</code> or"Force compositing layer",Compare the time spent in the compositing and drawing stages.</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h3>Outcome evaluation</h3>
+        <ul>
+          <li>ideal situation:The image is an independent composite layer;Scrolling is mostly done by compositing,framerate stable.</li>
+          <li>If lag is observed:reduceblur radiusorTurn on optimization tips;contrast HUD Indicators change.</li>
+        </ul>
+      </div>
+    </section>
+
+    <nav class="footer-nav">
+      <a href="./01-backdrop-scroll.html">return 11-1:background filter</a>
+      <a href="./03-combined.html">Go to 11-3:Comprehensive scene</a>
+    </nav>
+  </main>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>R&D side use cases 01｜Renderer Pass Mask control (SVG mask｜center overlay)</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;line-height:1.5;color:#111;background:#fff}
+    :root{--page-width:1120px;--border:1px solid rgba(0,0,0,.08);--o-height:160px;--o-width:min(960px,72vw)}
+    .page{position:relative}
+    .header{position:sticky;top:0;z-index:1000;background:#fff;border-bottom:var(--border)}
+    .topbar .inner{max-width:var(--page-width);margin:0 auto;padding:16px 24px}
+    .title{font-weight:600;font-size:20px;margin:0 0 6px 0}.subtitle{margin:0;color:#444}
+    .toolbar{background:#fff;border-top:var(--border)}
+    .toolbar .inner{max-width:var(--page-width);margin:0 auto;padding:12px 24px;display:flex;flex-wrap:wrap;gap:10px}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:var(--border);background:#f8fafc;font-size:13px}
+
+    .stage{max-width:var(--page-width);margin:0 auto;padding:24px}
+    .backdrop{position:relative;min-height:clamp(820px,120vh,1600px);border-radius:12px;overflow:clip;border:var(--border);background:conic-gradient(from 45deg,#e5e7eb 0 25%,#fff 0 50%,#e5e7eb 0 75%,#fff 0) 0 0/24px 24px,repeating-linear-gradient(135deg,rgba(0,0,0,.06) 0 2px,transparent 2px 8px),radial-gradient(1200px 600px at 80% 20%,rgba(2,132,199,.18),transparent 60%),radial-gradient(800px 500px at 10% 70%,rgba(236,72,153,.16),transparent 70%),#fff;padding:24px;margin-top:12px}
+
+    .overlay-o{position:sticky;top:clamp(160px,calc(50vh - var(--o-height)/2),65vh);z-index:5;width:var(--o-width);height:var(--o-height);margin:0 auto;border-radius:16px;border:1px solid rgba(0,0,0,.06);background:rgba(255,255,255,.35);-webkit-backdrop-filter:blur(8px) saturate(120%);backdrop-filter:blur(8px) saturate(120%);box-shadow:0 8px 24px rgba(0,0,0,.08);pointer-events:none}
+    .overlay-o::after{content:"Covering layer O(centered,backdrop-filter)";position:absolute;left:12px;top:10px;font-size:12px;padding:4px 8px;border-radius:999px;color:#fff;background:#111}
+
+    .layer-a{position:absolute;left:4%;top:10%;width:72%;height:60%;border-radius:28px;border:1px solid rgba(0,0,0,.08);background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(99,102,241,.08));filter:blur(10px)}
+    .layer-a::before{content:"A(filter: blur)";position:absolute;left:12px;top:10px;font-size:12px;padding:4px 8px;border-radius:999px;color:#fff;background:#111}
+    .layer-b{position:absolute;left:12%;top:16%;width:56%;height:56%;border-radius:24px;border:1px solid rgba(0,0,0,.1);background:rgba(251,191,36,.42);mix-blend-mode:multiply;isolation:isolate;box-shadow:0 10px 26px rgba(0,0,0,.1);overflow:hidden}
+    .layer-b::before{content:"B(mix-blend-mode: multiply)";position:absolute;left:12px;top:10px;font-size:12px;padding:4px 8px;border-radius:999px;color:#fff;background:#111}
+
+    .layer-c{position:absolute;left:22%;top:24%;width:300px;height:300px;border-radius:18px;border:1px solid rgba(0,0,0,.12);overflow:hidden}
+    .label-c{position:absolute;left:12px;top:10px;font-size:12px;padding:4px 8px;border-radius:999px;color:#fff;background:#111;z-index:2}
+    svg.c-scene{width:100%;height:100%;display:block}
+
+    .explain{max-width:var(--page-width);margin:0 auto;padding:24px;border-top:var(--border)}
+  </style>
+</head>
+<body>
+  <!-- SVG mask definitions -->
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <radialGradient id="maskGrad" cx="50%" cy="50%" r="55%">
+        <stop offset="0%" stop-color="white"/>
+        <stop offset="60%" stop-color="white"/>
+        <stop offset="62%" stop-color="black"/>
+        <stop offset="100%" stop-color="black"/>
+      </radialGradient>
+      <mask id="softCircle" maskUnits="objectBoundingBox">
+        <rect x="0" y="0" width="1" height="1" fill="url(#maskGrad)"/>
+      </mask>
+      <pattern id="checker" width="20" height="20" patternUnits="userSpaceOnUse">
+        <rect width="20" height="20" fill="#94a3b8"/>
+        <rect width="10" height="10" fill="#0f172a"/>
+        <rect x="10" y="10" width="10" height="10" fill="#0f172a"/>
+      </pattern>
+    </defs>
+  </svg>
+
+  <div class="page">
+    <div class="header">
+      <header class="topbar">
+        <div class="inner">
+          <h1 class="title">R&D side use cases 01｜Renderer Pass Mask control (SVG mask｜center overlay)</h1>
+          <p class="subtitle">C use SVG <code>&lt;mask&gt;</code>;Covering layer O Place it centrally to avoid overlapping with the navigation and bottom description.</p>
+        </div>
+      </header>
+
+      <section class="toolbar">
+        <div class="inner">
+          <span class="chip">A: CSS blur 10px</span>
+          <span class="chip">B: mix-blend multiply, isolation</span>
+          <span class="chip">C: SVG mask (soft circle)</span>
+          <span class="chip">O: backdrop-filter blur(8px) sticky centered</span>
+        </div>
+      </section>
+    </div>
+
+    <main class="stage">
+      <div class="backdrop">
+        <div class="layer-a">
+          <div class="layer-b">
+            <div class="layer-c">
+              <span class="label-c">C(SVG mask)</span>
+              <svg class="c-scene" viewBox="0 0 300 300" preserveAspectRatio="xMidYMid slice">
+                <g mask="url(#softCircle)">
+                  <rect x="0" y="0" width="300" height="300" fill="url(#checker)"/>
+                  <g stroke="#111" stroke-width="3">
+                    <line x1="0" y1="0" x2="300" y2="300"/>
+                    <line x1="300" y1="0" x2="0" y2="300"/>
+                    <circle cx="150" cy="150" r="90" fill="none"/>
+                  </g>
+                </g>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay-o" aria-hidden="true"></div>
+      </div>
+    </main>
+
+    <section class="explain">
+      <h3>Explanation</h3>
+      <ul>
+        <li>Covering layer O Within the test area, use sticky Centered; does not match top bar/Bottom description overlaps.</li>
+        <li>contrast C(SVG mask)and CSS <code>mask-image</code> Off-screen link differences.</li>
+      </ul>
+    </section>
+  </div>
+</body>
+</html>

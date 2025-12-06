@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video codec details and scaling</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .filtered {
+      filter: saturate(1.2) contrast(1.05);
+    }
+    .hero-wrap {
+      position: relative;
+      transform-origin: center;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Video Codec and rendering path coverage｜Details</h1>
+    <p>Play a single source in full frame to test scaling,object-fit, overlay Effects of superposition on decoding and synthesis.</p>
+  </header>
+  <main class="page">
+    <section class="toolbar">
+      <div class="group">
+        <label>Select source</label>
+        <select id="source"></select>
+      </div>
+      <div class="group">
+        <label>Play rate</label>
+        <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1">
+        <span id="rate-label">1.0x</span>
+      </div>
+      <div class="group">
+        <label>Zoom factor</label>
+        <input type="range" id="scale" min="0.6" max="1.8" step="0.1" value="1">
+        <span id="scale-label">1.0</span>
+      </div>
+      <div class="group">
+        <label>object-fit</label>
+        <select id="fit">
+          <option value="contain">contain</option>
+          <option value="cover">cover</option>
+          <option value="fill">fill</option>
+          <option value="none">none</option>
+        </select>
+      </div>
+      <div class="group">
+        <label><input type="checkbox" id="overlay" checked> Overlay test layer</label>
+      </div>
+      <div class="group">
+        <label><input type="checkbox" id="filter-toggle"> CSS filter</label>
+      </div>
+      <button class="btn primary" id="play">play</button>
+      <button class="btn" id="pause">pause</button>
+      <a class="btn" href="video-grid.html">Return to list</a>
+    </section>
+
+    <section class="panel detail-layout">
+      <div class="hero-video">
+        <div class="hero-wrap" id="hero-wrap">
+          <video id="player" playsinline controls preload="auto" muted></video>
+          <div class="overlay" id="overlay-box">Overlay ｜ Check compositing layers</div>
+        </div>
+      </div>
+      <div class="meta-panel">
+        <h3 class="section-title">playstate</h3>
+        <div class="meta-row">
+          <span class="badge">DPR <span id="dpr"></span></span>
+          <span class="badge">size <span id="dim">-</span></span>
+          <span class="badge">color <span id="color">-</span></span>
+          <span class="badge">decoder <span id="decoder">-</span></span>
+        </div>
+        <div class="meta-row">
+          <span class="badge">Frame rate <span id="fps">-</span></span>
+          <span class="badge">dropped frames <span id="dropped">-</span></span>
+          <span class="badge">readyState <span id="ready">-</span></span>
+        </div>
+        <div class="meta-row mono" id="meta-text">-</div>
+      </div>
+    </section>
+
+    <section class="panel explain">
+      <h3 class="section-title">Instructions for use</h3>
+      <div>1)Switch between different encodings/resolution source, observation zoom,object-fit, CSS filter/overlay composition layer changes.</div>
+      <div>2)DevTools → Media Confirm hardware decoding, colorspace;Performance Record 10s View the main thread with GPU synthesis.</div>
+      <div>3)full screenplayand adjustZoom factor,Observe sharpening/Vague, Color cast anddropped framesDoes it appear.</div>
+    </section>
+  </main>
+
+  <script>
+    const videos = [
+      {
+        id: "h264-720",
+        title: "H.264 720p30",
+        codec: "H.264",
+        res: "1280×720",
+        fps: 30,
+        chroma: "4:2:0",
+        src: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        mime: "video/mp4"
+      },
+      {
+        id: "h264-1080",
+        title: "H.264 1080p30",
+        codec: "H.264",
+        res: "1920×1080",
+        fps: 30,
+        chroma: "4:2:0",
+        src: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+        mime: "video/mp4"
+      },
+      {
+        id: "vp9-720",
+        title: "VP9 720p30",
+        codec: "VP9",
+        res: "1280×720",
+        fps: 30,
+        chroma: "4:2:0",
+        src: "https://test-videos.co.uk/vids/bigbuckbunny/webm/vp9/720/Big_Buck_Bunny_720_10s_1MB.webm",
+        mime: "video/webm"
+      },
+      {
+        id: "av1-1080",
+        title: "AV1 1080p",
+        codec: "AV1",
+        res: "1920×1080",
+        fps: 24,
+        chroma: "4:2:0",
+        src: "https://test-videos.co.uk/vids/bigbuckbunny/webm/av1/1080/Big_Buck_Bunny_1080_10s_1MB.webm",
+        mime: "video/webm"
+      }
+    ];
+
+    const params = new URLSearchParams(location.search);
+    const initialId = params.get("id") || "h264-720";
+    const sourceSelect = document.getElementById("source");
+    const player = document.getElementById("player");
+    const overlayBox = document.getElementById("overlay-box");
+    const heroWrap = document.getElementById("hero-wrap");
+
+    const dpr = window.devicePixelRatio || 1;
+    document.getElementById("dpr").textContent = dpr.toFixed(2);
+
+    videos.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v.id;
+      opt.textContent = `${v.title} (${v.codec})`;
+      sourceSelect.appendChild(opt);
+    });
+    sourceSelect.value = initialId;
+
+    document.getElementById("rate").addEventListener("input", e => {
+      const val = Number(e.target.value);
+      player.playbackRate = val;
+      document.getElementById("rate-label").textContent = `${val.toFixed(1)}x`;
+    });
+    document.getElementById("scale").addEventListener("input", e => {
+      const val = Number(e.target.value);
+      heroWrap.style.transform = `scale(${val})`;
+      document.getElementById("scale-label").textContent = val.toFixed(1);
+    });
+    document.getElementById("fit").addEventListener("change", e => {
+      player.style.objectFit = e.target.value;
+    });
+    document.getElementById("overlay").addEventListener("change", e => {
+      overlayBox.style.display = e.target.checked ? "block" : "none";
+    });
+    document.getElementById("filter-toggle").addEventListener("change", e => {
+      player.classList.toggle("filtered", e.target.checked);
+    });
+    document.getElementById("play").addEventListener("click", () => player.play().catch(() => {}));
+    document.getElementById("pause").addEventListener("click", () => player.pause());
+    sourceSelect.addEventListener("change", () => loadSource(sourceSelect.value));
+
+    function loadSource(id) {
+      const data = videos.find(v => v.id === id) || videos[0];
+      player.src = data.src;
+      player.playbackRate = Number(document.getElementById("rate").value);
+      player.style.objectFit = document.getElementById("fit").value;
+      player.load();
+      player.play().catch(() => {});
+      updateMetaText(data);
+      history.replaceState(null, "", `?id=${data.id}`);
+    }
+
+    function updateMetaText(data) {
+      document.getElementById("meta-text").textContent = `${data.title} ｜ ${data.res} ｜ ${data.fps}fps ｜ ${data.codec} ｜ ${data.mime} ｜ chroma ${data.chroma}`;
+    }
+
+    function pollStats() {
+      const data = videos.find(v => v.src === player.currentSrc) || videos.find(v => v.id === sourceSelect.value);
+      document.getElementById("dim").textContent = `${player.videoWidth}×${player.videoHeight}`;
+      document.getElementById("ready").textContent = player.readyState;
+      const quality = player.getVideoPlaybackQuality ? player.getVideoPlaybackQuality() : null;
+      const dropped = quality ? quality.droppedVideoFrames : 0;
+      const total = quality ? quality.totalVideoFrames : 0;
+      document.getElementById("dropped").textContent = `${dropped}/${total}`;
+      if (data) {
+        document.getElementById("decoder").textContent = data.codec;
+      }
+      requestAnimationFrame(pollStats);
+    }
+
+    let lastFrameTime = 0;
+    function trackFPS(now, metadata) {
+      if (lastFrameTime) {
+        const delta = now - lastFrameTime;
+        const fps = 1000 / delta;
+        document.getElementById("fps").textContent = `${fps.toFixed(1)} fps`;
+      }
+      lastFrameTime = now;
+      if (metadata && metadata.mediaTime) {
+        document.getElementById("color").textContent = player.colorSpace || "N/A";
+      }
+      player.requestVideoFrameCallback(trackFPS);
+    }
+
+    player.addEventListener("loadedmetadata", () => {
+      document.getElementById("dim").textContent = `${player.videoWidth}×${player.videoHeight}`;
+    });
+
+    loadSource(initialId);
+    pollStats();
+    if (player.requestVideoFrameCallback) {
+      player.requestVideoFrameCallback(trackFPS);
+    } else {
+      document.getElementById("fps").textContent = "rVFC Not supported";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>R&D side use cases 09｜Custom font rendering and shadow contrast</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="inner">
+      <h1>R&D side use cases 09｜Web custom font (WOFF2/Variable fonts) rendering and caching</h1>
+      <p class="subtitle">Multiple text overlay thickness/italics/small caps/ligature, contrast text-shadow and filter: drop-shadow right Paint influence,and observe the fontloadandcachePerformance.</p>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar-section">
+    <div class="inner">
+      <div class="toolbar">
+        <fieldset>
+          <legend>Font selection</legend>
+          <label>variable font
+            <select id="fontSelect">
+              <option value="InterVar" selected>Inter Var(Sans serif, variable)</option>
+              <option value="SourceSerif4">Source Serif 4(serif, static WOFF2)</option>
+            </select>
+          </label>
+          <label><input type="checkbox" id="useSerif" /> right forced serifrightAccording to</label>
+          <button id="reloadFonts" class="primary">Reload fonts (emulate cache bust)</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>variable axis/Font properties</legend>
+          <label>Thickness <input type="range" id="weight" min="200" max="900" value="600" /></label>
+          <label>italicsangle <input type="range" id="slant" min="-10" max="0" step="1" value="0" /></label>
+          <label>Kerning <input type="range" id="letter" min="-1" max="2" step="0.1" value="0" /></label>
+          <label><input type="checkbox" id="ligatures" checked /> Ligature liga/clig</label>
+          <label><input type="checkbox" id="smallCaps" /> small caps</label>
+          <label><input type="checkbox" id="animateWeight" /> Automatic round tripThickness</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>shadowandrendering</legend>
+          <label>shadow offset <input type="range" id="shadowOffset" min="0" max="12" value="4" /></label>
+          <label>Blurred shadows <input type="range" id="shadowBlur" min="0" max="24" value="8" /></label>
+          <label><input type="checkbox" id="toggleShadow" checked /> enable text-shadow(left column)</label>
+          <label><input type="checkbox" id="toggleDrop" checked /> enable drop-shadow(right column)</label>
+          <label>
+            rolling rhythm
+            <select id="scrollMode">
+              <option value="none">still</option>
+              <option value="auto">Automatically scroll up and down</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>state</legend>
+          <div class="status-row">
+            <span class="badge" id="fontStatus">Font: Waiting to load</span>
+            <span class="badge" id="cacheStatus">cache/Hits:--</span>
+            <span class="badge" id="fpsBadge">scroll FPS:--</span>
+            <span class="badge" id="tickStatus">Composition layer observation: Beats running</span>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </section>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="bar" id="tickerBar"></div>
+  </div>
+
+  <!-- Test area -->
+  <main class="test-area">
+    <div class="inner">
+      <div class="panes">
+        <section class="pane" id="leftPane">
+          <header class="pane-head">
+            <h2>Left column:text-shadow(renderingaislerightAccording to)</h2>
+            <span class="hint">for observation Paint Blink, redraw range</span>
+          </header>
+          <div class="content checker" id="leftContent">
+            <!-- samples injected by JS -->
+          </div>
+        </section>
+
+        <section class="pane" id="rightPane">
+          <header class="pane-head">
+            <h2>Right column:filter: drop-shadow()</h2>
+            <span class="hint">Filters may trigger compositing layers</span>
+          </header>
+          <div class="content checker" id="rightContent">
+            <!-- samples injected by JS -->
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Explanation -->
+  <section class="explain">
+    <div class="inner">
+      <h3>Explanation</h3>
+      <h4>Test target</h4>
+      <p>View custom fonts(Containsvariable font)Glyph rasterization of, cachehitandsynthesisPerformance,rightCompare text-shadow and filter: drop-shadow existrenderingandDifferences in performance,observeThickness/italics/Ligatureswitchthe stability of.</p>
+
+      <h4>test plan</h4>
+      <ul>
+        <li>load WOFF2 variable font(Inter Var)andstatic WOFF2 rightAccording to,supplyThickness/italics/KerningAdjustable,supportLigatureandsmall caps.</li>
+        <li>The text in the left and right columns is exactly the same, and the left column applies text-shadow,Use the right column filter: drop-shadow,rightCompare Paint andComposition layer behavior.</li>
+        <li>Mixed large font sizes, Small font size, Ligature, number, Chinese,Comes with sub-pixel edgesrightAccording topiece;supplyautomaticscrolltriggerrepeat Paint.</li>
+        <li>supply"againloadfont"button, pass cache bust trigger FontFace againdownload,used forobservefirst frameandcachehitdifference.</li>
+      </ul>
+
+      <h4>How to use</h4>
+      <ol>
+        <li>waiting for topstateshowfontalreadyload,adjustThickness, italics, Kerning, Ligature/small capsswitch,observeText reflowandrenderingsharpness.</li>
+        <li>switch text-shadow / drop-shadow,Open DevTools → Rendering Check Paint flashing,Observe which column is redrawn more frequently.</li>
+        <li>enableautomaticscrollRedraw area with magnification,Record Performance 10 Seconds, view the main thread Paint, fontcachehitCondition.</li>
+        <li>Click"againloadfont"trigger cache bust,CheckFirst download timeandFollow-uphitdifference;exist Layers Panel confirms whether the filter generates independent composite layers.</li>
+      </ol>
+
+      <h4>Check/test/How to evaluate results</h4>
+      <ul>
+        <li>The fonts are clear and there is no miscutting fallback;variable axisChanges should not cause long frame stutters;Ligatureandsmall capsshould take effect immediately.</li>
+        <li>text-shadow and drop-shadow visual proximity,The latter may be synthesized separately but should nottriggerExcessive performance loss;two columnsswitchNo flicker.</li>
+        <li>During auto-scroll, the FPS badge should stay stable; Paint Flashing should highlight repaint regions that match the shadow area; when fonts reload there should be a noticeable first-frame delay to log.</li>
+      </ul>
+    </div>
+  </section>
+
+  <script src="./app.js"></script>
+</body>
+</html>
